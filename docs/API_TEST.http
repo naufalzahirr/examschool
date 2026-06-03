@@ -1,0 +1,82 @@
+### Login siswa
+POST http://127.0.0.1:8000/api/mobile/login
+Content-Type: application/json
+
+{
+  "access_code": "DEMO01",
+  "nis": "4728",
+  "password": "4728",
+  "device_id": "ANDROID-DEVICE-001"
+}
+
+### Ambil antrean download paket soal
+POST http://127.0.0.1:8000/api/mobile/exam-package/queue
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "access_code": "DEMO01",
+  "device_id": "ANDROID-DEVICE-001"
+}
+
+### Download paket terenkripsi lewat Laravel fallback
+GET http://127.0.0.1:8000/api/mobile/exam-package?access_code=DEMO01&queue_token={{queue_token}}
+Authorization: Bearer {{token}}
+If-None-Match: "{{package_checksum}}"
+
+### Catat download selesai
+POST http://127.0.0.1:8000/api/mobile/exam-package/download-complete
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "access_code": "DEMO01",
+  "queue_token": "{{queue_token}}",
+  "package_checksum": "{{package_checksum}}",
+  "device_id": "ANDROID-DEVICE-001"
+}
+
+### Minta unlock key saat jadwal ujian dibuka
+POST http://127.0.0.1:8000/api/mobile/exam-package/unlock
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "access_code": "DEMO01",
+  "package_checksum": "{{package_checksum}}",
+  "device_id": "ANDROID-DEVICE-001"
+}
+
+### Mulai attempt
+POST http://127.0.0.1:8000/api/mobile/attempt/start
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "access_code": "DEMO01",
+  "client_attempt_id": "local-001",
+  "device_id": "ANDROID-DEVICE-001",
+  "cached_payload_hash": "{{package_checksum}}"
+}
+
+### Submit final offline-first
+POST http://127.0.0.1:8000/api/mobile/attempt/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "access_code": "DEMO01",
+  "client_attempt_id": "local-001",
+  "device_id": "ANDROID-DEVICE-001",
+  "cached_payload_hash": "{{package_checksum}}",
+  "local_finished_at": "2026-06-03T09:30:00+07:00",
+  "submitted_at": "2026-06-03T09:30:00+07:00",
+  "submission_checksum": "{{submission_checksum}}",
+  "idempotency_key": "local-001:{{submission_checksum}}",
+  "exit_events": [
+    {"type":"app_paused","at":"2026-06-03T08:45:12+07:00","duration_seconds":4}
+  ],
+  "answers": [
+    {"question_id": 1, "value": "1", "answered_at": "2026-06-03T08:20:00+07:00"}
+  ]
+}

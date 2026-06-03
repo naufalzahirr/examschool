@@ -1,0 +1,250 @@
+[
+  {
+    "id": 1,
+    "term_id": 1,
+    "nama_kelas": "XII ANM",
+    "tingkat": 12,
+    "created_at": "2026-01-04 01:43:55",
+    "updated_at": "2026-01-04 01:43:55"
+  },
+  {
+    "id": 2,
+    "term_id": 1,
+    "nama_kelas": "XII PSPT",
+    "tingkat": 12,
+    "created_at": "2026-01-04 01:44:06",
+    "updated_at": "2026-01-04 01:44:06"
+  },
+  {
+    "id": 3,
+    "term_id": 1,
+    "nama_kelas": "XII DKV 2",
+    "tingkat": 12,
+    "created_at": "2026-01-04 01:44:21",
+    "updated_at": "2026-01-04 01:44:21"
+  },
+  {
+    "id": 4,
+    "term_id": 1,
+    "nama_kelas": "XII DKV 1",
+    "tingkat": 12,
+    "created_at": "2026-01-04 01:44:34",
+    "updated_at": "2026-01-04 01:44:34"
+  },
+  {
+    "id": 5,
+    "term_id": 1,
+    "nama_kelas": "XII TKJ IND",
+    "tingkat": 12,
+    "created_at": "2026-01-04 01:44:45",
+    "updated_at": "2026-01-04 01:44:45"
+  },
+  {
+    "id": 6,
+    "term_id": 1,
+    "nama_kelas": "XII TKJ 2",
+    "tingkat": 12,
+    "created_at": "2026-01-04 01:44:53",
+    "updated_at": "2026-01-04 01:44:53"
+  },
+  {
+    "id": 7,
+    "term_id": 1,
+    "nama_kelas": "XII TKJ 1",
+    "tingkat": 12,
+    "created_at": "2026-01-04 01:45:02",
+    "updated_at": "2026-01-04 01:45:02"
+  },
+  {
+    "id": 8,
+    "term_id": 1,
+    "nama_kelas": "XII GIM",
+    "tingkat": 12,
+    "created_at": "2026-01-04 01:45:09",
+    "updated_at": "2026-01-04 01:45:09"
+  },
+  {
+    "id": 9,
+    "term_id": 1,
+    "nama_kelas": "XII RPL 2",
+    "tingkat": 12,
+    "created_at": "2026-01-04 01:45:17",
+    "updated_at": "2026-01-04 01:45:17"
+  },
+  {
+    "id": 10,
+    "term_id": 1,
+    "nama_kelas": "XII RPL 1",
+    "tingkat": 12,
+    "created_at": "2026-01-04 01:45:28",
+    "updated_at": "2026-01-04 01:45:28"
+  },
+  {
+    "id": 11,
+    "term_id": 1,
+    "nama_kelas": "XI RPL 1",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:45:52",
+    "updated_at": "2026-01-04 01:45:52"
+  },
+  {
+    "id": 12,
+    "term_id": 1,
+    "nama_kelas": "XI RPL 2",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:46:03",
+    "updated_at": "2026-01-04 01:46:03"
+  },
+  {
+    "id": 13,
+    "term_id": 1,
+    "nama_kelas": "XI GIM",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:49:12",
+    "updated_at": "2026-01-04 01:49:12"
+  },
+  {
+    "id": 14,
+    "term_id": 1,
+    "nama_kelas": "XI TKJ 1",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:49:21",
+    "updated_at": "2026-01-04 01:49:21"
+  },
+  {
+    "id": 15,
+    "term_id": 1,
+    "nama_kelas": "XI TKJ 2",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:49:32",
+    "updated_at": "2026-01-04 01:49:32"
+  },
+  {
+    "id": 16,
+    "term_id": 1,
+    "nama_kelas": "XI TKJ 3",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:49:38",
+    "updated_at": "2026-01-04 01:49:38"
+  },
+  {
+    "id": 17,
+    "term_id": 1,
+    "nama_kelas": "XI DKV 1",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:49:47",
+    "updated_at": "2026-01-04 01:49:47"
+  },
+  {
+    "id": 18,
+    "term_id": 1,
+    "nama_kelas": "XI DKV 2",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:49:55",
+    "updated_at": "2026-01-04 01:49:55"
+  },
+  {
+    "id": 19,
+    "term_id": 1,
+    "nama_kelas": "XI DKV 3",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:50:02",
+    "updated_at": "2026-01-04 01:50:02"
+  },
+  {
+    "id": 20,
+    "term_id": 1,
+    "nama_kelas": "XI PSPT",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:50:09",
+    "updated_at": "2026-01-04 01:50:09"
+  },
+  {
+    "id": 21,
+    "term_id": 1,
+    "nama_kelas": "XI ANM",
+    "tingkat": 11,
+    "created_at": "2026-01-04 01:50:15",
+    "updated_at": "2026-01-04 01:50:15"
+  },
+  {
+    "id": 22,
+    "term_id": 1,
+    "nama_kelas": "X RPL 1",
+    "tingkat": 10,
+    "created_at": "2026-01-04 01:50:22",
+    "updated_at": "2026-01-04 01:50:22"
+  },
+  {
+    "id": 23,
+    "term_id": 1,
+    "nama_kelas": "X RPL 2",
+    "tingkat": 10,
+    "created_at": "2026-01-04 01:50:30",
+    "updated_at": "2026-01-04 01:50:30"
+  },
+  {
+    "id": 24,
+    "term_id": 1,
+    "nama_kelas": "X RPL 3",
+    "tingkat": 10,
+    "created_at": "2026-01-04 01:50:39",
+    "updated_at": "2026-01-04 01:50:39"
+  },
+  {
+    "id": 25,
+    "term_id": 1,
+    "nama_kelas": "X TKJ 1",
+    "tingkat": 10,
+    "created_at": "2026-01-04 01:50:49",
+    "updated_at": "2026-01-04 01:50:49"
+  },
+  {
+    "id": 26,
+    "term_id": 1,
+    "nama_kelas": "X TKJ 2",
+    "tingkat": 10,
+    "created_at": "2026-01-04 01:50:56",
+    "updated_at": "2026-01-04 01:50:56"
+  },
+  {
+    "id": 27,
+    "term_id": 1,
+    "nama_kelas": "X TKJ 3",
+    "tingkat": 10,
+    "created_at": "2026-01-04 01:51:01",
+    "updated_at": "2026-01-04 01:51:01"
+  },
+  {
+    "id": 28,
+    "term_id": 1,
+    "nama_kelas": "X DKV 1",
+    "tingkat": 10,
+    "created_at": "2026-01-04 01:51:11",
+    "updated_at": "2026-01-04 01:51:11"
+  },
+  {
+    "id": 29,
+    "term_id": 1,
+    "nama_kelas": "X DKV 2",
+    "tingkat": 10,
+    "created_at": "2026-01-04 01:51:16",
+    "updated_at": "2026-01-04 01:51:16"
+  },
+  {
+    "id": 30,
+    "term_id": 1,
+    "nama_kelas": "X PSPT",
+    "tingkat": 10,
+    "created_at": "2026-01-04 01:51:21",
+    "updated_at": "2026-01-04 01:51:21"
+  },
+  {
+    "id": 31,
+    "term_id": 1,
+    "nama_kelas": "X ANM",
+    "tingkat": 10,
+    "created_at": "2026-01-04 01:51:26",
+    "updated_at": "2026-01-04 01:51:26"
+  }
+]
