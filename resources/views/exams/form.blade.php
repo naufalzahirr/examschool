@@ -110,9 +110,33 @@
             </div>
         </div>
         <div class="three">
-            <div class="field"><label>Mulai</label><input class="input" type="datetime-local" name="starts_at" value="{{ old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')) }}"></div>
-            <div class="field"><label>Selesai</label><input class="input" type="datetime-local" name="ends_at" value="{{ old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')) }}"></div>
+            <div class="field">
+                <label>Mulai</label>
+                <input id="starts_at_input" class="input" type="datetime-local" name="starts_at" value="{{ old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')) }}">
+                <p class="help" id="starts_at_preview">
+                    @if(old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')))
+                        Tersimpan: <b>{{ optional($exam->starts_at)->format('d M Y, H:i') ?? '' }}</b>
+                    @else
+                        Isi tanggal dan jam mulai.
+                    @endif
+                </p>
+            </div>
+            <div class="field">
+                <label>Selesai</label>
+                <input id="ends_at_input" class="input" type="datetime-local" name="ends_at" value="{{ old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')) }}">
+                <p class="help" id="ends_at_preview">
+                    @if(old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')))
+                        Tersimpan: <b>{{ optional($exam->ends_at)->format('d M Y, H:i') ?? '' }}</b>
+                    @else
+                        Isi tanggal dan jam selesai.
+                    @endif
+                </p>
+            </div>
             <div class="field"><label>Durasi Pengerjaan (menit)</label><input class="input" type="number" name="duration_minutes" value="{{ old('duration_minutes', $exam->duration_minutes ?: 90) }}" min="1" required></div>
+        </div>
+        <div class="alert warning" style="padding:.65rem .9rem;margin:.5rem 0">
+            ⚠️ <b>Perhatikan jam:</b> Di beberapa browser Windows, jam tampil dalam format 12 jam (AM/PM).
+            Jam 7 malam harus dipilih sebagai <b>7:20 PM</b> (bukan AM). Cek tulisan di bawah kolom Mulai/Selesai untuk konfirmasi.
         </div>
         <div class="row">
             <label class="check-pill"><input type="checkbox" name="shuffle_questions" value="1" @checked(old('shuffle_questions', $exam->shuffle_questions))> Acak urutan soal</label>
@@ -135,3 +159,41 @@
     </div>
 </form>
 @endsection
+
+@push('scripts')
+<script>
+// Preview jam yang dipilih di bawah input agar user bisa konfirmasi AM/PM
+const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
+function formatPreview(val) {
+    if (!val) return 'Belum diisi.';
+    const d = new Date(val);
+    if (isNaN(d)) return 'Format tidak valid.';
+    const jam = String(d.getHours()).padStart(2, '0');
+    const mnt = String(d.getMinutes()).padStart(2, '0');
+    const hari = HARI[d.getDay()];
+    const tgl = d.getDate();
+    const bln = BULAN[d.getMonth()];
+    const thn = d.getFullYear();
+    const pm = d.getHours() >= 12 ? ' (siang/malam)' : ' (pagi)';
+    return `<b>${hari}, ${tgl} ${bln} ${thn} jam ${jam}:${mnt}</b>${pm}`;
+}
+
+function bindPreview(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    if (!input || !preview) return;
+    input.addEventListener('change', function() {
+        preview.innerHTML = formatPreview(this.value);
+    });
+    // Init
+    if (input.value) preview.innerHTML = formatPreview(input.value);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    bindPreview('starts_at_input', 'starts_at_preview');
+    bindPreview('ends_at_input', 'ends_at_preview');
+});
+</script>
+@endpush
