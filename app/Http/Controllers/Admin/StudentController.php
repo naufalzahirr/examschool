@@ -46,7 +46,7 @@ class StudentController extends Controller
     public function create()
     {
         return view('students.form', [
-            'student' => new Student(),
+            'student' => new Student,
             'classrooms' => $this->availableClassrooms(),
         ]);
     }
@@ -108,16 +108,17 @@ class StudentController extends Controller
             }
 
             [$nis, $name, $password, $className, $classroomId] = array_pad(array_map('trim', explode(';', $line, 5)), 5, null);
-            if (!$classroomId && $className && is_numeric($className)) {
+            if (! $classroomId && $className && is_numeric($className)) {
                 $classroomId = $className;
                 $className = null;
             }
-            if (!$className && $classroomId) {
+            if (! $className && $classroomId) {
                 $className = Classroom::find($classroomId)?->nama_kelas;
             }
 
-            if (!$nis || !$name || !$password) {
+            if (! $nis || ! $name || ! $password || strlen($password) < 8) {
                 $skipped++;
+
                 continue;
             }
 
@@ -147,7 +148,7 @@ class StudentController extends Controller
 
     private function validated(Request $request, ?Student $student = null): array
     {
-        $passwordRule = $student ? ['nullable', 'confirmed', Password::min(6)] : ['required', 'confirmed', Password::min(6)];
+        $passwordRule = $student ? ['nullable', 'confirmed', Password::min(8)] : ['required', 'confirmed', Password::min(8)];
 
         return $request->validate([
             'nis' => ['required', 'string', 'max:40', Rule::unique('students', 'nis')->ignore($student?->id)],
@@ -168,7 +169,7 @@ class StudentController extends Controller
         $data['nama_lengkap'] = $data['name'];
         $data['is_active'] = $request->boolean('is_active', true);
 
-        $classroom = !empty($data['classroom_id']) ? Classroom::find($data['classroom_id']) : null;
+        $classroom = ! empty($data['classroom_id']) ? Classroom::find($data['classroom_id']) : null;
         $data['class_name'] = $classroom?->nama_kelas;
 
         return $data;

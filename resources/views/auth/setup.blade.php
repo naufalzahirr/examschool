@@ -8,8 +8,8 @@
         @csrf
         <div class="field"><label>Nama</label><input class="input" name="name" value="{{ old('name') }}" required></div>
         <div class="field"><label>Email</label><input class="input" type="email" name="email" value="{{ old('email') }}" required></div>
-        <div class="field"><label>Password</label><input class="input" type="password" name="password" required></div>
-        <div class="field"><label>Konfirmasi Password</label><input class="input" type="password" name="password_confirmation" required></div>
+        <div class="field"><label>Password</label><input class="input" type="password" name="password" minlength="8" autocomplete="new-password" required><p class="help">Minimal 8 karakter. Pakai password berbeda dari akun lain.</p></div>
+        <div class="field"><label>Konfirmasi Password</label><input class="input" type="password" name="password_confirmation" minlength="8" autocomplete="new-password" required></div>
         <button class="btn primary" style="width:100%;">Buat Admin</button>
     </form>
 </div>

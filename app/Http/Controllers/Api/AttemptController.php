@@ -7,10 +7,10 @@ use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\ExamParticipant;
 use App\Models\Question;
+use App\Models\SchoolSetting;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\SchoolSetting;
 
 class AttemptController extends Controller
 {
@@ -19,13 +19,13 @@ class AttemptController extends Controller
         $data = $request->validate([
             'access_code' => ['required', 'string'],
             'client_attempt_id' => ['required', 'string', 'max:80'],
-            'device_id' => ['nullable', 'string', 'max:120'],
+            'device_id' => ['required', 'string', 'max:120'],
             'started_at' => ['nullable', 'date'],
             'cached_payload_hash' => ['nullable', 'string', 'max:100'],
         ]);
 
         [$exam, $participant] = $this->resolve($request, $data['access_code']);
-        $this->ensureCanContinue($exam, $participant, $data['device_id'] ?? null);
+        $this->ensureCanContinue($exam, $participant, $data['device_id']);
         $this->ensurePackageHashMatches($exam, $data['cached_payload_hash'] ?? null);
 
         $attempt = ExamAttempt::firstOrCreate(
@@ -35,7 +35,7 @@ class AttemptController extends Controller
             ],
             [
                 'exam_id' => $exam->id,
-                'device_id' => $data['device_id'] ?? null,
+                'device_id' => $data['device_id'],
                 'started_at' => $data['started_at'] ?? now(),
                 'status' => 'started',
                 'cached_payload_hash' => $data['cached_payload_hash'] ?? null,
@@ -56,13 +56,13 @@ class AttemptController extends Controller
         $data = $request->validate([
             'access_code' => ['required', 'string'],
             'client_attempt_id' => ['required', 'string', 'max:80'],
-            'device_id' => ['nullable', 'string', 'max:120'],
+            'device_id' => ['required', 'string', 'max:120'],
             'answers' => ['required', 'array'],
             'cached_payload_hash' => ['nullable', 'string'],
         ]);
 
         [$exam, $participant] = $this->resolve($request, $data['access_code']);
-        $this->ensureCanContinue($exam, $participant, $data['device_id'] ?? null, allowSubmitted: true);
+        $this->ensureCanContinue($exam, $participant, $data['device_id'], allowSubmitted: true);
         $this->ensurePackageHashMatches($exam, $data['cached_payload_hash'] ?? null);
 
         $attempt = ExamAttempt::firstOrCreate(
@@ -72,7 +72,7 @@ class AttemptController extends Controller
             ],
             [
                 'exam_id' => $exam->id,
-                'device_id' => $data['device_id'] ?? null,
+                'device_id' => $data['device_id'],
                 'started_at' => now(),
             ]
         );
@@ -94,13 +94,12 @@ class AttemptController extends Controller
         ]);
     }
 
-
     public function integrityEvent(Request $request)
     {
         $data = $request->validate([
             'access_code' => ['required', 'string'],
             'client_attempt_id' => ['required', 'string', 'max:80'],
-            'device_id' => ['nullable', 'string', 'max:120'],
+            'device_id' => ['required', 'string', 'max:120'],
             'event_type' => ['required', 'string', 'max:80'],
             'reason' => ['nullable', 'string', 'max:120'],
             'at' => ['nullable', 'date'],
@@ -108,7 +107,7 @@ class AttemptController extends Controller
         ]);
 
         [$exam, $participant] = $this->resolve($request, $data['access_code']);
-        $this->ensureCanContinue($exam, $participant, $data['device_id'] ?? null, allowSubmitted: true, allowUploadGrace: true);
+        $this->ensureCanContinue($exam, $participant, $data['device_id'], allowSubmitted: true, allowUploadGrace: true);
 
         $event = [
             'type' => $data['event_type'],
@@ -126,7 +125,7 @@ class AttemptController extends Controller
                 ],
                 [
                     'exam_id' => $exam->id,
-                    'device_id' => $data['device_id'] ?? null,
+                    'device_id' => $data['device_id'],
                     'started_at' => now(),
                     'status' => 'started',
                 ]
@@ -168,7 +167,7 @@ class AttemptController extends Controller
         $data = $request->validate([
             'access_code' => ['required', 'string'],
             'client_attempt_id' => ['required', 'string', 'max:80'],
-            'device_id' => ['nullable', 'string', 'max:120'],
+            'device_id' => ['required', 'string', 'max:120'],
             'answers' => ['required', 'array'],
             'cached_payload_hash' => ['nullable', 'string'],
             'submitted_at' => ['nullable', 'date'],
@@ -179,11 +178,11 @@ class AttemptController extends Controller
         ]);
 
         [$exam, $participant] = $this->resolve($request, $data['access_code']);
-        $this->ensureCanContinue($exam, $participant, $data['device_id'] ?? null, allowUploadGrace: true);
+        $this->ensureCanContinue($exam, $participant, $data['device_id'], allowSubmitted: true, allowUploadGrace: true);
         $this->ensurePackageHashMatches($exam, $data['cached_payload_hash'] ?? null);
 
         $incomingChecksum = $data['submission_checksum'] ?? hash('sha256', json_encode($data['answers'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
-        $incomingIdempotency = $data['idempotency_key'] ?? ($data['client_attempt_id'] . ':' . $incomingChecksum);
+        $incomingIdempotency = $data['idempotency_key'] ?? ($data['client_attempt_id'].':'.$incomingChecksum);
 
         if ($participant->submitted_at) {
             $existingAttempt = $participant->attempts()
@@ -210,15 +209,43 @@ class AttemptController extends Controller
             ], 409);
         }
 
-        [$attempt, $score] = DB::transaction(function () use ($exam, $participant, $data, $incomingChecksum, $incomingIdempotency) {
+        $result = DB::transaction(function () use ($exam, $participant, $data, $incomingChecksum, $incomingIdempotency) {
+            $lockedParticipant = ExamParticipant::whereKey($participant->id)->lockForUpdate()->firstOrFail();
+            $this->ensureCanContinue($exam, $lockedParticipant, $data['device_id'], allowSubmitted: true, allowUploadGrace: true);
+
+            if ($lockedParticipant->submitted_at) {
+                $existingAttempt = $lockedParticipant->attempts()
+                    ->where('client_attempt_id', $data['client_attempt_id'])
+                    ->latest()
+                    ->first();
+
+                if ($existingAttempt && (
+                    hash_equals((string) $existingAttempt->submission_checksum, (string) $incomingChecksum)
+                    || hash_equals((string) $existingAttempt->idempotency_key, (string) $incomingIdempotency)
+                )) {
+                    return [
+                        'idempotent' => true,
+                        'attempt' => $existingAttempt,
+                        'participant' => $lockedParticipant,
+                        'score' => (float) $lockedParticipant->score,
+                    ];
+                }
+
+                return [
+                    'conflict' => true,
+                    'participant' => $lockedParticipant,
+                    'score' => (float) $lockedParticipant->score,
+                ];
+            }
+
             $attempt = ExamAttempt::firstOrCreate(
                 [
-                    'participant_id' => $participant->id,
+                    'participant_id' => $lockedParticipant->id,
                     'client_attempt_id' => $data['client_attempt_id'],
                 ],
                 [
                     'exam_id' => $exam->id,
-                    'device_id' => $data['device_id'] ?? null,
+                    'device_id' => $data['device_id'],
                     'started_at' => now(),
                 ]
             );
@@ -243,7 +270,7 @@ class AttemptController extends Controller
                 ]),
             ]);
 
-            $participantMeta = $participant->meta ?: [];
+            $participantMeta = $lockedParticipant->meta ?: [];
             $submittedEvents = $data['exit_events'] ?? [];
             if ($submittedEvents) {
                 $participantMeta['submitted_exit_events'] = $submittedEvents;
@@ -251,15 +278,40 @@ class AttemptController extends Controller
                 $participantMeta['last_integrity_event'] = collect($submittedEvents)->last();
             }
 
-            $participant->update([
+            $lockedParticipant->update([
                 'status' => 'submitted',
                 'submitted_at' => $attempt->submitted_at,
                 'score' => $score,
                 'meta' => $participantMeta,
             ]);
 
-            return [$attempt, $score];
+            return [
+                'submitted' => true,
+                'attempt' => $attempt,
+                'participant' => $lockedParticipant,
+                'score' => $score,
+            ];
         });
+
+        if ($result['idempotent'] ?? false) {
+            return response()->json([
+                'message' => 'Jawaban sudah diterima sebelumnya. Tidak disimpan ulang.',
+                'attempt_id' => $result['attempt']->id,
+                'score' => (float) $result['score'],
+                'submitted_at' => optional($result['participant']->submitted_at)->toIso8601String(),
+                'idempotent' => true,
+            ]);
+        }
+
+        if ($result['conflict'] ?? false) {
+            return response()->json([
+                'message' => 'Ujian sudah pernah disubmit.',
+                'score' => (float) $result['score'],
+            ], 409);
+        }
+
+        $attempt = $result['attempt'];
+        $score = $result['score'];
 
         return response()->json([
             'message' => 'Jawaban berhasil dikirim.',
@@ -270,7 +322,6 @@ class AttemptController extends Controller
             'submission_checksum' => $attempt->submission_checksum,
         ]);
     }
-
 
     private function summarizeIntegrityEvents(array $events): array
     {
@@ -317,7 +368,7 @@ class AttemptController extends Controller
         abort_unless($student instanceof Student, 401, 'Token siswa tidak valid.');
 
         $exam = Exam::where('access_code', strtoupper($accessCode))->firstOrFail();
-        abort_unless($student->tokenCan('exam:' . $exam->id), 403, 'Token siswa tidak berlaku untuk ujian ini.');
+        abort_unless($student->tokenCan('exam:'.$exam->id), 403, 'Token siswa tidak berlaku untuk ujian ini.');
 
         $participant = ExamParticipant::where('exam_id', $exam->id)
             ->where('student_id', $student->id)
@@ -326,33 +377,40 @@ class AttemptController extends Controller
         return [$exam, $participant];
     }
 
-    private function ensureCanContinue(Exam $exam, ExamParticipant $participant, ?string $deviceId = null, bool $allowSubmitted = false, bool $allowUploadGrace = false): void
+    private function ensureCanContinue(Exam $exam, ExamParticipant $participant, string $deviceId, bool $allowSubmitted = false, bool $allowUploadGrace = false): void
     {
         if ($allowUploadGrace) {
             $uploadGraceMinutes = max(0, (int) SchoolSetting::getValue('upload_grace_minutes', 10));
             $now = now();
             $withinUploadWindow = $exam->status === Exam::STATUS_PUBLISHED
-                && (!$exam->starts_at || $now->greaterThanOrEqualTo($exam->starts_at))
-                && (!$exam->ends_at || $now->lessThanOrEqualTo($exam->ends_at->copy()->addMinutes($uploadGraceMinutes)));
+                && (! $exam->starts_at || $now->greaterThanOrEqualTo($exam->starts_at))
+                && (! $exam->ends_at || $now->lessThanOrEqualTo($exam->ends_at->copy()->addMinutes($uploadGraceMinutes)));
 
             abort_unless($withinUploadWindow, 403, 'Waktu upload jawaban sudah ditutup. Hubungi pengawas.');
         } else {
             abort_unless($exam->isOpenNow(), 403, 'Ujian belum dibuka atau sudah ditutup.');
         }
 
-        if (!$allowSubmitted) {
+        if (! $allowSubmitted) {
             abort_if($participant->submitted_at, 409, 'Ujian sudah pernah disubmit.');
         }
 
-        if ($participant->device_id && $deviceId && $participant->device_id !== $deviceId) {
+        $deviceId = trim($deviceId);
+        abort_if($deviceId === '', 422, 'ID perangkat wajib dikirim aplikasi.');
+
+        if ($participant->device_id && ! hash_equals((string) $participant->device_id, $deviceId)) {
             abort(423, 'Akun ini sudah terkunci di perangkat lain.');
+        }
+
+        if (! $participant->device_id) {
+            $participant->forceFill(['device_id' => $deviceId])->save();
+            $participant->refresh();
         }
     }
 
-
     private function ensurePackageHashMatches(Exam $exam, ?string $cachedPayloadHash): void
     {
-        if ($cachedPayloadHash && $exam->package_checksum && !hash_equals((string) $exam->package_checksum, (string) $cachedPayloadHash)) {
+        if ($cachedPayloadHash && $exam->package_checksum && ! hash_equals((string) $exam->package_checksum, (string) $cachedPayloadHash)) {
             abort(409, 'Paket soal di perangkat tidak sesuai dengan paket aktif di server. Siswa perlu download ulang paket soal.');
         }
     }
@@ -364,7 +422,7 @@ class AttemptController extends Controller
 
         foreach ($answers as $answer) {
             $questionId = $answer['question_id'] ?? null;
-            if (!$questionId || !$questions->has($questionId)) {
+            if (! $questionId || ! $questions->has($questionId)) {
                 continue;
             }
 

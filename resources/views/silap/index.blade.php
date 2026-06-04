@@ -14,15 +14,15 @@
         <h2>Endpoint API</h2>
         <p class="muted">Tambahkan di file <code>.env</code> backend ujian:</p>
         <pre class="code">SILAP_SYNC_TOKEN=isi_token_rahasia_panjang
-SILAP_DEFAULT_STUDENT_PASSWORD=</pre>
-        <p class="muted small">Jika <code>SILAP_DEFAULT_STUDENT_PASSWORD</code> kosong, akun siswa baru otomatis memakai NIS sebagai password awal.</p>
+SILAP_DEFAULT_STUDENT_PASSWORD=password_awal_minimal_8_karakter</pre>
+        <p class="muted small">Di production, password awal siswa wajib diisi dari payload sinkron atau <code>SILAP_DEFAULT_STUDENT_PASSWORD</code>. Sistem menolak sinkron tanpa password default.</p>
     </div>
     <div class="card">
         <h2>URL Sinkron</h2>
         <pre class="code">POST {{ $endpoint }}
 Authorization: Bearer TOKEN_DARI_ENV
 Content-Type: application/json</pre>
-        <p class="muted small">Kalau token belum diset, endpoint hanya aman untuk development lokal. Pada APP_ENV=production, request sinkron akan ditolak sampai SILAP_SYNC_TOKEN diisi.</p>
+        <p class="muted small">Endpoint ini dibatasi rate limit. Pada APP_ENV=production, request sinkron ditolak sampai <code>SILAP_SYNC_TOKEN</code> diisi.</p>
     </div>
 </div>
 

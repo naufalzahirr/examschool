@@ -25,12 +25,12 @@
         <div class="import-toolbar">
             <div>
                 <h2 class="mb0">Tempel Data Siswa</h2>
-                <p class="muted small mb0">Format: <b>NIS;Nama;Password;Nama Kelas;ClassroomID</b></p>
+                <p class="muted small mb0">Format: <b>NIS;Nama;Password minimal 8 karakter;Nama Kelas;ClassroomID</b></p>
             </div>
             <button class="btn primary">Import / Update Akun</button>
         </div>
-        <textarea name="students_text" rows="14" placeholder="4728;ACHMAD RAFA YUSAPUTRA;4728;XII RPL 1;10&#10;4729;ADE RAHMANA;4729;XII RPL 1;10"></textarea>
-        <p class="help">Kolom nama kelas boleh kosong jika ClassroomID valid. Jika kolom ke-4 berisi angka, sistem membacanya sebagai ClassroomID.</p>
+        <textarea name="students_text" rows="14" placeholder="4728;ACHMAD RAFA YUSAPUTRA;Siswa4728!;XII RPL 1;10&#10;4729;ADE RAHMANA;Siswa4729!;XII RPL 1;10"></textarea>
+        <p class="help">Kolom nama kelas boleh kosong jika ClassroomID valid. Baris dengan password kurang dari 8 karakter akan dilewati.</p>
     </form>
 
     <div class="card">
@@ -41,8 +41,8 @@
             <div class="step"><span class="step-no">3</span><div><b>Import</b><br><span class="muted small">NIS lama akan diperbarui, NIS baru akan dibuat.</span></div></div>
         </div>
         <h3 class="mt">Contoh</h3>
-        <div class="import-format">4728;ACHMAD RAFA YUSAPUTRA;4728;XII RPL 1;10
-4729;ADE RAHMANA;4729;XII RPL 1;10</div>
+        <div class="import-format">4728;ACHMAD RAFA YUSAPUTRA;Siswa4728!;XII RPL 1;10
+4729;ADE RAHMANA;Siswa4729!;XII RPL 1;10</div>
     </div>
 </div>
 @endsection

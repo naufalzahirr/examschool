@@ -19,6 +19,7 @@ class SchoolSetting extends Model
         }
 
         $decoded = json_decode((string) $row->value, true);
+
         return json_last_error() === JSON_ERROR_NONE ? $decoded : $row->value;
     }
 
@@ -36,7 +37,7 @@ class SchoolSetting extends Model
             'school_name' => 'Nama Sekolah',
             'school_address' => '',
             'school_logo' => '',
-            'academic_year' => date('Y') . '/' . ((int) date('Y') + 1),
+            'academic_year' => date('Y').'/'.((int) date('Y') + 1),
             'semester' => 'Ganjil',
             'principal_name' => '',
             'proctor_name' => '',
@@ -51,8 +52,8 @@ class SchoolSetting extends Model
             'default_exam_exit_policy' => 'proctor_code',
             'offline_exit_code_length' => 8,
             'exit_violation_max_allowed' => 3,
-            'default_teacher_password' => 'Guru@123',
-            'default_student_password_mode' => 'nis',
+            'default_teacher_password' => '',
+            'default_student_password_mode' => 'custom',
         ];
     }
 

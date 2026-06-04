@@ -26,6 +26,9 @@ class SilapInitialDataSeeder extends Seeder
 
         $defaultPassword = trim((string) env('SILAP_DEFAULT_STUDENT_PASSWORD', ''));
         $defaultPassword = $defaultPassword !== '' ? $defaultPassword : null;
+        if (app()->environment('production') && ! $defaultPassword) {
+            throw new \RuntimeException('SILAP_DEFAULT_STUDENT_PASSWORD wajib diisi saat seeding data siswa di production.');
+        }
 
         foreach ($students as $row) {
             // Jika SILAP_DEFAULT_STUDENT_PASSWORD kosong, model Student otomatis memakai NIS sebagai password awal.
@@ -35,7 +38,7 @@ class SilapInitialDataSeeder extends Seeder
 
     private function loadJson(string $filename): array
     {
-        $path = database_path('seeders/data/' . $filename);
+        $path = database_path('seeders/data/'.$filename);
 
         if (! File::exists($path)) {
             throw new \RuntimeException("File seed data tidak ditemukan: {$path}");

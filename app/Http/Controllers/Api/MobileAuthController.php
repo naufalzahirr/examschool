@@ -15,9 +15,7 @@ use Illuminate\Support\Str;
 
 class MobileAuthController extends Controller
 {
-    public function __construct(private readonly ExamPackageService $examPackageService)
-    {
-    }
+    public function __construct(private readonly ExamPackageService $examPackageService) {}
 
     public function login(Request $request)
     {
@@ -25,11 +23,11 @@ class MobileAuthController extends Controller
             'access_code' => ['required', 'string'],
             'nis' => ['required', 'string', 'max:40'],
             'password' => ['required', 'string'],
-            'device_id' => ['nullable', 'string', 'max:120'],
+            'device_id' => ['required', 'string', 'max:120'],
         ]);
 
         $exam = Exam::where('access_code', strtoupper($data['access_code']))->first();
-        if (!$exam) {
+        if (! $exam) {
             return response()->json(['message' => 'Kode ujian tidak ditemukan.'], 404);
         }
 
@@ -38,23 +36,23 @@ class MobileAuthController extends Controller
         }
 
         $student = Student::where('nis', strtoupper($data['nis']))->first();
-        if (!$student || !Hash::check($data['password'], $student->password)) {
+        if (! $student || ! Hash::check($data['password'], $student->password)) {
             return response()->json(['message' => 'NIS atau password tidak sesuai.'], 422);
         }
 
-        if (!$student->is_active) {
+        if (! $student->is_active) {
             return response()->json(['message' => 'Akun siswa tidak aktif. Hubungi pengawas.'], 403);
         }
 
         $participant = $exam->participants()->where('student_id', $student->id)->first();
-        if (!$participant && $student->classroom_id && $exam->classrooms()->whereKey($student->classroom_id)->exists()) {
+        if (! $participant && $student->classroom_id && $exam->classrooms()->whereKey($student->classroom_id)->exists()) {
             $participant = $exam->participants()->firstOrCreate(
                 ['student_id' => $student->id],
                 ['status' => 'assigned']
             );
         }
 
-        if (!$participant) {
+        if (! $participant) {
             return response()->json(['message' => 'Akun siswa belum terdaftar sebagai peserta ujian ini atau kelas siswa tidak termasuk target ujian.'], 403);
         }
 
@@ -62,19 +60,13 @@ class MobileAuthController extends Controller
             return response()->json(['message' => 'Peserta ini sudah submit ujian.'], 409);
         }
 
-        if ($participant->device_id && !empty($data['device_id']) && $participant->device_id !== $data['device_id']) {
-            return response()->json(['message' => 'Akun ini sudah terkunci di perangkat lain. Hubungi pengawas untuk reset perangkat.'], 423);
+        $this->ensureParticipantDevice($participant, $data['device_id']);
+        if ($participant->status === 'assigned') {
+            $participant->forceFill(['status' => 'download_ready'])->save();
         }
 
-        if (!empty($data['device_id']) && !$participant->device_id) {
-            $participant->forceFill([
-                'device_id' => $data['device_id'],
-                'status' => $participant->status === 'assigned' ? 'download_ready' : $participant->status,
-            ])->save();
-        }
-
-        $student->tokens()->where('name', 'mobile-exam-' . $exam->id)->delete();
-        $plainToken = $student->createToken('mobile-exam-' . $exam->id, ['exam:' . $exam->id])->plainTextToken;
+        $student->tokens()->where('name', 'mobile-exam-'.$exam->id)->delete();
+        $plainToken = $student->createToken('mobile-exam-'.$exam->id, ['exam:'.$exam->id])->plainTextToken;
 
         $settings = $this->packageSettings();
         $downloadOpensAt = $exam->downloadOpensAt($settings['open_hours']);
@@ -123,6 +115,7 @@ class MobileAuthController extends Controller
                 'download_opens_at' => optional($downloadOpensAt)->toIso8601String(),
                 'download_open_hours_before_start' => $settings['open_hours'],
                 'queue_endpoint' => '/api/mobile/exam-package/queue',
+                'download_endpoint' => '/api/mobile/exam-package',
                 'download_complete_endpoint' => '/api/mobile/exam-package/download-complete',
                 'unlock_endpoint' => '/api/mobile/exam-package/unlock',
                 'download_limit' => $settings['concurrent_limit'],
@@ -144,7 +137,7 @@ class MobileAuthController extends Controller
     {
         $data = $request->validate([
             'access_code' => ['required', 'string'],
-            'device_id' => ['nullable', 'string', 'max:120'],
+            'device_id' => ['required', 'string', 'max:120'],
             'needs_package' => ['nullable', 'boolean'],
         ]);
 
@@ -166,16 +159,14 @@ class MobileAuthController extends Controller
             ], 403);
         }
 
-        if ($participant->device_id && !empty($data['device_id']) && $participant->device_id !== $data['device_id']) {
-            return response()->json(['message' => 'Akun ini sudah terkunci di perangkat lain.'], 423);
-        }
-
         $needsPackage = (bool) ($data['needs_package'] ?? false);
+        $deviceId = $data['device_id'];
 
-        $result = DB::transaction(function () use ($exam, $participant, $settings, $needsPackage) {
+        $result = DB::transaction(function () use ($exam, $participant, $settings, $needsPackage, $deviceId) {
             $now = now();
+            $lockedExam = Exam::whereKey($exam->id)->lockForUpdate()->firstOrFail();
 
-            ExamParticipant::where('exam_id', $exam->id)
+            ExamParticipant::where('exam_id', $lockedExam->id)
                 ->whereNotNull('package_queue_token')
                 ->whereNotNull('package_queue_expires_at')
                 ->where('package_queue_expires_at', '<', $now)
@@ -189,6 +180,7 @@ class MobileAuthController extends Controller
 
             /** @var ExamParticipant $fresh */
             $fresh = ExamParticipant::whereKey($participant->id)->lockForUpdate()->firstOrFail();
+            $this->ensureParticipantDevice($fresh, $deviceId);
 
             if ((int) $fresh->package_download_attempts_count >= $settings['max_attempts'] && ! $fresh->package_download_finished_at) {
                 return [
@@ -196,7 +188,7 @@ class MobileAuthController extends Controller
                     'blocked' => true,
                     'queue_token' => null,
                     'expires_at' => null,
-                    'active' => $this->activeDownloadCount($exam),
+                    'active' => $this->activeDownloadCount($lockedExam),
                     'limit' => $settings['concurrent_limit'],
                     'position' => null,
                     'total_waiting' => 0,
@@ -210,7 +202,7 @@ class MobileAuthController extends Controller
                     'already_downloaded' => true,
                     'queue_token' => $fresh->package_queue_token,
                     'expires_at' => optional($fresh->package_queue_expires_at)->toIso8601String(),
-                    'active' => $this->activeDownloadCount($exam),
+                    'active' => $this->activeDownloadCount($lockedExam),
                     'limit' => $settings['concurrent_limit'],
                     'position' => 0,
                 ];
@@ -240,17 +232,17 @@ class MobileAuthController extends Controller
                     'granted' => true,
                     'queue_token' => $fresh->package_queue_token,
                     'expires_at' => $fresh->package_queue_expires_at->toIso8601String(),
-                    'active' => $this->activeDownloadCount($exam),
+                    'active' => $this->activeDownloadCount($lockedExam),
                     'limit' => $settings['concurrent_limit'],
                     'position' => 0,
                 ];
             }
 
-            $active = $this->activeDownloadCount($exam);
+            $active = $this->activeDownloadCount($lockedExam);
             $limit = max(1, $settings['concurrent_limit']);
             $available = max(0, $limit - $active);
 
-            $ahead = ExamParticipant::where('exam_id', $exam->id)
+            $ahead = ExamParticipant::where('exam_id', $lockedExam->id)
                 ->whereNotNull('package_queue_joined_at')
                 ->whereNull('package_download_finished_at')
                 ->where(function ($query) use ($now) {
@@ -282,13 +274,13 @@ class MobileAuthController extends Controller
                     'granted' => true,
                     'queue_token' => $token,
                     'expires_at' => $fresh->package_queue_expires_at->toIso8601String(),
-                    'active' => $this->activeDownloadCount($exam),
+                    'active' => $this->activeDownloadCount($lockedExam),
                     'limit' => $limit,
                     'position' => 0,
                 ];
             }
 
-            $totalWaiting = ExamParticipant::where('exam_id', $exam->id)
+            $totalWaiting = ExamParticipant::where('exam_id', $lockedExam->id)
                 ->whereNotNull('package_queue_joined_at')
                 ->whereNull('package_download_finished_at')
                 ->count();
@@ -305,11 +297,13 @@ class MobileAuthController extends Controller
         });
 
         $statusCode = ($result['blocked'] ?? false) ? 429 : ($result['granted'] ? 200 : 202);
+
         return response()->json(array_merge([
             'message' => $result['message'] ?? ($result['granted'] ? 'Slot download tersedia.' : 'Masuk antrean download paket soal.'),
             'access_code' => $exam->access_code,
             'total_participants' => $exam->participants()->count(),
             'download_url' => $result['granted'] ? $this->absolutePackageUrl($exam) : null,
+            'download_endpoint' => '/api/mobile/exam-package',
             'package_checksum' => $exam->package_checksum,
             'package_version' => (int) $exam->package_version,
             'encrypted' => (bool) $exam->package_is_encrypted,
@@ -321,11 +315,12 @@ class MobileAuthController extends Controller
         $data = $request->validate([
             'access_code' => ['required', 'string'],
             'queue_token' => ['required', 'string', 'max:120'],
+            'device_id' => ['required', 'string', 'max:120'],
             'package_checksum' => ['nullable', 'string', 'max:80'],
         ]);
 
         [$exam, $participant] = $this->resolveAuthenticatedParticipant($request, $data['access_code']);
-        $this->ensureValidDownloadSlot($exam, $participant, $data['queue_token']);
+        $this->ensureValidDownloadSlot($exam, $participant, $data['queue_token'], $data['device_id']);
 
         $clientChecksum = trim((string) ($data['package_checksum'] ?? $request->header('If-None-Match', '')), '"');
         if ($clientChecksum !== '' && hash_equals((string) $exam->package_checksum, $clientChecksum)) {
@@ -342,7 +337,7 @@ class MobileAuthController extends Controller
 
         return response($contents, 200, array_merge([
             'Content-Type' => 'application/json; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $exam->access_code . '-v' . $exam->package_version . '.enc.json"',
+            'Content-Disposition' => 'attachment; filename="'.$exam->access_code.'-v'.$exam->package_version.'.enc.json"',
             'Cache-Control' => 'private, max-age=86400',
         ], $this->packageHeaders($exam)));
     }
@@ -353,11 +348,11 @@ class MobileAuthController extends Controller
             'access_code' => ['required', 'string'],
             'queue_token' => ['required', 'string', 'max:120'],
             'package_checksum' => ['required', 'string', 'max:80'],
-            'device_id' => ['nullable', 'string', 'max:120'],
+            'device_id' => ['required', 'string', 'max:120'],
         ]);
 
         [$exam, $participant] = $this->resolveAuthenticatedParticipant($request, $data['access_code']);
-        $this->ensureValidDownloadSlot($exam, $participant, $data['queue_token']);
+        $this->ensureValidDownloadSlot($exam, $participant, $data['queue_token'], $data['device_id']);
 
         if (! hash_equals((string) $exam->package_checksum, (string) $data['package_checksum'])) {
             return response()->json(['message' => 'Checksum file paket tidak sesuai. Download ulang paket soal.'], 409);
@@ -387,7 +382,7 @@ class MobileAuthController extends Controller
     {
         $data = $request->validate([
             'access_code' => ['required', 'string'],
-            'device_id' => ['nullable', 'string', 'max:120'],
+            'device_id' => ['required', 'string', 'max:120'],
             'package_checksum' => ['required', 'string', 'max:80'],
         ]);
 
@@ -406,9 +401,7 @@ class MobileAuthController extends Controller
             return response()->json(['message' => 'Paket soal di perangkat tidak sesuai dengan paket aktif server.'], 409);
         }
 
-        if ($participant->device_id && !empty($data['device_id']) && $participant->device_id !== $data['device_id']) {
-            return response()->json(['message' => 'Akun ini sudah terkunci di perangkat lain.'], 423);
-        }
+        $this->ensureParticipantDevice($participant, $data['device_id']);
 
         $participant->forceFill([
             'package_unlock_key_issued_at' => now(),
@@ -433,7 +426,7 @@ class MobileAuthController extends Controller
         abort_unless($student instanceof Student, 401, 'Token siswa tidak valid.');
 
         $exam = Exam::where('access_code', strtoupper($accessCode))->firstOrFail();
-        abort_unless($student->tokenCan('exam:' . $exam->id), 403, 'Token siswa tidak berlaku untuk ujian ini.');
+        abort_unless($student->tokenCan('exam:'.$exam->id), 403, 'Token siswa tidak berlaku untuk ujian ini.');
 
         $participant = ExamParticipant::where('exam_id', $exam->id)
             ->where('student_id', $student->id)
@@ -442,12 +435,25 @@ class MobileAuthController extends Controller
         return [$exam, $participant, $student];
     }
 
-    private function ensureValidDownloadSlot(Exam $exam, ExamParticipant $participant, string $queueToken): void
+    private function ensureValidDownloadSlot(Exam $exam, ExamParticipant $participant, string $queueToken, string $deviceId): void
     {
+        $this->ensureParticipantDevice($participant, $deviceId);
         abort_unless($exam->status === Exam::STATUS_PUBLISHED, 403, 'Ujian belum dipublish atau sudah ditutup.');
         abort_unless($exam->hasGeneratedPackage(), 409, 'Paket soal belum dibuat.');
         abort_if(! $participant->package_queue_token || ! hash_equals($participant->package_queue_token, $queueToken), 429, 'Slot download tidak valid. Minta antrean download ulang.');
         abort_if(! $participant->package_queue_expires_at || now()->greaterThan($participant->package_queue_expires_at), 429, 'Slot download sudah kedaluwarsa. Minta antrean download ulang.');
+    }
+
+    private function ensureParticipantDevice(ExamParticipant $participant, string $deviceId): void
+    {
+        $deviceId = trim($deviceId);
+        abort_if($deviceId === '', 422, 'ID perangkat wajib dikirim aplikasi.');
+        abort_if($participant->device_id && ! hash_equals((string) $participant->device_id, $deviceId), 423, 'Akun ini sudah terkunci di perangkat lain. Hubungi pengawas untuk reset perangkat.');
+
+        if (! $participant->device_id) {
+            $participant->forceFill(['device_id' => $deviceId])->save();
+            $participant->refresh();
+        }
     }
 
     private function activeDownloadCount(Exam $exam): int
@@ -481,13 +487,13 @@ class MobileAuthController extends Controller
             return $url;
         }
 
-        return rtrim(config('app.url'), '/') . '/' . ltrim($url, '/');
+        return rtrim(config('app.url'), '/').'/'.ltrim($url, '/');
     }
 
     private function packageHeaders(Exam $exam): array
     {
         return [
-            'ETag' => '"' . $exam->package_checksum . '"',
+            'ETag' => '"'.$exam->package_checksum.'"',
             'X-Exam-Package-Version' => (string) $exam->package_version,
             'X-Exam-Package-Checksum' => (string) $exam->package_checksum,
             'X-Exam-Package-Plain-Checksum' => (string) $exam->package_plain_checksum,

@@ -20,9 +20,9 @@ Route::get('/', fn () => redirect()->route('dashboard'));
 
 Route::middleware('guest')->group(function () {
     Route::get('/setup', [SimpleAuthController::class, 'showSetup'])->name('setup');
-    Route::post('/setup', [SimpleAuthController::class, 'storeSetup'])->name('setup.store');
+    Route::post('/setup', [SimpleAuthController::class, 'storeSetup'])->middleware('throttle:web-login')->name('setup.store');
     Route::get('/login', [SimpleAuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [SimpleAuthController::class, 'login'])->name('login.store');
+    Route::post('/login', [SimpleAuthController::class, 'login'])->middleware('throttle:web-login')->name('login.store');
 });
 
 Route::post('/logout', [SimpleAuthController::class, 'logout'])->middleware('auth')->name('logout');

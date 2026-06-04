@@ -41,8 +41,8 @@
     <div class="field"><label>Alamat</label><textarea name="alamat" rows="3">{{ old('alamat', $student->alamat) }}</textarea></div>
 
     <div class="two">
-        <div class="field"><label>{{ $student->exists ? 'Password Baru (kosongkan jika tidak diganti)' : 'Password' }}</label><input class="input" type="password" name="password" {{ $student->exists ? '' : 'required' }}></div>
-        <div class="field"><label>Konfirmasi Password</label><input class="input" type="password" name="password_confirmation" {{ $student->exists ? '' : 'required' }}></div>
+        <div class="field"><label>{{ $student->exists ? 'Password Baru (kosongkan jika tidak diganti)' : 'Password' }}</label><input class="input" type="password" name="password" minlength="8" autocomplete="new-password" {{ $student->exists ? '' : 'required' }}><p class="help">Minimal 8 karakter. Hindari memakai NIS sebagai password produksi.</p></div>
+        <div class="field"><label>Konfirmasi Password</label><input class="input" type="password" name="password_confirmation" minlength="8" autocomplete="new-password" {{ $student->exists ? '' : 'required' }}></div>
     </div>
 
     @if($student->silap_id)

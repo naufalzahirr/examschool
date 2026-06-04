@@ -90,7 +90,7 @@ class UserAccountController extends Controller
     public function generateTeacherAccounts(Request $request)
     {
         $data = $request->validate([
-            'default_password' => ['required', 'string', 'min:6', 'max:80'],
+            'default_password' => ['required', 'string', 'min:8', 'max:80'],
             'only_without_account' => ['nullable', 'boolean'],
         ]);
 
@@ -100,21 +100,22 @@ class UserAccountController extends Controller
 
         DB::transaction(function () use ($data, &$created, &$updated, &$skipped) {
             $query = Teacher::query()->where('is_active', true)->orderBy('id');
-            if (!empty($data['only_without_account'])) {
+            if (! empty($data['only_without_account'])) {
                 $query->whereNull('user_id');
             }
 
             $query->chunkById(100, function ($teachers) use ($data, &$created, &$updated, &$skipped) {
                 foreach ($teachers as $teacher) {
-                    $username = $this->normalizeUsername($teacher->nip ?: ('guru' . $teacher->id));
-                    if (!$username) {
+                    $username = $this->normalizeUsername($teacher->nip ?: ('guru'.$teacher->id));
+                    if (! $username) {
                         $skipped++;
+
                         continue;
                     }
 
                     $email = $teacher->kontak && filter_var($teacher->kontak, FILTER_VALIDATE_EMAIL)
                         ? $teacher->kontak
-                        : $username . '@guru.local';
+                        : $username.'@guru.local';
 
                     $user = $teacher->user ?: User::where('username', $username)->first();
                     if ($user) {
@@ -169,6 +170,7 @@ class UserAccountController extends Controller
     {
         $value = strtolower(trim($value));
         $value = preg_replace('/[^a-z0-9_.-]+/', '', $value) ?: '';
+
         return substr($value, 0, 80);
     }
 }

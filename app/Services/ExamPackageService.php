@@ -44,10 +44,10 @@ class ExamPackageService
         }
 
         $path = $this->pathFor($exam, $checksum);
-        $disk = 'public';
+        $disk = (string) config('filesystems.exam_package_disk', 'local');
         Storage::disk($disk)->put($path, $json);
 
-        $publicUrl = Storage::disk($disk)->url($path);
+        $publicUrl = $disk === 'public' ? Storage::disk($disk)->url($path) : null;
         $size = strlen($json);
 
         $exam->forceFill([
@@ -77,8 +77,8 @@ class ExamPackageService
 
     public function read(Exam $exam): ?string
     {
-        $disk = $exam->package_disk ?: 'public';
-        if (!$exam->package_path || !Storage::disk($disk)->exists($exam->package_path)) {
+        $disk = $exam->package_disk ?: 'local';
+        if (! $exam->package_path || ! Storage::disk($disk)->exists($exam->package_path)) {
             return null;
         }
 
@@ -87,7 +87,8 @@ class ExamPackageService
 
     public function exists(Exam $exam): bool
     {
-        $disk = $exam->package_disk ?: 'public';
+        $disk = $exam->package_disk ?: 'local';
+
         return (bool) $exam->package_path && Storage::disk($disk)->exists($exam->package_path);
     }
 
@@ -97,7 +98,12 @@ class ExamPackageService
             return null;
         }
 
-        return $exam->package_public_url ?: Storage::disk($exam->package_disk ?: 'public')->url($exam->package_path);
+        $disk = $exam->package_disk ?: 'local';
+        if ($disk !== 'public') {
+            return null;
+        }
+
+        return $exam->package_public_url ?: Storage::disk($disk)->url($exam->package_path);
     }
 
     public function unlockKey(Exam $exam): string
@@ -113,7 +119,8 @@ class ExamPackageService
     {
         $safeCode = preg_replace('/[^A-Z0-9\-]/', '', strtoupper($exam->access_code));
         $hash = $checksum ? substr($checksum, 0, 16) : Str::lower(Str::random(16));
-        return 'exam-packages/' . $safeCode . '/v' . (int) $exam->package_version . '/' . $safeCode . '-v' . (int) $exam->package_version . '-' . $hash . '.enc.json';
+
+        return 'exam-packages/'.$safeCode.'/v'.(int) $exam->package_version.'/'.$safeCode.'-v'.(int) $exam->package_version.'-'.$hash.'.enc.json';
     }
 
     private function encryptPayload(array $plainPayload, string $unlockKeyHex, Exam $exam, string $plainChecksum): array
@@ -130,7 +137,7 @@ class ExamPackageService
             throw new RuntimeException('Gagal encode plaintext paket soal.');
         }
 
-        $aad = $exam->access_code . '|v' . (int) $exam->package_version . '|' . $plainChecksum;
+        $aad = $exam->access_code.'|v'.(int) $exam->package_version.'|'.$plainChecksum;
         $cipherText = openssl_encrypt($plainJson, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
         if ($cipherText === false) {
             throw new RuntimeException('Gagal mengenkripsi paket soal.');
@@ -250,7 +257,7 @@ class ExamPackageService
                 ->filter(fn ($item) => $item['value'] !== '')
                 ->values();
 
-            $payload['matching_bank'] = $this->deterministicShuffle($bank, 'matching:' . $exam->id . ':' . $question->id . ':' . $exam->package_version)->all();
+            $payload['matching_bank'] = $this->deterministicShuffle($bank, 'matching:'.$exam->id.':'.$question->id.':'.$exam->package_version)->all();
         }
 
         return $payload;
@@ -259,7 +266,7 @@ class ExamPackageService
     private function deterministicShuffle(Collection $items, string $seed): Collection
     {
         return $items->sortBy(function ($item, $index) use ($seed) {
-            return hash('sha256', $seed . ':' . $index . ':' . json_encode($item, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            return hash('sha256', $seed.':'.$index.':'.json_encode($item, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         })->values();
     }
 }

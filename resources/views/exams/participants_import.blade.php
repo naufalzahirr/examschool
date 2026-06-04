@@ -35,12 +35,12 @@
         <div class="import-toolbar">
             <div>
                 <h2 class="mb0">Import Peserta + Buat Akun</h2>
-                <p class="muted small mb0">Format: <b>NIS;Nama;Password;Nama Kelas;ClassroomID</b></p>
+                <p class="muted small mb0">Format: <b>NIS;Nama;Password minimal 8 karakter;Nama Kelas;ClassroomID</b></p>
             </div>
             <button class="btn primary">Import Peserta</button>
         </div>
-        <textarea name="students_text" rows="14" placeholder="4728;ACHMAD RAFA YUSAPUTRA;4728;XII RPL 1;10&#10;4729;ADE RAHMANA;4729;XII RPL 1;10"></textarea>
-        <p class="help">Jika NIS sudah ada, data dan password diperbarui, lalu siswa ditambahkan ke ujian ini.</p>
+        <textarea name="students_text" rows="14" placeholder="4728;ACHMAD RAFA YUSAPUTRA;Siswa4728!;XII RPL 1;10&#10;4729;ADE RAHMANA;Siswa4729!;XII RPL 1;10"></textarea>
+        <p class="help">Jika NIS sudah ada, data dan password diperbarui, lalu siswa ditambahkan ke ujian ini. Baris dengan password kurang dari 8 karakter akan dilewati.</p>
     </form>
 
     <form class="card form" method="POST" action="{{ route('exams.participants.assignExisting', $exam) }}">

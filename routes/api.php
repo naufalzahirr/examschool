@@ -5,12 +5,12 @@ use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\SilapSyncController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/silap/sync', [SilapSyncController::class, 'sync']);
+Route::post('/silap/sync', [SilapSyncController::class, 'sync'])->middleware('throttle:silap-sync');
 
 Route::prefix('mobile')->group(function () {
-    Route::post('/login', [MobileAuthController::class, 'login']);
+    Route::post('/login', [MobileAuthController::class, 'login'])->middleware('throttle:mobile-login');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'throttle:mobile-exam'])->group(function () {
         Route::post('/exam-package/queue', [MobileAuthController::class, 'queue']);
         Route::get('/exam-package', [MobileAuthController::class, 'package']);
         Route::post('/exam-package/download-complete', [MobileAuthController::class, 'downloadComplete']);

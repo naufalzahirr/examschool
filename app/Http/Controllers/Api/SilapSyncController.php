@@ -30,6 +30,11 @@ class SilapSyncController extends Controller
         $studentRows = $data['students'] ?? $data['siswa'] ?? [];
         $teacherRows = $data['teachers'] ?? $data['guru'] ?? [];
         $defaultPassword = $data['default_student_password'] ?? env('SILAP_DEFAULT_STUDENT_PASSWORD');
+        if (app()->environment('production') && blank($defaultPassword)) {
+            return response()->json([
+                'message' => 'Password awal siswa wajib diisi melalui default_student_password atau SILAP_DEFAULT_STUDENT_PASSWORD di produksi.',
+            ], 422);
+        }
 
         $result = [
             'classrooms_created_or_updated' => 0,
@@ -78,8 +83,9 @@ class SilapSyncController extends Controller
     private function authorizeToken(Request $request): void
     {
         $configured = env('SILAP_SYNC_TOKEN');
-        if (!filled($configured)) {
+        if (! filled($configured)) {
             abort_if(app()->environment('production'), 500, 'SILAP_SYNC_TOKEN belum diset. Endpoint sinkron tidak boleh terbuka di produksi.');
+
             return;
         }
 

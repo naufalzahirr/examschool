@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -16,13 +17,19 @@ class Exam extends Model
     use HasFactory;
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_READY = 'ready';
+
     public const STATUS_PUBLISHED = 'published';
+
     public const STATUS_CLOSED = 'closed';
+
     public const STATUS_ARCHIVED = 'archived';
 
     public const LOCK_STANDARD = 'standard';
+
     public const LOCK_STRICT_AIRPLANE = 'strict_airplane';
+
     public const LOCK_STRICT_KIOSK = 'strict_kiosk';
 
     public const LOCK_MODES = [
@@ -32,7 +39,9 @@ class Exam extends Model
     ];
 
     public const EXIT_AFTER_SUBMIT = 'after_submit';
+
     public const EXIT_AFTER_TIME_END = 'after_time_end';
+
     public const EXIT_PROCTOR_CODE = 'proctor_code';
 
     public const EXIT_POLICIES = [
@@ -77,20 +86,19 @@ class Exam extends Model
     {
         static::creating(function (Exam $exam) {
             if (! $exam->lock_mode) {
-                $exam->lock_mode = (string) \App\Models\SchoolSetting::getValue('default_exam_lock_mode', self::LOCK_STRICT_AIRPLANE);
+                $exam->lock_mode = (string) SchoolSetting::getValue('default_exam_lock_mode', self::LOCK_STRICT_AIRPLANE);
             }
             if (! $exam->exit_policy) {
-                $exam->exit_policy = (string) \App\Models\SchoolSetting::getValue('default_exam_exit_policy', self::EXIT_PROCTOR_CODE);
+                $exam->exit_policy = (string) SchoolSetting::getValue('default_exam_exit_policy', self::EXIT_PROCTOR_CODE);
             }
-            if (!$exam->access_code) {
+            if (! $exam->access_code) {
                 $exam->access_code = self::generateAccessCode();
             }
-            if (!$exam->package_version) {
+            if (! $exam->package_version) {
                 $exam->package_version = 1;
             }
         });
     }
-
 
     public function lockModeLabel(): string
     {
@@ -108,7 +116,7 @@ class Exam extends Model
             return $this->offlineExitCodePlain();
         }
 
-        $code = self::generateOfflineExitCode((int) \App\Models\SchoolSetting::getValue('offline_exit_code_length', 8));
+        $code = self::generateOfflineExitCode((int) SchoolSetting::getValue('offline_exit_code_length', 8));
         $salt = Str::random(24);
 
         $this->forceFill([
@@ -146,7 +154,7 @@ class Exam extends Model
 
     public static function offlineExitCodeHash(string $code, string $salt, string $accessCode): string
     {
-        return hash('sha256', strtoupper(trim($code)) . '|' . $salt . '|' . strtoupper(trim($accessCode)));
+        return hash('sha256', strtoupper(trim($code)).'|'.$salt.'|'.strtoupper(trim($accessCode)));
     }
 
     public function offlineLockPayload(): array
@@ -199,7 +207,7 @@ class Exam extends Model
         $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         do {
             $suffix = collect(range(1, 6))->map(fn () => $alphabet[random_int(0, strlen($alphabet) - 1)])->implode('');
-            $code = 'US-' . $suffix;
+            $code = 'US-'.$suffix;
         } while (self::where('access_code', $code)->exists());
 
         return $code;
@@ -207,8 +215,8 @@ class Exam extends Model
 
     public function bumpPackageVersion(): void
     {
-        if ($this->package_path && Storage::disk($this->package_disk ?: 'public')->exists($this->package_path)) {
-            Storage::disk($this->package_disk ?: 'public')->delete($this->package_path);
+        if ($this->package_path && Storage::disk($this->package_disk ?: 'local')->exists($this->package_path)) {
+            Storage::disk($this->package_disk ?: 'local')->delete($this->package_path);
         }
 
         $this->forceFill([
@@ -228,7 +236,7 @@ class Exam extends Model
         return (bool) $this->package_path
             && (bool) $this->package_checksum
             && (bool) $this->package_generated_at
-            && Storage::disk($this->package_disk ?: 'public')->exists($this->package_path);
+            && Storage::disk($this->package_disk ?: 'local')->exists($this->package_path);
     }
 
     public function packageStatusLabel(): string
@@ -247,7 +255,7 @@ class Exam extends Model
     public function syncParticipantsFromClassrooms(): int
     {
         $classroomIds = $this->classrooms()->pluck('classrooms.id')->all();
-        if (!$classroomIds) {
+        if (! $classroomIds) {
             return 0;
         }
 
@@ -271,7 +279,6 @@ class Exam extends Model
         return $created;
     }
 
-
     public function hasStartedWork(): bool
     {
         return $this->attempts()->exists()
@@ -294,22 +301,22 @@ class Exam extends Model
             [
                 'label' => 'Minimal ada 1 soal',
                 'ok' => $questionsCount > 0,
-                'note' => $questionsCount . ' soal',
+                'note' => $questionsCount.' soal',
             ],
             [
                 'label' => 'Kelas peserta sudah dipilih',
                 'ok' => $this->classrooms->isNotEmpty(),
-                'note' => $this->classrooms->count() . ' kelas',
+                'note' => $this->classrooms->count().' kelas',
             ],
             [
                 'label' => 'Peserta sudah tersinkron',
                 'ok' => $participantsCount > 0,
-                'note' => $participantsCount . ' peserta',
+                'note' => $participantsCount.' peserta',
             ],
             [
                 'label' => 'Durasi ujian valid',
                 'ok' => (int) $this->duration_minutes > 0,
-                'note' => $this->duration_minutes . ' menit',
+                'note' => $this->duration_minutes.' menit',
             ],
             [
                 'label' => 'Paket soal terenkripsi akan bisa dibuat',
@@ -324,7 +331,7 @@ class Exam extends Model
             [
                 'label' => 'Jadwal selesai tidak lebih awal dari jadwal mulai',
                 'ok' => ! $this->starts_at || ! $this->ends_at || $this->ends_at->greaterThanOrEqualTo($this->starts_at),
-                'note' => $this->starts_at && $this->ends_at ? $this->starts_at->format('d M Y H:i') . ' - ' . $this->ends_at->format('d M Y H:i') : 'jadwal fleksibel',
+                'note' => $this->starts_at && $this->ends_at ? $this->starts_at->format('d M Y H:i').' - '.$this->ends_at->format('d M Y H:i') : 'jadwal fleksibel',
             ],
         ];
     }
@@ -382,18 +389,20 @@ class Exam extends Model
     public function isOpenNow(): bool
     {
         $now = now();
+
         return $this->status === self::STATUS_PUBLISHED
-            && (!$this->starts_at || $now->greaterThanOrEqualTo($this->starts_at))
-            && (!$this->ends_at || $now->lessThanOrEqualTo($this->ends_at));
+            && (! $this->starts_at || $now->greaterThanOrEqualTo($this->starts_at))
+            && (! $this->ends_at || $now->lessThanOrEqualTo($this->ends_at));
     }
 
-    public function downloadOpensAt(?int $hoursBefore = null): ?\Illuminate\Support\Carbon
+    public function downloadOpensAt(?int $hoursBefore = null): ?Carbon
     {
         if (! $this->starts_at) {
             return null;
         }
 
-        $hoursBefore ??= (int) \App\Models\SchoolSetting::getValue('package_download_open_hours', 12);
+        $hoursBefore ??= (int) SchoolSetting::getValue('package_download_open_hours', 12);
+
         return $this->starts_at->copy()->subHours(max(0, $hoursBefore));
     }
 

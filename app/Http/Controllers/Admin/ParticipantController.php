@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Classroom;
 use App\Models\Exam;
 use App\Models\ExamParticipant;
+use App\Models\SchoolSetting;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -57,15 +59,16 @@ class ParticipantController extends Controller
                 }
 
                 [$nis, $name, $password, $className, $classroomId] = array_pad(array_map('trim', explode(';', $line, 5)), 5, null);
-                if (!$classroomId && $className && is_numeric($className)) {
+                if (! $classroomId && $className && is_numeric($className)) {
                     $classroomId = $className;
                     $className = null;
                 }
-                if (!$className && $classroomId) {
-                    $className = \App\Models\Classroom::find($classroomId)?->nama_kelas;
+                if (! $className && $classroomId) {
+                    $className = Classroom::find($classroomId)?->nama_kelas;
                 }
-                if (!$nis || !$name || !$password) {
+                if (! $nis || ! $name || ! $password || strlen($password) < 8) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -124,8 +127,9 @@ class ParticipantController extends Controller
             }
 
             $student = Student::where('nis', $nis)->first();
-            if (!$student) {
+            if (! $student) {
                 $notFound[] = $nis;
+
                 continue;
             }
 
@@ -143,7 +147,7 @@ class ParticipantController extends Controller
         AuditLog::record('exam.participants_assigned', $exam, ['assigned' => $assigned, 'not_found' => $notFound]);
         $message = "{$assigned} siswa berhasil ditambahkan ke ujian.";
         if ($notFound) {
-            $message .= ' NIS tidak ditemukan: ' . implode(', ', array_slice($notFound, 0, 20));
+            $message .= ' NIS tidak ditemukan: '.implode(', ', array_slice($notFound, 0, 20));
         }
 
         return back()->with('success', $message);
@@ -232,7 +236,7 @@ class ParticipantController extends Controller
             'active' => $exam->participants()->whereNotNull('package_queue_token')->whereNotNull('package_queue_expires_at')->where('package_queue_expires_at', '>', now())->whereNull('package_download_finished_at')->count(),
             'downloaded' => $exam->participants()->whereNotNull('package_download_finished_at')->count(),
             'unlocked' => $exam->participants()->whereNotNull('package_unlock_key_issued_at')->count(),
-            'limit' => (int) \App\Models\SchoolSetting::getValue('package_download_concurrent_limit', 50),
+            'limit' => (int) SchoolSetting::getValue('package_download_concurrent_limit', 50),
         ];
 
         $integrityStats = [
@@ -292,7 +296,7 @@ class ParticipantController extends Controller
     public function exportResults(Exam $exam)
     {
         $this->ensureCanManage($exam);
-        $filename = 'hasil-' . preg_replace('/[^A-Za-z0-9\-]+/', '-', strtolower($exam->access_code . '-' . $exam->title)) . '.csv';
+        $filename = 'hasil-'.preg_replace('/[^A-Za-z0-9\-]+/', '-', strtolower($exam->access_code.'-'.$exam->title)).'.csv';
 
         return response()->streamDownload(function () use ($exam) {
             $handle = fopen('php://output', 'w');
@@ -319,6 +323,7 @@ class ParticipantController extends Controller
             fclose($handle);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
+
     private function ensureCanManage(Exam $exam): void
     {
         abort_unless(auth()->user()->canManageExam($exam), 403);

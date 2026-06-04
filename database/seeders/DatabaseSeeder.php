@@ -12,8 +12,9 @@ class DatabaseSeeder extends Seeder
         // classrooms.sql, guru.sql, dan siswa.sql.
         $this->call(SilapInitialDataSeeder::class);
 
-        // Seeder ini hanya membuat akun admin dan contoh ujian/soal.
-        // Data siswa/guru/kelas tetap berasal dari SILAP.
-        $this->call(ExamDemoSeeder::class);
+        // Demo data tidak boleh ikut otomatis di produksi karena berisi akun/kode contoh.
+        if (! app()->environment('production') && (bool) env('SEED_DEMO_DATA', false)) {
+            $this->call(ExamDemoSeeder::class);
+        }
     }
 }
