@@ -132,12 +132,14 @@ class QuestionBankController extends Controller
 
             $parts = array_map('trim', explode(';', $line));
             [$type, $title, $points, $answer, $options] = array_pad($parts, 5, null);
-            if (!$type || !$title) {
+            if (! $type || ! $title) {
                 $skipped++;
+
                 continue;
             }
-            if (!in_array($type, Question::TYPES, true)) {
-                $errors[] = 'Baris ' . ($lineNo + 1) . ': jenis soal tidak valid.';
+            if (! in_array($type, Question::TYPES, true)) {
+                $errors[] = 'Baris '.($lineNo + 1).': jenis soal tidak valid.';
+
                 continue;
             }
 
@@ -158,16 +160,17 @@ class QuestionBankController extends Controller
                 QuestionBankItem::create($payload);
                 $created++;
             } catch (\Throwable $e) {
-                $errors[] = 'Baris ' . ($lineNo + 1) . ': ' . $e->getMessage();
+                $errors[] = 'Baris '.($lineNo + 1).': '.$e->getMessage();
             }
         }
 
         $message = "Import bank soal selesai. Tersimpan: {$created}, dilewati: {$skipped}.";
         if ($errors) {
-            $message .= ' Error: ' . implode(' | ', array_slice($errors, 0, 5));
+            $message .= ' Error: '.implode(' | ', array_slice($errors, 0, 5));
         }
 
         AuditLog::record('question_bank.imported', null, ['created' => $created, 'skipped' => $skipped]);
+
         return back()->with('success', $message);
     }
 
@@ -183,11 +186,17 @@ class QuestionBankController extends Controller
             'question_bank_ids.*' => ['integer', 'exists:question_bank_items,id'],
         ]);
 
+        $existingBankItemIds = $this->examBankItemIds($exam);
         $items = QuestionBankItem::query()
             ->visibleToUser(auth()->user(), forSelection: true)
             ->whereIn('id', $data['question_bank_ids'])
+            ->whereNotIn('id', $existingBankItemIds)
             ->where('is_active', true)
             ->get();
+
+        if ($items->isEmpty()) {
+            return back()->withErrors(['bank' => 'Belum ada soal baru yang bisa ditambahkan. Soal mungkin sudah ada di ujian atau tidak aktif.']);
+        }
 
         $added = 0;
         DB::transaction(function () use ($exam, $items, &$added) {
@@ -221,7 +230,13 @@ class QuestionBankController extends Controller
         });
 
         AuditLog::record('exam.questions_added_from_bank', $exam, ['added' => $added]);
-        return redirect()->route('exams.builder', $exam)->with('success', "{$added} soal berhasil ditambahkan dari bank soal.");
+        $skipped = count($data['question_bank_ids']) - $added;
+        $message = "{$added} soal berhasil ditambahkan dari bank soal.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} soal dilewati karena sudah ada di ujian atau tidak bisa dipakai.";
+        }
+
+        return redirect()->route('exams.builder', $exam)->with('success', $message);
     }
 
     public function selectForExam(Request $request, Exam $exam)
@@ -232,16 +247,37 @@ class QuestionBankController extends Controller
             ->where('is_active', true)
             ->with('teacher')
             ->latest();
+
         if ($search = trim((string) $request->get('q'))) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('question_code', 'like', "%{$search}%")
                     ->orWhere('subject', 'like', "%{$search}%")
+                    ->orWhere('grade_level', 'like', "%{$search}%")
                     ->orWhere('topic', 'like', "%{$search}%");
             });
         }
-        $items = $query->paginate(30)->withQueryString();
 
-        return view('question_bank.select_for_exam', compact('exam', 'items'));
+        foreach (['subject', 'grade_level', 'type', 'difficulty', 'visibility'] as $field) {
+            if ($value = $request->get($field)) {
+                $query->where($field, $value);
+            }
+        }
+
+        if ($owner = $request->get('owner')) {
+            if ($owner === 'mine') {
+                $query->where('teacher_id', auth()->id());
+            } elseif ($owner === 'shared') {
+                $query->where('visibility', QuestionBankItem::VISIBILITY_SCHOOL)
+                    ->where('teacher_id', '!=', auth()->id());
+            }
+        }
+
+        $items = $query->paginate(30)->withQueryString();
+        $filters = $this->selectionFilterOptions();
+        $existingBankItemIds = $this->examBankItemIds($exam);
+
+        return view('question_bank.select_for_exam', compact('exam', 'items', 'filters', 'existingBankItemIds'));
     }
 
     private function validated(Request $request): array
@@ -300,6 +336,7 @@ class QuestionBankController extends Controller
 
         if ($title === '') {
             $errors['question_json'] = 'Pertanyaan wajib diisi.';
+
             return $errors;
         }
 
@@ -365,6 +402,7 @@ class QuestionBankController extends Controller
                 ->map(function ($o) {
                     $left = trim((string) ($o['label'] ?? ''));
                     $right = trim((string) ($o['match'] ?? ($o['meta']['match'] ?? '')));
+
                     return [
                         'label' => $left,
                         'is_correct' => true,
@@ -396,7 +434,7 @@ class QuestionBankController extends Controller
                 ->values()
                 ->all();
 
-            if (!$accepted && !empty($question['correct_text'])) {
+            if (! $accepted && ! empty($question['correct_text'])) {
                 $accepted = [trim((string) $question['correct_text'])];
             }
 
@@ -410,6 +448,7 @@ class QuestionBankController extends Controller
     {
         if (in_array($type, [Question::TYPE_MULTIPLE_CHOICE, Question::TYPE_MULTIPLE_CHOICE_COMPLEX], true)) {
             $correct = collect($options ?? [])->where('is_correct', true)->pluck('label')->values()->all();
+
             return $correct ? implode(' | ', $correct) : null;
         }
 
@@ -419,7 +458,7 @@ class QuestionBankController extends Controller
 
         if ($type === Question::TYPE_MATCHING) {
             return collect($options ?? [])
-                ->map(fn ($o) => ($o['label'] ?? '') . ' = ' . ($o['meta']['match'] ?? ''))
+                ->map(fn ($o) => ($o['label'] ?? '').' = '.($o['meta']['match'] ?? ''))
                 ->implode(' | ') ?: null;
         }
 
@@ -440,7 +479,9 @@ class QuestionBankController extends Controller
             $correctLabels = collect(preg_split('/[|,]/', $answerText))->map(fn ($v) => trim((string) $v))->filter()->values()->all();
             foreach (preg_split('/\r\n|\r|\n|\|/', $optionsText) as $line) {
                 $label = trim($line);
-                if ($label === '') continue;
+                if ($label === '') {
+                    continue;
+                }
                 $options[] = ['label' => $label, 'is_correct' => in_array($label, $correctLabels, true)];
             }
             $correctText = collect($options)->where('is_correct', true)->pluck('label')->implode(' | ') ?: null;
@@ -449,13 +490,15 @@ class QuestionBankController extends Controller
             $correctText = $answerKey['answer'] ? 'Benar' : 'Salah';
         } elseif ($type === Question::TYPE_MATCHING) {
             foreach (preg_split('/\r\n|\r|\n|\|/', $optionsText) as $line) {
-                if (!str_contains($line, '=')) continue;
+                if (! str_contains($line, '=')) {
+                    continue;
+                }
                 [$left, $right] = array_map('trim', explode('=', $line, 2));
                 if ($left !== '' && $right !== '') {
                     $options[] = ['label' => $left, 'is_correct' => true, 'meta' => ['match' => $right]];
                 }
             }
-            $correctText = collect($options)->map(fn ($o) => ($o['label'] ?? '') . ' = ' . ($o['meta']['match'] ?? ''))->implode(' | ') ?: null;
+            $correctText = collect($options)->map(fn ($o) => ($o['label'] ?? '').' = '.($o['meta']['match'] ?? ''))->implode(' | ') ?: null;
         } elseif ($type === Question::TYPE_SHORT_ANSWER) {
             $accepted = collect(preg_split('/[|;\n]/', $answerText))->map(fn ($v) => trim((string) $v))->filter()->values()->all();
             $answerKey = ['accepted' => $accepted];
@@ -498,6 +541,33 @@ class QuestionBankController extends Controller
             'difficulties' => ['mudah' => 'Mudah', 'sedang' => 'Sedang', 'sulit' => 'Sulit'],
             'visibilities' => QuestionBankItem::visibilityLabels(),
         ];
+    }
+
+    private function selectionFilterOptions(): array
+    {
+        $base = QuestionBankItem::query()
+            ->visibleToUser(auth()->user(), forSelection: true)
+            ->where('is_active', true);
+
+        return [
+            'subjects' => (clone $base)->select('subject')->whereNotNull('subject')->distinct()->orderBy('subject')->pluck('subject'),
+            'grades' => (clone $base)->select('grade_level')->whereNotNull('grade_level')->distinct()->orderBy('grade_level')->pluck('grade_level'),
+            'types' => QuestionBankItem::typeLabels(),
+            'difficulties' => ['mudah' => 'Mudah', 'sedang' => 'Sedang', 'sulit' => 'Sulit'],
+            'visibilities' => QuestionBankItem::visibilityLabels(),
+            'owners' => ['mine' => 'Soal saya', 'shared' => 'Dibagikan guru lain'],
+        ];
+    }
+
+    private function examBankItemIds(Exam $exam): array
+    {
+        return $exam->questions()
+            ->get(['settings'])
+            ->map(fn ($question) => (int) ($question->settings['source_bank_item_id'] ?? 0))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function ensureCanManage(QuestionBankItem $item): void

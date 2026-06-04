@@ -12,7 +12,7 @@
     <div class="between mb">
         <div>
             <h1>Builder Soal</h1>
-            <p class="muted">Template dibuat seperti Google Form: satu pertanyaan per card, tipe soal bisa diganti, lalu kunci jawaban diatur langsung di bawahnya.</p>
+            <p class="muted">Soal ujian diambil dari Bank Soal. Guru membuat soal di Bank Soal terlebih dahulu, lalu memilih soal yang sesuai untuk ujian ini.</p>
         </div>
         <a class="btn" href="{{ route('exams.show', $exam) }}">Kembali</a>
     </div>
@@ -36,12 +36,24 @@
         @csrf
         <input type="hidden" name="questions_json" id="questionsJson">
         <div id="questions"></div>
-        @if($canEdit)
-            <div class="floating-add row" style="justify-content:center"><button type="button" class="btn primary add-btn" onclick="addQuestion()">+ Tambah Pertanyaan</button><a class="btn soft" href="{{ route('exams.question-bank.select', $exam) }}">Ambil dari Bank Soal</a></div>
-            <div class="card mt between">
-                <div><b>Simpan perubahan</b><br><span class="muted small">Setiap perubahan soal/kunci jawaban akan menaikkan versi paket soal yang di-download siswa.</span></div>
-                <button class="btn primary">Simpan Soal</button>
+        @if($canEdit && $exam->questions->isEmpty())
+            <div class="card mt">
+                <h3>Belum ada soal di ujian ini</h3>
+                <p class="muted">Ambil soal dari Bank Soal sekolah atau buat soal baru di Bank Soal terlebih dahulu. Setelah ditambahkan, soal menjadi salinan ujian dan bisa direview di halaman ini.</p>
+                <div class="row mt">
+                    <a class="btn primary" href="{{ route('exams.question-bank.select', $exam) }}">Ambil dari Bank Soal</a>
+                    <a class="btn soft" href="{{ route('question-bank.create') }}">Buat Soal di Bank Soal</a>
+                </div>
             </div>
+        @endif
+        @if($canEdit)
+            @if($exam->questions->isNotEmpty())
+                <div class="floating-add row" style="justify-content:center"><a class="btn primary add-btn" href="{{ route('exams.question-bank.select', $exam) }}">Ambil dari Bank Soal</a><a class="btn soft" href="{{ route('question-bank.create') }}">Buat Soal di Bank Soal</a></div>
+                <div class="card mt between">
+                    <div><b>Simpan perubahan</b><br><span class="muted small">Perubahan pada salinan soal ujian akan menaikkan versi paket soal yang di-download siswa.</span></div>
+                    <button class="btn primary">Simpan Soal</button>
+                </div>
+            @endif
         @else
             <div class="card mt">
                 <b>Mode lihat saja</b><br>
@@ -290,7 +302,7 @@ document.getElementById('builderForm').addEventListener('submit', function(e){
     document.getElementById('questionsJson').value = JSON.stringify(questions);
 });
 
-if(initialQuestions.length){ initialQuestions.forEach(q => addQuestion(q)); } else { addQuestion(); }
+if(initialQuestions.length){ initialQuestions.forEach(q => addQuestion(q)); }
 lockBuilderIfNeeded();
 </script>
 @endpush
