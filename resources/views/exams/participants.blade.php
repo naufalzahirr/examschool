@@ -51,7 +51,9 @@
                     <option value="assigned" @selected(request('status') === 'assigned')>Belum login</option>
                     <option value="download_ready" @selected(request('status') === 'download_ready')>Siap download</option>
                     <option value="downloaded" @selected(request('status') === 'downloaded')>Paket terunduh</option>
+                    <option value="unlocked" @selected(request('status') === 'unlocked')>Soal terbuka</option>
                     <option value="in_progress" @selected(request('status') === 'in_progress')>Sedang mengerjakan</option>
+                    <option value="locked" @selected(request('status') === 'locked')>Terkunci/Pelanggaran</option>
                     <option value="synced" @selected(request('status') === 'synced')>Tersinkron</option>
                     <option value="submitted" @selected(request('status') === 'submitted')>Sudah submit</option>
                 </select>

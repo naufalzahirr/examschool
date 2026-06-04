@@ -191,7 +191,7 @@
                 <span style="font-size:18px">{{ $downloadIsOpen ? '✅' : '⏳' }}</span>
                 <span>
                     <b>Siswa boleh download paket soal</b><br>
-                    <span class="muted small">Dibuka {{ $downloadOpensAt ?: '12 jam sebelum mulai' }} (12 jam sebelum ujian dimulai)</span>
+                    <span class="muted small">Download dibuka 12 jam sebelum ujian mulai</span>
                 </span>
             </span>
             @if($downloadIsOpen)
@@ -288,7 +288,7 @@
             <h2 class="mb0">Aturan Ujian Offline</h2>
             <p class="muted small mb0">Dikirim ke paket soal. Aplikasi siswa menggunakan ini untuk mengunci layar dan mencatat pelanggaran.</p>
         </div>
-        <span class="badge warning">{{ $exam->lockModeLabel() }}</span>
+        <a class="btn soft" href="{{ route('exams.edit', $exam) }}">Ubah Aturan</a>
     </div>
     <div class="three">
         <div>

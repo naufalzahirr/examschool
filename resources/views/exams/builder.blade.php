@@ -1,4 +1,4 @@
-@extends('layouts.app', ['title' => 'Review/Edit Soal Ujian'])
+@extends('layouts.app', ['title' => $canEdit ? 'Edit Soal Ujian' : 'Lihat Soal Ujian'])
 
 @push('head')
 <style>
@@ -11,8 +11,8 @@
 <div class="builder-wrap">
     <div class="between mb">
         <div>
-            <h1>Review/Edit Soal Ujian</h1>
-            <p class="muted">Soal utama tetap dipilih dari Bank Soal. Halaman ini dipakai untuk meninjau salinan soal yang sudah masuk ke ujian.</p>
+            <h1>{{ $canEdit ? 'Edit Soal Ujian' : 'Lihat Soal Ujian' }}</h1>
+            <p class="muted">{{ $canEdit ? 'Tinjau dan edit salinan soal ujian ini. Soal baru tetap dipilih dari Bank Soal.' : 'Ujian sudah dikunci — soal hanya bisa dilihat, tidak bisa diubah.' }}</p>
         </div>
         <a class="btn" href="{{ route('exams.show', $exam) }}">Kembali</a>
     </div>

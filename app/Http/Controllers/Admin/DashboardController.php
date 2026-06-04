@@ -32,6 +32,15 @@ class DashboardController extends Controller
                 $q->whereNull('ends_at')->orWhere('ends_at', '>=', $today);
             });
 
+        $readyToPublishExams = (clone $examQuery)
+            ->whereIn('status', [Exam::STATUS_DRAFT, Exam::STATUS_READY])
+            ->withCount(['questions', 'participants', 'classrooms'])
+            ->with('classrooms')
+            ->latest()
+            ->get()
+            ->filter(fn ($e) => collect($e->readinessChecklist())->every(fn ($i) => $i['ok']))
+            ->take(5);
+
         return view('dashboard', [
             'examCount' => (clone $examQuery)->count(),
             'publishedCount' => (clone $examQuery)->where('status', 'published')->count(),
@@ -45,6 +54,7 @@ class DashboardController extends Controller
             'submittedCount' => ExamAttempt::where('status', 'submitted')->count(),
             'recentExams' => (clone $examQuery)->with('classrooms')->latest()->take(8)->get(),
             'runningExams' => (clone $runningQuery)->with('classrooms')->latest()->take(8)->get(),
+            'readyToPublishExams' => $readyToPublishExams,
             'recentAuditLogs' => $user->isAdmin() ? AuditLog::with('user')->latest()->take(8)->get() : collect(),
         ]);
     }

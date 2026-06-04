@@ -44,12 +44,26 @@
             <thead><tr><th>Peserta</th><th>NIS</th><th>Kelas</th><th>Status</th><th>Nilai</th><th>Submit</th><th>Last Sync</th></tr></thead>
             <tbody>
             @forelse($participants as $p)
-                @php($last = $p->attempts->first())
+                @php
+                $last = $p->attempts->first();
+                $statusLabel = match($p->status) {
+                    'assigned'       => 'Belum login',
+                    'download_ready' => 'Siap download',
+                    'downloading'    => 'Mengunduh',
+                    'downloaded'     => 'Paket terunduh',
+                    'unlocked'       => 'Soal terbuka',
+                    'in_progress'    => 'Mengerjakan',
+                    'locked'         => 'Terkunci',
+                    'synced'         => 'Tersinkron',
+                    'submitted'      => 'Sudah submit',
+                    default          => $p->status,
+                };
+                @endphp
                 <tr>
                     <td><b>{{ $p->student?->name ?: 'Siswa dihapus' }}</b></td>
                     <td>{{ $p->student?->nis ?: '-' }}</td>
                     <td>{{ $p->student?->classroom?->nama_kelas ?: ($p->student?->class_name ?: '-') }}</td>
-                    <td><span class="badge {{ $p->status }}">{{ $p->status }}</span></td>
+                    <td><span class="badge {{ $p->status }}">{{ $statusLabel }}</span></td>
                     <td><b>{{ $p->score ?? '-' }}</b></td>
                     <td>{{ optional($p->submitted_at)->format('d M Y H:i') ?: '-' }}</td>
                     <td>{{ optional($last?->last_synced_at)->format('d M Y H:i') ?: '-' }}</td>

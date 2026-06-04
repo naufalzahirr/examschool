@@ -35,24 +35,42 @@
 
 <div class="two mb">
     <div class="card">
-        <div class="between mb"><h2 class="mb0">Monitor Ujian Aktif</h2></div>
+        <div class="between mb">
+            <h2 class="mb0">Monitor Ujian Aktif</h2>
+            @if($runningExams->isNotEmpty())
+                <span class="badge published">{{ $runningExams->count() }} sedang berjalan</span>
+            @endif
+        </div>
         <div class="table-wrap"><table class="table"><thead><tr><th>Ujian</th><th>Kode</th><th>Kelas</th><th>Aksi</th></tr></thead><tbody>
             @forelse($runningExams as $exam)
                 <tr><td><b>{{ $exam->title }}</b><br><span class="muted small">{{ $exam->subject ?: '-' }}</span></td><td><span class="badge published">{{ $exam->access_code }}</span></td><td>@foreach($exam->classrooms->take(2) as $c)<span class="badge">{{ $c->nama_kelas }}</span>@endforeach</td><td><a class="btn soft" href="{{ route('exams.monitor', $exam) }}">Monitor</a></td></tr>
             @empty
-                <tr><td colspan="4">Belum ada ujian yang sedang berlangsung.</td></tr>
+                <tr><td colspan="4" class="muted">Tidak ada ujian yang sedang berlangsung saat ini.</td></tr>
             @endforelse
         </tbody></table></div>
     </div>
+
     <div class="card">
-        <div class="between mb"><h2 class="mb0">Checklist Produksi</h2></div>
-        <div class="check-list">
-            <div class="check-pill">✅ Data kelas, siswa, guru dari SILAP</div>
-            <div class="check-pill">✅ Akun guru/pengawas berbasis role</div>
-            <div class="check-pill">✅ Bank soal reusable</div>
-            <div class="check-pill">✅ Publish mengunci soal</div>
-            <div class="check-pill">✅ Audit log untuk tindakan penting</div>
+        <div class="between mb">
+            <h2 class="mb0">Siap Dipublish</h2>
+            @if($readyToPublishExams->isNotEmpty())
+                <span class="badge warning">{{ $readyToPublishExams->count() }} ujian menunggu</span>
+            @endif
         </div>
+        @forelse($readyToPublishExams as $exam)
+            <div class="check-pill" style="justify-content:space-between;margin-bottom:.4rem">
+                <span>
+                    <b>{{ $exam->title }}</b><br>
+                    <span class="muted small">{{ $exam->questions_count }} soal · {{ $exam->participants_count }} peserta{{ $exam->starts_at ? ' · ' . $exam->starts_at->format('d M H:i') : '' }}</span>
+                </span>
+                <form method="POST" action="{{ route('exams.publish', $exam) }}">
+                    @csrf
+                    <button class="btn green" style="white-space:nowrap">Publish</button>
+                </form>
+            </div>
+        @empty
+            <p class="muted small" style="margin:0">Semua ujian sudah dipublish atau masih dalam proses penyiapan soal.</p>
+        @endforelse
     </div>
 </div>
 

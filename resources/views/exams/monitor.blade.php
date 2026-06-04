@@ -30,7 +30,14 @@
             <b>Status server:</b> {{ $exam->operationalStatus() }} &nbsp;·&nbsp;
             <b>Jadwal:</b> {{ optional($exam->starts_at)->format('d M Y H:i') ?: 'fleksibel' }}
             – {{ optional($exam->ends_at)->format('H:i') ?: 'fleksibel' }} &nbsp;·&nbsp;
-            <b>Download:</b> {{ $queueStats['download_window_open'] ? 'sudah dibuka' : 'dibuka ' . $queueStats['download_opens_at'] }}
+            <b>Download:</b>
+            @if($queueStats['download_window_open'])
+                sedang dibuka
+            @elseif($queueStats['download_opens_at'])
+                dibuka {{ $queueStats['download_opens_at'] }}
+            @else
+                dibuka 12 jam sebelum mulai
+            @endif
         </div>
         <span class="badge {{ $exam->isOpenNow() ? 'published' : 'warning' }}">
             {{ $exam->isOpenNow() ? 'Ujian Sedang Dibuka' : 'Belum / Tidak Dibuka' }}
