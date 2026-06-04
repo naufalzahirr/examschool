@@ -153,9 +153,20 @@ class MobileAuthController extends Controller
         }
 
         if (! $exam->isPackageDownloadWindowOpen($settings['open_hours'])) {
+            $opensAt  = $exam->downloadOpensAt($settings['open_hours']);
+            $isEnded  = $exam->ends_at && now()->greaterThan($exam->ends_at);
+            $isEarly  = $opensAt && now()->lessThan($opensAt);
+
+            $message = match (true) {
+                $isEnded => 'Waktu ujian sudah berakhir. Download paket tidak lagi tersedia.',
+                $isEarly => 'Jendela download belum dibuka. Download tersedia mulai ' . $opensAt->format('d M Y H:i') . '.',
+                default  => 'Jendela download paket soal belum tersedia. Hubungi pengawas.',
+            };
+
             return response()->json([
-                'message' => 'Jendela download paket soal belum dibuka.',
-                'download_opens_at' => optional($exam->downloadOpensAt($settings['open_hours']))->toIso8601String(),
+                'message'          => $message,
+                'download_opens_at' => optional($opensAt)->toIso8601String(),
+                'ends_at'          => optional($exam->ends_at)->toIso8601String(),
             ], 403);
         }
 

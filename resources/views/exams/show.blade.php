@@ -162,6 +162,101 @@
 </div>
 
 
+{{-- ===== TIMELINE UJIAN ===== --}}
+<div class="card mb">
+    <div class="between mb">
+        <div>
+            <h2 class="mb0">Timeline Ujian</h2>
+            <p class="muted small mb0">Urutan waktu yang dialami siswa dari download sampai selesai.</p>
+        </div>
+        @if($exam->starts_at)
+            <a class="btn soft" href="{{ route('exams.edit', $exam) }}">Ubah Jadwal</a>
+        @endif
+    </div>
+
+    @php
+        $downloadOpensAt  = $queueStats['download_opens_at'];   // sudah format 'd M Y H:i'
+        $downloadIsOpen   = $queueStats['download_window_open'];
+        $now              = now();
+        $step1Done = $downloadOpensAt && $exam->starts_at && $now->greaterThanOrEqualTo($exam->starts_at->copy()->subHours(12));
+        $step2Done = $exam->starts_at && $now->greaterThanOrEqualTo($exam->starts_at);
+        $step3Done = $exam->ends_at   && $now->greaterThan($exam->ends_at);
+    @endphp
+
+    <div style="display:grid;gap:.65rem">
+
+        {{-- Step 1: Download tersedia --}}
+        <div class="check-pill" style="justify-content:space-between;background:{{ $downloadIsOpen ? 'var(--success-soft)' : '#f6f7f9' }}">
+            <span style="display:flex;align-items:center;gap:.5rem">
+                <span style="font-size:18px">{{ $downloadIsOpen ? '✅' : '⏳' }}</span>
+                <span>
+                    <b>Siswa boleh download paket soal</b><br>
+                    <span class="muted small">Dibuka {{ $downloadOpensAt ?: '12 jam sebelum mulai' }} (12 jam sebelum ujian dimulai)</span>
+                </span>
+            </span>
+            @if($downloadIsOpen)
+                <span class="badge published">sedang dibuka</span>
+            @elseif($downloadOpensAt)
+                <span class="badge">{{ $downloadOpensAt }}</span>
+            @else
+                <span class="badge warning">belum ada jadwal</span>
+            @endif
+        </div>
+
+        {{-- Step 2: Ujian mulai (unlock key tersedia) --}}
+        <div class="check-pill" style="justify-content:space-between;background:{{ $step2Done && !$step3Done ? 'var(--success-soft)' : '#f6f7f9' }}">
+            <span style="display:flex;align-items:center;gap:.5rem">
+                <span style="font-size:18px">{{ $step2Done && !$step3Done ? '🟢' : ($step3Done ? '✅' : '🔒') }}</span>
+                <span>
+                    <b>Ujian dimulai — soal bisa dibuka</b><br>
+                    <span class="muted small">Server memberikan unlock key. Siswa wajib mode pesawat sebelum mulai menjawab.</span>
+                </span>
+            </span>
+            @if($exam->starts_at)
+                <span class="badge {{ $step2Done ? 'published' : '' }}">{{ $exam->starts_at->format('d M Y H:i') }}</span>
+            @else
+                <span class="badge warning">jadwal fleksibel</span>
+            @endif
+        </div>
+
+        {{-- Step 3: Durasi mengerjakan --}}
+        <div class="check-pill" style="justify-content:space-between">
+            <span style="display:flex;align-items:center;gap:.5rem">
+                <span style="font-size:18px">⏱️</span>
+                <span>
+                    <b>Durasi mengerjakan</b><br>
+                    <span class="muted small">Timer mundur dimulai saat siswa membuka soal (unlock key diterima).</span>
+                </span>
+            </span>
+            <span class="badge">{{ $exam->duration_minutes }} menit</span>
+        </div>
+
+        {{-- Step 4: Ujian selesai --}}
+        <div class="check-pill" style="justify-content:space-between;background:{{ $step3Done ? '#f0fdf4' : '#f6f7f9' }}">
+            <span style="display:flex;align-items:center;gap:.5rem">
+                <span style="font-size:18px">{{ $step3Done ? '🏁' : '🔚' }}</span>
+                <span>
+                    <b>Ujian ditutup — download & unlock tidak tersedia</b><br>
+                    <span class="muted small">Setelah waktu ini, siswa tidak bisa download atau membuka soal baru.</span>
+                </span>
+            </span>
+            @if($exam->ends_at)
+                <span class="badge {{ $step3Done ? 'closed' : '' }}">{{ $exam->ends_at->format('d M Y H:i') }}</span>
+            @else
+                <span class="badge warning">tidak ada batas</span>
+            @endif
+        </div>
+
+    </div>
+
+    @if(!$exam->starts_at || !$exam->ends_at)
+        <div class="alert warning" style="margin-top:.75rem;margin-bottom:0">
+            Jadwal belum diatur. Tanpa jadwal, ujian bisa dibuka kapan saja dan jendela download selalu terbuka setelah publish.
+            <a href="{{ route('exams.edit', $exam) }}">Atur jadwal →</a>
+        </div>
+    @endif
+</div>
+
 {{-- ===== KELAS PESERTA ===== --}}
 <div class="card mb">
     <div class="between mb">

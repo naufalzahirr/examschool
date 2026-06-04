@@ -106,8 +106,15 @@
         <div class="between mb">
             <div>
                 <h2 class="mb0">Jadwal & Aturan Soal</h2>
-                <p class="muted small mb0">Jadwal menentukan kapan unlock key diberikan ke aplikasi siswa.</p>
+                <p class="muted small mb0">Jadwal menentukan kapan siswa bisa download paket dan kapan soal bisa dibuka.</p>
             </div>
+        </div>
+        <div class="alert info" style="padding:.65rem .9rem;margin-bottom:.75rem">
+            📱 <b>Alur di HP siswa:</b>
+            <span class="muted">Download paket</span> (12 jam sebelum Mulai)
+            → <span class="muted">Soal terbuka</span> (saat jam Mulai)
+            → <span class="muted">Tidak bisa lagi</span> (setelah jam Selesai).
+            Pastikan <b>Selesai</b> ≥ <b>Mulai</b> + durasi ujian.
         </div>
         <div class="three">
             <div class="field">
