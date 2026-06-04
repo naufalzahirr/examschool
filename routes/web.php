@@ -59,7 +59,6 @@ Route::middleware('auth')->group(function () {
 
         Route::resource('exams', ExamController::class);
         Route::post('/exams/{exam}/regenerate-code', [ExamController::class, 'regenerateCode'])->name('exams.regenerateCode');
-        Route::post('/exams/{exam}/regenerate-exit-code', [ExamController::class, 'regenerateExitCode'])->name('exams.regenerateExitCode');
         Route::post('/exams/{exam}/publish', [ExamController::class, 'publish'])->name('exams.publish');
         Route::post('/exams/{exam}/package/regenerate', [ExamController::class, 'regeneratePackage'])->name('exams.package.regenerate');
         Route::post('/exams/{exam}/unpublish', [ExamController::class, 'unpublish'])->name('exams.unpublish');

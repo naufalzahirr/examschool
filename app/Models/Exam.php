@@ -8,9 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class Exam extends Model
 {
@@ -47,7 +45,6 @@ class Exam extends Model
     public const EXIT_POLICIES = [
         self::EXIT_AFTER_SUBMIT => 'Boleh keluar setelah submit',
         self::EXIT_AFTER_TIME_END => 'Boleh keluar setelah waktu habis',
-        self::EXIT_PROCTOR_CODE => 'Harus kode pengawas sampai submit/waktu habis',
     ];
 
     public const STATUSES = [
@@ -89,7 +86,7 @@ class Exam extends Model
                 $exam->lock_mode = (string) SchoolSetting::getValue('default_exam_lock_mode', self::LOCK_STRICT_AIRPLANE);
             }
             if (! $exam->exit_policy) {
-                $exam->exit_policy = (string) SchoolSetting::getValue('default_exam_exit_policy', self::EXIT_PROCTOR_CODE);
+                $exam->exit_policy = self::normalizeExitPolicy((string) SchoolSetting::getValue('default_exam_exit_policy', self::EXIT_AFTER_SUBMIT));
             }
             if (! $exam->access_code) {
                 $exam->access_code = self::generateAccessCode();
@@ -107,73 +104,37 @@ class Exam extends Model
 
     public function exitPolicyLabel(): string
     {
-        return self::EXIT_POLICIES[$this->exit_policy] ?? $this->exit_policy ?? 'Kode pengawas';
+        $policy = self::normalizeExitPolicy($this->exit_policy);
+
+        return self::EXIT_POLICIES[$policy];
     }
 
-    public function ensureOfflineExitCode(bool $force = false): ?string
+    public static function normalizeExitPolicy(?string $policy): string
     {
-        if (! $force && $this->offline_exit_code_hash && $this->offline_exit_code_salt && $this->offline_exit_code_encrypted) {
-            return $this->offlineExitCodePlain();
-        }
-
-        $code = self::generateOfflineExitCode((int) SchoolSetting::getValue('offline_exit_code_length', 8));
-        $salt = Str::random(24);
-
-        $this->forceFill([
-            'offline_exit_code_salt' => $salt,
-            'offline_exit_code_hash' => self::offlineExitCodeHash($code, $salt, $this->access_code),
-            'offline_exit_code_encrypted' => Crypt::encryptString($code),
-            'offline_exit_code_generated_at' => now(),
-        ])->save();
-
-        return $code;
-    }
-
-    public function offlineExitCodePlain(): ?string
-    {
-        if (! $this->offline_exit_code_encrypted) {
-            return null;
-        }
-
-        try {
-            return Crypt::decryptString($this->offline_exit_code_encrypted);
-        } catch (\Throwable) {
-            return null;
-        }
-    }
-
-    public static function generateOfflineExitCode(int $length = 8): string
-    {
-        $length = max(6, min(16, $length));
-        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-        return collect(range(1, $length))
-            ->map(fn () => $alphabet[random_int(0, strlen($alphabet) - 1)])
-            ->implode('');
-    }
-
-    public static function offlineExitCodeHash(string $code, string $salt, string $accessCode): string
-    {
-        return hash('sha256', strtoupper(trim($code)).'|'.$salt.'|'.strtoupper(trim($accessCode)));
+        return array_key_exists((string) $policy, self::EXIT_POLICIES)
+            ? (string) $policy
+            : self::EXIT_AFTER_SUBMIT;
     }
 
     public function offlineLockPayload(): array
     {
+        $exitPolicy = self::normalizeExitPolicy($this->exit_policy);
+
         return [
             'lock_mode' => $this->lock_mode ?: self::LOCK_STANDARD,
-            'exit_policy' => $this->exit_policy ?: self::EXIT_PROCTOR_CODE,
-            'offline_exit_code_required' => ($this->exit_policy ?: self::EXIT_PROCTOR_CODE) === self::EXIT_PROCTOR_CODE,
-            'offline_exit_code_salt' => $this->offline_exit_code_salt,
-            'offline_exit_code_hash' => $this->offline_exit_code_hash,
-            'offline_exit_code_algorithm' => 'SHA256(UPPERCASE_CODE|salt|access_code)',
-            'exit_code_generated_at' => optional($this->offline_exit_code_generated_at)->toIso8601String(),
+            'exit_policy' => $exitPolicy,
+            'offline_exit_code_required' => false,
+            'offline_exit_code_salt' => null,
+            'offline_exit_code_hash' => null,
+            'offline_exit_code_algorithm' => null,
+            'exit_code_generated_at' => null,
             'airplane_mode_required' => true,
             'internet_active_locks_exam' => true,
             'app_exit_locks_exam' => true,
             'reopen_requires_offline' => true,
-            'reopen_requires_proctor_code' => true,
+            'reopen_requires_proctor_code' => false,
             'timer_continues_when_locked' => true,
-            'strict_android_note' => 'Mode utama: siswa wajib mode pesawat/offline setelah unlock key. Android BYOD tidak bisa dijamin 100% anti tombol Home tanpa device owner/kiosk, tetapi mobile akan fullscreen, menolak lanjut saat online, mengunci saat keluar aplikasi, dan mewajibkan kode pengawas.',
+            'strict_android_note' => 'Mode utama: siswa wajib mode pesawat/offline setelah unlock key. Android BYOD tidak bisa dijamin 100% anti tombol Home tanpa device owner/kiosk, tetapi mobile akan fullscreen, menolak lanjut saat online, mengunci saat keluar aplikasi, dan membunyikan alarm/notifikasi pelanggaran tanpa input pengawas.',
         ];
     }
 
@@ -322,11 +283,6 @@ class Exam extends Model
                 'label' => 'Paket soal terenkripsi akan bisa dibuat',
                 'ok' => $questionsCount > 0 && (int) $this->package_version > 0,
                 'note' => $this->hasGeneratedPackage() ? 'paket tersedia' : 'dibuat otomatis saat publish',
-            ],
-            [
-                'label' => 'Kode keluar offline pengawas tersedia',
-                'ok' => $this->exit_policy !== self::EXIT_PROCTOR_CODE || (bool) $this->offline_exit_code_hash,
-                'note' => $this->exit_policy === self::EXIT_PROCTOR_CODE ? ($this->offline_exit_code_hash ? 'kode siap' : 'akan dibuat otomatis saat publish') : 'tidak wajib',
             ],
             [
                 'label' => 'Jadwal selesai tidak lebih awal dari jadwal mulai',

@@ -56,7 +56,7 @@ class ExamController extends Controller
                 'duration_minutes' => 90,
                 'status' => Exam::STATUS_DRAFT,
                 'lock_mode' => SchoolSetting::getValue('default_exam_lock_mode', Exam::LOCK_STRICT_AIRPLANE),
-                'exit_policy' => SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_PROCTOR_CODE),
+                'exit_policy' => Exam::normalizeExitPolicy((string) SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_AFTER_SUBMIT)),
             ]),
             'classrooms' => $this->availableClassrooms(),
             'selectedClassroomIds' => [],
@@ -129,7 +129,7 @@ class ExamController extends Controller
     public function update(Request $request, Exam $exam)
     {
         $this->ensureCanManage($exam);
-        $data = $this->validated($request);
+        $data = $this->validated($request, $exam);
         $classroomIds = $data['classroom_ids'] ?? [];
         unset($data['classroom_ids']);
 
@@ -185,27 +185,12 @@ class ExamController extends Controller
         return redirect()->route('exams.index')->with('success', 'Ujian dihapus.');
     }
 
-    public function regenerateExitCode(Exam $exam)
-    {
-        $this->ensureCanManage($exam);
-        abort_if($exam->hasStartedWork(), 422, 'Kode keluar offline tidak bisa digenerate ulang setelah ada aktivitas siswa.');
-
-        $code = $exam->ensureOfflineExitCode(force: true);
-        $exam->bumpPackageVersion();
-        AuditLog::record('exam.exit_code_regenerated', $exam, ['access_code' => $exam->access_code]);
-
-        return back()->with('success', 'Kode keluar offline pengawas berhasil digenerate ulang: '.$code.'. Simpan kode ini untuk pengawas. Paket soal perlu digenerate/publish ulang.');
-    }
-
     public function regenerateCode(Exam $exam)
     {
         $this->ensureCanManage($exam);
         abort_if(in_array($exam->status, [Exam::STATUS_PUBLISHED, Exam::STATUS_CLOSED, Exam::STATUS_ARCHIVED], true), 422, 'Kode ujian tidak bisa diganti setelah ujian dipublish/ditutup/diarsipkan.');
 
         $exam->forceFill(['access_code' => Exam::generateAccessCode()])->save();
-        if ($exam->exit_policy === Exam::EXIT_PROCTOR_CODE) {
-            $exam->ensureOfflineExitCode(force: true);
-        }
         AuditLog::record('exam.code_regenerated', $exam, ['access_code' => $exam->access_code]);
 
         return back()->with('success', 'Kode ujian berhasil digenerate ulang: '.$exam->access_code);
@@ -216,11 +201,6 @@ class ExamController extends Controller
         $this->ensureCanManage($exam);
         if ($exam->participants()->count() < 1) {
             $exam->syncParticipantsFromClassrooms();
-        }
-
-        if ($exam->exit_policy === Exam::EXIT_PROCTOR_CODE) {
-            $exam->ensureOfflineExitCode();
-            $exam->refresh();
         }
 
         if (! $exam->isReadyToPublish()) {
@@ -315,7 +295,7 @@ class ExamController extends Controller
         return back()->with('success', 'Ujian diarsipkan. Data hasil tetap bisa dibuka dari riwayat.');
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?Exam $exam = null): array
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:180'],
@@ -329,15 +309,17 @@ class ExamController extends Controller
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
             'shuffle_questions' => ['nullable', 'boolean'],
             'shuffle_options' => ['nullable', 'boolean'],
-            'lock_mode' => ['required', Rule::in(array_keys(Exam::LOCK_MODES))],
-            'exit_policy' => ['required', Rule::in(array_keys(Exam::EXIT_POLICIES))],
+            'lock_mode' => ['nullable', Rule::in(array_keys(Exam::LOCK_MODES))],
             'status' => ['nullable', Rule::in([Exam::STATUS_DRAFT, Exam::STATUS_READY])],
         ]);
 
         $data['shuffle_questions'] = $request->boolean('shuffle_questions');
         $data['shuffle_options'] = $request->boolean('shuffle_options');
-        $data['lock_mode'] = $data['lock_mode'] ?? Exam::LOCK_STRICT_AIRPLANE;
-        $data['exit_policy'] = $data['exit_policy'] ?? Exam::EXIT_PROCTOR_CODE;
+        $data['lock_mode'] = $data['lock_mode']
+            ?? $exam?->lock_mode
+            ?? SchoolSetting::getValue('default_exam_lock_mode', Exam::LOCK_STRICT_AIRPLANE);
+        $data['exit_policy'] = $data['exit_policy']
+            ?? Exam::normalizeExitPolicy($exam?->exit_policy ?? (string) SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_AFTER_SUBMIT));
         $data['classroom_ids'] = collect($request->input('classroom_ids', []))->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
         unset($data['status']);
 

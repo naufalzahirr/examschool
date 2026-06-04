@@ -14,7 +14,7 @@ return new class extends Migration
             }
 
             if (! Schema::hasColumn('exams', 'exit_policy')) {
-                $table->string('exit_policy', 40)->default('proctor_code')->after('lock_mode')->index();
+                $table->string('exit_policy', 40)->default('after_submit')->after('lock_mode')->index();
             }
 
             if (! Schema::hasColumn('exams', 'offline_exit_code_salt')) {

@@ -36,7 +36,7 @@
     <div class="between">
         <div>
             <h2 class="mb0">Integritas & Kunci Ujian</h2>
-            <p class="muted small mb0">Pantau siswa yang ujiannya terkunci karena keluar aplikasi, internet aktif, atau gagal kode pengawas. Saat HP benar-benar mode pesawat, event akan masuk setelah siswa upload jawaban.</p>
+            <p class="muted small mb0">Pantau siswa yang ujiannya terkunci karena keluar aplikasi atau internet aktif. Saat HP benar-benar mode pesawat, event akan masuk setelah siswa upload jawaban.</p>
         </div>
         <span class="badge {{ ($integrityStats['locked'] ?? 0) > 0 ? 'warning' : 'active' }}">{{ ($integrityStats['locked'] ?? 0) > 0 ? 'perlu pengawas' : 'normal' }}</span>
     </div>

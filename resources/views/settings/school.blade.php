@@ -23,7 +23,7 @@
 <hr style="border:0;border-top:1px solid var(--line);margin:1.25rem 0">
 <h2>Mode Ujian Offline & Kunci Aplikasi</h2>
 <p class="muted small">Default ini akan dipakai saat membuat ujian baru. Ujian lama tetap memakai konfigurasi masing-masing.</p>
-<div class="four" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem">
+<div class="two">
     <div class="field">
         <label>Mode Kunci Default</label>
         <select class="input" name="default_exam_lock_mode">
@@ -32,19 +32,10 @@
             <option value="strict_kiosk" @selected(old('default_exam_lock_mode', $settings['default_exam_lock_mode'])==='strict_kiosk')>Ketat / coba kiosk lock</option>
         </select>
     </div>
-    <div class="field">
-        <label>Aturan Keluar Default</label>
-        <select class="input" name="default_exam_exit_policy">
-            <option value="proctor_code" @selected(old('default_exam_exit_policy', $settings['default_exam_exit_policy'])==='proctor_code')>Kode pengawas</option>
-            <option value="after_submit" @selected(old('default_exam_exit_policy', $settings['default_exam_exit_policy'])==='after_submit')>Setelah submit</option>
-            <option value="after_time_end" @selected(old('default_exam_exit_policy', $settings['default_exam_exit_policy'])==='after_time_end')>Setelah waktu habis</option>
-        </select>
-    </div>
-    <div class="field"><label>Panjang Kode Keluar</label><input class="input" type="number" name="offline_exit_code_length" min="6" max="16" value="{{ old('offline_exit_code_length', $settings['offline_exit_code_length']) }}" required></div>
     <div class="field"><label>Maks. Toleransi Pelanggaran Keluar</label><input class="input" type="number" name="exit_violation_max_allowed" min="0" max="50" value="{{ old('exit_violation_max_allowed', $settings['exit_violation_max_allowed']) }}" required></div>
 </div>
 <div class="alert warning" style="margin-bottom:0">
-    Mode utama yang direkomendasikan: siswa download paket online, mengambil unlock key saat jadwal dibuka, lalu wajib mode pesawat/offline sebelum mulai menjawab. Jika internet aktif atau keluar aplikasi, ujian terkunci dan wajib kode pengawas.
+    Mode utama yang direkomendasikan: siswa download paket online, mengambil unlock key saat jadwal dibuka, lalu wajib mode pesawat/offline sebelum mulai menjawab. Jika internet aktif atau keluar aplikasi, ujian terkunci di mobile, alarm/notifikasi pelanggaran berbunyi, dan event dikirim bersama jawaban.
 </div>
 
 <div class="field"><label>Mode Password Awal Siswa</label><select class="input" name="default_student_password_mode"><option value="custom" @selected(old('default_student_password_mode', $settings['default_student_password_mode'])==='custom')>Custom dari proses sinkron/import</option><option value="nis" @selected(old('default_student_password_mode', $settings['default_student_password_mode'])==='nis')>Gunakan NIS masing-masing (hanya development)</option></select><p class="help">Di production, mode NIS akan ditolak saat disimpan.</p></div>

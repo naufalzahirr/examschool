@@ -82,16 +82,16 @@
     </div>
 
 
-    <div class="card" style="box-shadow:none;background:#fbfbff;border-color:#dbe3ff">
-        <div class="between">
-            <div>
-                <h3>Mode Ujian Offline & Kunci Aplikasi</h3>
-                <p class="muted small mb0">Progress utama nanti disimpan di HP. Server hanya memberi paket terenkripsi, unlock key, dan menerima upload jawaban final.</p>
+    @if($exam->exists)
+        <div class="card" style="box-shadow:none;background:#fbfbff;border-color:#dbe3ff">
+            <div class="between">
+                <div>
+                    <h3>Mode Ujian Offline & Kunci Aplikasi</h3>
+                    <p class="muted small mb0">Konfigurasi ini diambil dari default sekolah saat ujian dibuat.</p>
+                </div>
+                <span class="badge warning">Edit hati-hati</span>
             </div>
-            <span class="badge warning">Android realistis</span>
-        </div>
 
-        <div class="two">
             <div class="field">
                 <label>Mode Kunci Android</label>
                 <select class="input" name="lock_mode">
@@ -99,23 +99,10 @@
                         <option value="{{ $value }}" @selected(old('lock_mode', $exam->lock_mode ?: \App\Models\Exam::LOCK_STRICT_AIRPLANE) === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
-                <p class="help">Rekomendasi: Ketat / Mode Pesawat. Siswa wajib offline saat menjawab; keluar aplikasi/internet aktif langsung terkunci dan butuh kode pengawas.</p>
-            </div>
-            <div class="field">
-                <label>Aturan Keluar Saat Offline</label>
-                <select class="input" name="exit_policy">
-                    @foreach(($exitPolicies ?? \App\Models\Exam::EXIT_POLICIES) as $value => $label)
-                        <option value="{{ $value }}" @selected(old('exit_policy', $exam->exit_policy ?: \App\Models\Exam::EXIT_PROCTOR_CODE) === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-                <p class="help">Rekomendasi produksi: kode pengawas. Kode ini ikut masuk ke paket terenkripsi dalam bentuk hash sehingga aplikasi bisa validasi offline.</p>
+                <p class="help">Jika siswa keluar paksa atau internet aktif saat mengerjakan, mobile mengunci layar ujian, membunyikan alarm/notifikasi, dan mencatat event integritas.</p>
             </div>
         </div>
-
-        <div class="alert info" style="margin-bottom:0">
-            <b>Catatan teknis:</b> aplikasi akan memaksa alur mode pesawat/offline sebelum mulai jawab, fullscreen, menolak tombol back, dan mengunci ujian saat keluar aplikasi atau internet aktif. Tanpa device-owner/kiosk, Android tetap tidak bisa dijamin 100% memblokir tombol Home, maka pengawas tetap perlu memantau ruangan.
-        </div>
-    </div>
+    @endif
 
     @if($exam->exists)
         <button class="btn primary">Simpan Konfigurasi</button>

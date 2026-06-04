@@ -11,7 +11,7 @@ return new class extends Migration
         if ($current === null || $current === 'standard') {
             SchoolSetting::setValue('default_exam_lock_mode', 'strict_airplane');
         }
-        SchoolSetting::setValue('default_exam_exit_policy', 'proctor_code');
+        SchoolSetting::setValue('default_exam_exit_policy', 'after_submit');
     }
 
     public function down(): void

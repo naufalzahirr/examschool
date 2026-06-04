@@ -14,11 +14,6 @@ class ExamPackageService
 {
     public function generate(Exam $exam): array
     {
-        if (($exam->exit_policy ?: Exam::EXIT_PROCTOR_CODE) === Exam::EXIT_PROCTOR_CODE) {
-            $exam->ensureOfflineExitCode();
-            $exam->refresh();
-        }
-
         $exam->load(['questions.options', 'classrooms']);
 
         $plainPayload = $this->buildPayload($exam);

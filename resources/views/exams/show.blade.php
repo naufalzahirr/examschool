@@ -68,28 +68,19 @@
 <div class="card mb">
     <div class="between mb">
         <div>
-            <h2 class="mb0">Mode Ujian Offline & Kode Keluar</h2>
-            <p class="muted small mb0">Aturan ini ikut masuk ke paket soal terenkripsi. Aplikasi Android memakainya untuk menentukan kapan siswa boleh keluar dari mode ujian.</p>
+            <h2 class="mb0">Mode Ujian Offline & Alarm Pelanggaran</h2>
+            <p class="muted small mb0">Aturan ini ikut masuk ke paket soal terenkripsi. Aplikasi Android memakainya untuk mengunci layar ujian dan mencatat pelanggaran saat siswa keluar paksa atau internet aktif.</p>
         </div>
         <span class="badge warning">{{ $exam->lockModeLabel() }}</span>
     </div>
     <div class="grid mb">
         <div><div class="muted small">Mode Kunci</div><b>{{ $exam->lockModeLabel() }}</b></div>
         <div><div class="muted small">Aturan Keluar</div><b>{{ $exam->exitPolicyLabel() }}</b></div>
-        <div><div class="muted small">Kode Keluar Pengawas</div><code>{{ $exam->offlineExitCodePlain() ?: '-' }}</code></div>
-        <div><div class="muted small">Dibuat</div><b>{{ optional($exam->offline_exit_code_generated_at)->format('d M Y H:i') ?: '-' }}</b></div>
+        <div><div class="muted small">Buka Kembali</div><b>Otomatis setelah kondisi aman</b></div>
+        <div><div class="muted small">Event Integritas</div><b>Dikirim saat sync/submit</b></div>
     </div>
     <div class="alert info">
-        Saat offline, aplikasi tidak bisa bertanya ke server untuk membuka kunci. Karena itu kode keluar pengawas divalidasi lokal memakai hash yang ikut di paket terenkripsi. Kode asli hanya tampil di web untuk admin/guru pengawas.
-    </div>
-    <div class="row">
-        @if(!$exam->hasStartedWork())
-            <form method="POST" action="{{ route('exams.regenerateExitCode', $exam) }}" onsubmit="return confirm('Generate ulang kode keluar offline? Paket soal harus digenerate ulang setelah kode berubah.')">
-                @csrf
-                <button class="btn soft">Generate Ulang Kode Keluar</button>
-            </form>
-        @endif
-        <span class="help">Untuk Android pribadi siswa, mode standar tetap mencatat pelanggaran keluar aplikasi secara lokal dan dikirim bersama submit jawaban.</span>
+        Jika siswa keluar paksa, membuka internet, atau aplikasi kehilangan fokus, mobile akan mengunci layar ujian, membunyikan alarm/notifikasi keras, mencatat event integritas, lalu event dikirim saat perangkat kembali online/saat submit.
     </div>
 </div>
 
