@@ -24,7 +24,7 @@
             </div>
         @endif
     @else
-        <div class="alert info" style="margin-bottom:0">Kode ujian akan otomatis dibuat setelah konfigurasi disimpan. Setelah itu guru bisa langsung memilih soal dari Bank Soal.</div>
+        <div class="alert info" style="margin-bottom:0">Kode ujian akan otomatis dibuat setelah konfigurasi disimpan. Langkah berikutnya langsung memilih soal dari Bank Soal.</div>
     @endif
 
     <div class="field">
@@ -120,10 +120,7 @@
     @if($exam->exists)
         <button class="btn primary">Simpan Konfigurasi</button>
     @else
-        <div class="row">
-            <button class="btn primary" name="choose_from_bank" value="1">Simpan & Pilih Bank Soal</button>
-            <button class="btn" name="choose_from_bank" value="0">Simpan Saja</button>
-        </div>
+        <button class="btn primary">Simpan & Pilih Bank Soal</button>
     @endif
 </form>
 @endsection

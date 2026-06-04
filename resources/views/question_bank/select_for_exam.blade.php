@@ -6,7 +6,7 @@
         <h1>Tambah dari Bank Soal</h1>
         <p class="muted">Pilih soal yang akan ditambahkan ke ujian: <b>{{ $exam->title }}</b>. Soal yang ditambahkan menjadi salinan ujian, jadi aman walaupun bank soal diedit lagi nanti.</p>
     </div>
-    <a class="btn" href="{{ route('exams.builder', $exam) }}">Kembali Builder</a>
+    <a class="btn" href="{{ route('exams.show', $exam) }}">Kembali ke Ujian</a>
 </div>
 
 <div class="card data-card mb">

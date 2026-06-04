@@ -91,11 +91,7 @@ class ExamController extends Controller
             $message .= ' Peserta otomatis dari kelas terpilih: '.$exam->created_participants_count.' siswa.';
         }
 
-        if ($request->boolean('choose_from_bank')) {
-            return redirect()->route('exams.question-bank.select', $exam)->with('success', $message.' Sekarang pilih soal dari Bank Soal untuk ujian ini.');
-        }
-
-        return redirect()->route('exams.builder', $exam)->with('success', $message);
+        return redirect()->route('exams.question-bank.select', $exam)->with('success', $message.' Sekarang pilih soal dari Bank Soal untuk ujian ini.');
     }
 
     public function show(Exam $exam)

@@ -3,7 +3,7 @@
 @section('content')
 <div class="between mb">
     <div><h1>Bank Soal</h1><p class="muted">Kumpulan soal reusable. Soal bisa dibuat pribadi atau dibagikan sebagai bank soal sekolah untuk dipakai guru lain.</p></div>
-    <div class="row"><a class="btn" href="{{ route('question-bank.import') }}">Import</a><a class="btn primary" href="{{ route('question-bank.create') }}">+ Buat Soal</a></div>
+    <div class="row"><a class="btn" href="{{ route('question-bank.import') }}">Import</a><a class="btn primary" href="{{ route('question-bank.create') }}">+ Buat Banyak Soal</a></div>
 </div>
 
 <div class="card data-card">

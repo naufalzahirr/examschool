@@ -48,6 +48,18 @@ class QuestionBankController extends Controller
             'item' => new QuestionBankItem(['type' => Question::TYPE_MULTIPLE_CHOICE, 'points' => 1, 'difficulty' => 'sedang', 'is_active' => true, 'visibility' => QuestionBankItem::VISIBILITY_SCHOOL]),
             'typeLabels' => QuestionBankItem::typeLabels(),
             'visibilityLabels' => QuestionBankItem::visibilityLabels(),
+            'initialQuestions' => [[
+                'type' => Question::TYPE_MULTIPLE_CHOICE,
+                'title' => '',
+                'description' => '',
+                'points' => 1,
+                'correct_text' => '',
+                'answer_key' => [],
+                'options' => [
+                    ['label' => 'Opsi 1', 'is_correct' => true],
+                    ['label' => 'Opsi 2', 'is_correct' => false],
+                ],
+            ]],
             'initialQuestion' => [
                 'type' => Question::TYPE_MULTIPLE_CHOICE,
                 'title' => '',
@@ -65,13 +77,22 @@ class QuestionBankController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validated($request);
-        $data['teacher_id'] = auth()->id();
-        $data = $this->normalizePayload($request, $data);
-        $item = QuestionBankItem::create($data);
-        AuditLog::record('question_bank.created', $item, ['type' => $item->type]);
+        $data = $this->validated($request, multiple: true);
+        $questions = $this->questionPayloadsFromRequest($request);
 
-        return redirect()->route('question-bank.index')->with('success', 'Soal berhasil ditambahkan ke bank soal.');
+        $created = 0;
+        DB::transaction(function () use ($request, $data, $questions, &$created) {
+            foreach ($questions as $question) {
+                $payload = $this->normalizeQuestionPayload($request, $data, $question);
+                $payload['teacher_id'] = auth()->id();
+                QuestionBankItem::create($payload);
+                $created++;
+            }
+        });
+
+        AuditLog::record('question_bank.created_many', null, ['created' => $created]);
+
+        return redirect()->route('question-bank.index')->with('success', "{$created} soal berhasil ditambahkan ke bank soal.");
     }
 
     public function edit(QuestionBankItem $questionBank)
@@ -236,7 +257,7 @@ class QuestionBankController extends Controller
             $message .= " {$skipped} soal dilewati karena sudah ada di ujian atau tidak bisa dipakai.";
         }
 
-        return redirect()->route('exams.builder', $exam)->with('success', $message);
+        return redirect()->route('exams.show', $exam)->with('success', $message.' Cek checklist kesiapan lalu publish ujian jika sudah lengkap.');
     }
 
     public function selectForExam(Request $request, Exam $exam)
@@ -280,17 +301,20 @@ class QuestionBankController extends Controller
         return view('question_bank.select_for_exam', compact('exam', 'items', 'filters', 'existingBankItemIds'));
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, bool $multiple = false): array
     {
-        return $request->validate([
+        $rules = [
             'subject' => ['nullable', 'string', 'max:120'],
             'grade_level' => ['nullable', 'string', 'max:80'],
             'topic' => ['nullable', 'string', 'max:120'],
             'difficulty' => ['required', Rule::in(['mudah', 'sedang', 'sulit'])],
             'visibility' => ['required', Rule::in(array_keys(QuestionBankItem::VISIBILITIES))],
-            'question_json' => ['required', 'json'],
             'is_active' => ['nullable', 'boolean'],
-        ]);
+        ];
+
+        $rules[$multiple ? 'questions_json' : 'question_json'] = ['required', 'json'];
+
+        return $request->validate($rules);
     }
 
     private function normalizePayload(Request $request, array $data): array
@@ -298,6 +322,26 @@ class QuestionBankController extends Controller
         $question = json_decode((string) ($data['question_json'] ?? ''), true);
         unset($data['question_json']);
 
+        return $this->normalizeQuestionPayload($request, $data, $question);
+    }
+
+    private function questionPayloadsFromRequest(Request $request): array
+    {
+        $questions = json_decode((string) $request->input('questions_json', ''), true);
+        if (! is_array($questions)) {
+            throw ValidationException::withMessages(['questions_json' => 'Format bank soal tidak valid.']);
+        }
+
+        $questions = array_values($questions);
+        if (count($questions) < 1) {
+            throw ValidationException::withMessages(['questions_json' => 'Minimal buat 1 soal.']);
+        }
+
+        return $questions;
+    }
+
+    private function normalizeQuestionPayload(Request $request, array $data, mixed $question): array
+    {
         if (! is_array($question)) {
             throw ValidationException::withMessages(['question_json' => 'Format bank soal tidak valid.']);
         }
