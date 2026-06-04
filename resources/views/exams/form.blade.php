@@ -150,6 +150,29 @@
             <label class="check-pill"><input type="checkbox" name="shuffle_options" value="1" @checked(old('shuffle_options', $exam->shuffle_options))> Acak urutan opsi jawaban</label>
         </div>
         <p class="help">Kunci jawaban tetap hanya tersimpan di server, tidak ikut dikirim ke aplikasi siswa.</p>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:1rem 0">
+
+        <div class="two">
+            <div class="field">
+                <label>Mode Keamanan Ujian</label>
+                <select class="input" name="lock_mode">
+                    @foreach($lockModes as $value => $label)
+                        <option value="{{ $value }}" @selected(old('lock_mode', $exam->lock_mode ?? \App\Models\Exam::LOCK_STRICT_AIRPLANE) === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <p class="help">Menentukan cara aplikasi siswa mengunci HP selama ujian berlangsung.</p>
+            </div>
+            <div class="field">
+                <label>Aturan Keluar Ujian</label>
+                <select class="input" name="exit_policy">
+                    @foreach($exitPolicies as $value => $label)
+                        <option value="{{ $value }}" @selected(old('exit_policy', $exam->exit_policy ?? \App\Models\Exam::EXIT_AFTER_SUBMIT) === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <p class="help">Kapan siswa diizinkan keluar dari aplikasi ujian.</p>
+            </div>
+        </div>
     </div>
 
     <div class="card">

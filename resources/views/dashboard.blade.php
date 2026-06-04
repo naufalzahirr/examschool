@@ -74,6 +74,47 @@
     </div>
 </div>
 
+{{-- Panel Ujian Segera --}}
+@if($upcomingExams->isNotEmpty())
+<div class="card mb" style="border-left:4px solid var(--warning)">
+    <div class="between mb">
+        <div>
+            <h2 class="mb0">Segera Dimulai</h2>
+            <p class="muted small mb0">Ujian yang akan mulai dalam 48 jam ke depan</p>
+        </div>
+        <span class="badge warning">{{ $upcomingExams->count() }} ujian</span>
+    </div>
+    <div class="table-wrap">
+        <table class="table">
+            <thead><tr><th>Ujian</th><th>Mulai</th><th>Kelas</th><th>Peserta</th><th>Aksi</th></tr></thead>
+            <tbody>
+            @foreach($upcomingExams as $exam)
+                @php $diff = now()->diffInMinutes($exam->starts_at, false); @endphp
+                <tr>
+                    <td>
+                        <b>{{ $exam->title }}</b><br>
+                        <span class="muted small">{{ $exam->access_code }} · {{ $exam->subject ?: '-' }}</span>
+                    </td>
+                    <td>
+                        <b>{{ $exam->starts_at->format('d M Y H:i') }}</b><br>
+                        <span class="badge {{ $diff <= 60 ? 'warning' : 'info' }}">
+                            {{ $diff <= 60 ? 'dalam ' . $diff . ' menit' : 'dalam ' . round($diff / 60, 0) . ' jam' }}
+                        </span>
+                    </td>
+                    <td>@foreach($exam->classrooms->take(2) as $c)<span class="badge">{{ $c->nama_kelas }}</span> @endforeach</td>
+                    <td>{{ $exam->participants_count }}</td>
+                    <td class="row">
+                        <a class="btn soft" href="{{ route('exams.show', $exam) }}">Detail</a>
+                        <a class="btn" href="{{ route('exams.monitor', $exam) }}">Monitor</a>
+                    </td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
 <div class="card mb">
     <div class="between mb">
         <h2 class="mb0">Ujian Terbaru</h2>

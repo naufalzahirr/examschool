@@ -19,7 +19,7 @@
             <a class="btn" href="{{ route('exams.show', $exam) }}">Kembali</a>
         @endif
         <span class="refresh-badge" id="refreshCountdown">Auto-refresh: 30s</span>
-        <a class="btn soft" href="{{ route('exams.monitor', $exam) }}">↻ Refresh Sekarang</a>
+        <a class="btn primary" href="{{ route('exams.monitor', $exam) }}" style="font-weight:900">↻ Refresh Sekarang</a>
     </div>
 </div>
 

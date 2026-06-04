@@ -33,6 +33,7 @@
             <nav class="menu">
                 <div class="menu-header">Utama</div>
                 <a class="menu-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><span class="menu-ico">📊</span>Dashboard</a>
+                <a class="menu-link {{ request()->routeIs('guide') ? 'active' : '' }}" href="{{ route('guide') }}"><span class="menu-ico">📖</span>Panduan</a>
                 @if(auth()->user()->isAdmin() || auth()->user()->isTeacher())
                     <a class="menu-link {{ request()->routeIs('exams.*') ? 'active' : '' }}" href="{{ route('exams.index') }}"><span class="menu-ico">📝</span>Ujian</a>
                     <a class="menu-link {{ request()->routeIs('question-bank.*') ? 'active' : '' }}" href="{{ route('question-bank.index') }}"><span class="menu-ico">🧩</span>Bank Soal</a>

@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('password.changed')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/panduan', [DashboardController::class, 'guide'])->name('guide');
 
     Route::middleware('role:admin')->group(function () {
         Route::get('/classrooms', [ClassroomController::class, 'index'])->name('classrooms.index');
@@ -76,6 +77,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/exams/{exam}/participants/sync-classrooms', [ParticipantController::class, 'syncClassrooms'])->name('exams.participants.syncClassrooms');
         Route::post('/exams/{exam}/participants/{participant}/reset-device', [ParticipantController::class, 'resetDevice'])->name('exams.participants.resetDevice');
         Route::post('/exams/{exam}/participants/{participant}/reset-attempt', [ParticipantController::class, 'resetAttempt'])->name('exams.participants.resetAttempt');
+        Route::delete('/exams/{exam}/participants/{participant}', [ParticipantController::class, 'removeParticipant'])->name('exams.participants.remove');
         Route::get('/exams/{exam}/results', [ParticipantController::class, 'results'])->name('exams.results');
         Route::get('/exams/{exam}/results/export', [ParticipantController::class, 'exportResults'])->name('exams.results.export');
     });

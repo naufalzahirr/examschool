@@ -31,7 +31,7 @@
             <div class="tool-field search">
                 <label>Live Search</label>
                 <div class="live-search-wrap">
-                    <input class="input" data-live-search="studentsTable" name="q" value="{{ request('q') }}" placeholder="Cari NIS, nama, kelas, classroom_id">
+                    <input class="input" data-live-search="studentsTable" name="q" value="{{ request('q') }}" placeholder="Cari NIS, nama, atau kelas">
                 </div>
             </div>
             <button class="btn primary">Cari</button>
@@ -45,20 +45,20 @@
 
     <div class="table-wrap">
         <table class="table" id="studentsTable">
-            <thead><tr><th>NIS</th><th>Nama</th><th>Kelas</th><th>Classroom</th><th>JK</th><th>Status</th><th>SILAP</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>NIS</th><th>Nama</th><th>Kelas</th><th>JK</th><th>Status</th><th>Sumber</th><th>Aksi</th></tr></thead>
             <tbody>
             @forelse($students as $student)
                 <tr>
                     <td><span class="badge">{{ $student->nis }}</span></td>
-                    <td><b>{{ $student->name }}</b><br><span class="muted small">user_id: {{ $student->silap_user_id ?: '-' }}</span></td>
+                    <td><b>{{ $student->name }}</b></td>
                     <td>{{ $student->classroom?->nama_kelas ?: ($student->class_name ?: '-') }}</td>
-                    <td>{{ $student->classroom_id ?: '-' }}</td>
                     <td>{{ $student->jenis_kelamin ?: '-' }}</td>
-                    <td><span class="badge {{ $student->is_active ? 'active' : 'inactive' }}">{{ $student->is_active ? 'aktif' : 'nonaktif' }}</span></td>
-                    <td class="small">{{ $student->silap_id ? 'ID '.$student->silap_id : 'manual' }}</td>
+                    <td><span class="badge {{ $student->is_active ? 'active' : 'inactive' }}">{{ $student->is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
+                    <td class="small muted">{{ $student->silap_id ? 'SILAP' : 'Manual' }}</td>
                     <td class="row">
                         <a class="btn soft" href="{{ route('students.edit', $student) }}">Edit</a>
-                        <form method="POST" action="{{ route('students.destroy', $student) }}" onsubmit="return confirm('Hapus akun siswa ini? Semua relasi peserta ujian ikut terhapus.')">
+                        <form method="POST" action="{{ route('students.destroy', $student) }}"
+                              onsubmit="return confirm('Hapus akun siswa {{ $student->name }}?\n\nSemua data peserta ujian terkait juga akan terhapus.\nYakin lanjutkan?')">
                             @csrf @method('DELETE')
                             <button class="btn danger">Hapus</button>
                         </form>

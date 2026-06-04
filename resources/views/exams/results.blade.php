@@ -1,10 +1,88 @@
 @extends('layouts.app', ['title' => 'Hasil ' . $exam->title])
 
+@push('head')
+<style>
+.dist-bar-wrap{background:#ebeef0;border-radius:999px;height:10px;overflow:hidden;width:100%}
+.dist-bar-fill{height:100%;border-radius:999px;background:var(--primary);transition:width .4s}
+.stat-big{font-size:32px;font-weight:900;color:var(--heading);letter-spacing:-.04em;line-height:1}
+</style>
+@endpush
+
 @section('content')
 <div class="between mb">
     <div><h1>Hasil Ujian</h1><p class="muted">{{ $exam->title }} · Kode: <b>{{ $exam->access_code }}</b></p></div>
     <div class="row"><a class="btn soft" href="{{ route('exams.results.export', $exam) }}">Export CSV</a><a class="btn" href="{{ route('exams.show', $exam) }}">Kembali</a></div>
 </div>
+
+{{-- ===== STATISTIK RINGKAS ===== --}}
+<div class="grid mb">
+    <div class="card">
+        <div class="muted small">Sudah Submit</div>
+        <div class="stat-big">{{ $stats['submitted'] }}</div>
+        <div class="muted small">dari {{ $stats['total'] }} peserta</div>
+    </div>
+    <div class="card">
+        <div class="muted small">Rata-rata Nilai</div>
+        <div class="stat-big">{{ $stats['avg_score'] ?? '–' }}</div>
+        <div class="muted small">&nbsp;</div>
+    </div>
+    <div class="card">
+        <div class="muted small">Nilai Tertinggi</div>
+        <div class="stat-big" style="color:var(--success)">{{ $stats['max_score'] ?? '–' }}</div>
+        <div class="muted small">&nbsp;</div>
+    </div>
+    <div class="card">
+        <div class="muted small">Nilai Terendah</div>
+        <div class="stat-big" style="color:{{ $stats['min_score'] !== null && $stats['min_score'] < 60 ? '#ff3e1d' : 'inherit' }}">{{ $stats['min_score'] ?? '–' }}</div>
+        <div class="muted small">&nbsp;</div>
+    </div>
+</div>
+
+@if($stats['submitted'] > 0)
+<div class="two mb">
+
+    {{-- Distribusi Nilai --}}
+    <div class="card">
+        <h2 class="mb0">Distribusi Nilai</h2>
+        <p class="muted small" style="margin-bottom:1rem">{{ $stats['submitted'] }} siswa sudah submit</p>
+        @php $maxDist = max(1, max($stats['distribution'])); @endphp
+        @foreach($stats['distribution'] as $range => $count)
+        <div style="display:grid;grid-template-columns:60px 1fr 40px;gap:.5rem;align-items:center;margin-bottom:.6rem">
+            <span class="small" style="font-weight:800;color:var(--heading)">{{ $range }}</span>
+            <div class="dist-bar-wrap">
+                <div class="dist-bar-fill" style="width:{{ $count > 0 ? round($count / $maxDist * 100) : 0 }}%;background:{{ str_starts_with($range,'85') ? '#71dd37' : (str_starts_with($range,'75') ? '#96c93d' : (str_starts_with($range,'60') ? '#ffab00' : '#ff3e1d')) }}"></div>
+            </div>
+            <span class="small muted">{{ $count }}</span>
+        </div>
+        @endforeach
+    </div>
+
+    {{-- Soal Paling Banyak Salah --}}
+    <div class="card">
+        <h2 class="mb0">Soal Paling Banyak Dijawab Salah</h2>
+        <p class="muted small" style="margin-bottom:1rem">Berdasarkan jawaban peserta yang sudah submit</p>
+        @forelse($hardQuestions as $q)
+        <div style="margin-bottom:.85rem">
+            <div class="between" style="gap:.5rem;margin-bottom:.3rem">
+                <span class="small" style="font-weight:800">
+                    No.{{ $q['no'] }} · {{ Str::limit($q['title'], 55) }}
+                </span>
+                <span class="badge {{ $q['wrong_pct'] >= 60 ? 'danger' : ($q['wrong_pct'] >= 40 ? 'warning' : '') }}" style="white-space:nowrap">
+                    {{ $q['wrong_pct'] }}% salah
+                </span>
+            </div>
+            <div class="dist-bar-wrap">
+                <div class="dist-bar-fill" style="width:{{ $q['wrong_pct'] }}%;background:{{ $q['wrong_pct'] >= 60 ? 'var(--danger)' : ($q['wrong_pct'] >= 40 ? 'var(--warning)' : 'var(--primary)') }}"></div>
+            </div>
+            <span class="muted tiny">{{ $q['wrong'] }} dari {{ $q['total'] }} siswa menjawab salah</span>
+        </div>
+        @empty
+        <p class="muted small">Data jawaban belum tersedia atau belum ada yang submit.</p>
+        @endforelse
+    </div>
+
+</div>
+@endif
 
 <div class="card data-card">
     <div class="table-toolbar">

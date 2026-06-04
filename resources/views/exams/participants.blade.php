@@ -134,6 +134,16 @@
                                 Ulangi Ujian
                             </button>
                         </form>
+                        {{-- Hapus dari ujian: hanya jika belum ada aktivitas --}}
+                        @if(in_array($p->status, ['assigned', 'download_ready']))
+                            <form method="POST" action="{{ route('exams.participants.remove', [$exam, $p]) }}"
+                                  onsubmit="return confirm('Hapus {{ $p->student?->name ?? 'siswa ini' }} dari ujian?\n\nSiswa akan dikeluarkan dari daftar peserta.\nGunakan ini hanya jika siswa salah dimasukkan.\n\nLanjutkan?')">
+                                @csrf @method('DELETE')
+                                <button class="btn" title="Hapus dari daftar peserta ujian ini (belum ada aktivitas)">
+                                    Hapus
+                                </button>
+                            </form>
+                        @endif
                     </td>
                 </tr>
             @empty
@@ -148,8 +158,9 @@
             Terlihat: <b data-live-count="participantsTable">{{ $participants->count() }}</b> baris
             &nbsp;·&nbsp;
             <span class="help">
-                <b>Ganti HP</b>: hanya hapus kunci perangkat.
-                <b>Ulangi Ujian</b>: hapus semua jawaban & nilai, siswa mulai dari nol.
+                <b>Ganti HP</b>: hanya hapus kunci perangkat. &nbsp;
+                <b>Ulangi Ujian</b>: hapus semua jawaban & nilai, siswa mulai dari nol. &nbsp;
+                <b>Hapus</b>: keluarkan siswa dari ujian (hanya muncul jika belum ada aktivitas).
             </span>
         </div>
         <div>{{ $participants->links() }}</div>

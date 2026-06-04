@@ -95,6 +95,7 @@ class MobileAuthController extends Controller
                 'id' => $exam->id,
                 'access_code' => $exam->access_code,
                 'title' => $exam->title,
+                'description' => $exam->description,
                 'subject' => $exam->subject,
                 'status' => $exam->status,
                 'starts_at' => optional($exam->starts_at)->toIso8601String(),

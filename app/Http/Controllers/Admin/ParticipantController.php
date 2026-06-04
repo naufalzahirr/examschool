@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AttemptAnswer;
 use App\Models\AuditLog;
 use App\Models\Classroom;
 use App\Models\Exam;
@@ -168,6 +169,25 @@ class ParticipantController extends Controller
         return back()->with('success', $message);
     }
 
+    public function removeParticipant(Exam $exam, ExamParticipant $participant)
+    {
+        $this->ensureCanManage($exam);
+        abort_unless((int) $participant->exam_id === (int) $exam->id, 404);
+
+        $safeStatuses = ['assigned', 'download_ready'];
+        if (! in_array($participant->status, $safeStatuses, true)) {
+            return back()->withErrors([
+                'remove' => 'Peserta tidak bisa dihapus karena sudah memiliki aktivitas (status: '.$participant->status.'). Gunakan "Ulangi Ujian" untuk mereset, atau arsipkan ujian setelah selesai.',
+            ]);
+        }
+
+        $studentName = $participant->student?->name ?? 'Siswa';
+        $participant->delete();
+        AuditLog::record('participant.removed', $participant, ['exam_id' => $exam->id, 'student_id' => $participant->student_id]);
+
+        return back()->with('success', $studentName.' berhasil dihapus dari daftar peserta ujian ini.');
+    }
+
     public function resetDevice(Exam $exam, ExamParticipant $participant)
     {
         $this->ensureCanManage($exam);
@@ -269,7 +289,56 @@ class ParticipantController extends Controller
 
         $participants = $query->paginate(50)->withQueryString();
 
-        return view('exams.results', compact('exam', 'participants'));
+        // Statistik dari seluruh peserta (bukan hanya halaman ini)
+        $scores = $exam->participants()
+            ->where('status', 'submitted')
+            ->whereNotNull('score')
+            ->pluck('score')
+            ->map(fn ($s) => (float) $s);
+
+        $stats = [
+            'total'       => $exam->participants()->count(),
+            'submitted'   => $scores->count(),
+            'avg_score'   => $scores->count() > 0 ? round($scores->avg(), 1) : null,
+            'max_score'   => $scores->count() > 0 ? round((float) $scores->max(), 1) : null,
+            'min_score'   => $scores->count() > 0 ? round((float) $scores->min(), 1) : null,
+            'not_submitted' => $exam->participants()->whereNotIn('status', ['submitted'])->count(),
+            'distribution' => [
+                '85–100' => $scores->filter(fn ($s) => $s >= 85)->count(),
+                '75–84'  => $scores->filter(fn ($s) => $s >= 75 && $s < 85)->count(),
+                '60–74'  => $scores->filter(fn ($s) => $s >= 60 && $s < 75)->count(),
+                '40–59'  => $scores->filter(fn ($s) => $s >= 40 && $s < 60)->count(),
+                '0–39'   => $scores->filter(fn ($s) => $s < 40)->count(),
+            ],
+        ];
+
+        // Soal paling banyak dijawab salah (dari attempt yang submitted)
+        $hardQuestions = AttemptAnswer::query()
+            ->whereHas('attempt', fn ($q) => $q->where('exam_id', $exam->id)->where('status', 'submitted'))
+            ->select(
+                'question_id',
+                DB::raw('COUNT(*) as total_answers'),
+                DB::raw('SUM(CASE WHEN is_correct = 0 THEN 1 ELSE 0 END) as wrong_count')
+            )
+            ->groupBy('question_id')
+            ->orderByDesc('wrong_count')
+            ->limit(8)
+            ->with('question:id,title,order_no,type')
+            ->get()
+            ->filter(fn ($row) => $row->total_answers > 0 && $row->wrong_count > 0)
+            ->map(fn ($row) => [
+                'no'          => $row->question?->order_no ?? '?',
+                'title'       => $row->question?->title ?? '(soal dihapus)',
+                'type'        => $row->question?->type ?? '-',
+                'total'       => (int) $row->total_answers,
+                'wrong'       => (int) $row->wrong_count,
+                'wrong_pct'   => $row->total_answers > 0
+                    ? round($row->wrong_count / $row->total_answers * 100)
+                    : 0,
+            ])
+            ->values();
+
+        return view('exams.results', compact('exam', 'participants', 'stats', 'hardQuestions'));
     }
 
     private function applyParticipantFilters($query, Request $request): void
@@ -296,26 +365,39 @@ class ParticipantController extends Controller
     public function exportResults(Exam $exam)
     {
         $this->ensureCanManage($exam);
-        $filename = 'hasil-'.preg_replace('/[^A-Za-z0-9\-]+/', '-', strtolower($exam->access_code.'-'.$exam->title)).'.csv';
+        $filename = 'hasil-'.preg_replace('/[^A-Za-z0-9\-]+/', '-', strtolower($exam->access_code.'-'.$exam->title)).'-'.now()->format('Ymd').'.csv';
 
-        return response()->streamDownload(function () use ($exam) {
+        $statusLabels = [
+            'assigned'       => 'Belum login',
+            'download_ready' => 'Siap download',
+            'downloading'    => 'Mengunduh',
+            'downloaded'     => 'Paket terunduh',
+            'unlocked'       => 'Soal terbuka',
+            'in_progress'    => 'Mengerjakan',
+            'locked'         => 'Terkunci',
+            'synced'         => 'Tersinkron',
+            'submitted'      => 'Sudah submit',
+        ];
+
+        return response()->streamDownload(function () use ($exam, $statusLabels) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['NIS', 'Nama', 'Kelas', 'Status', 'Nilai', 'Submit', 'Last Sync']);
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM agar Excel tidak rusak
+            fputcsv($handle, ['NIS', 'Nama', 'Kelas', 'Status', 'Nilai', 'Waktu Submit', 'Sinkron Terakhir']);
 
             $exam->participants()
                 ->with(['student.classroom', 'attempts' => fn ($q) => $q->latest()])
                 ->orderBy('id')
-                ->chunk(200, function ($participants) use ($handle) {
+                ->chunk(200, function ($participants) use ($handle, $statusLabels) {
                     foreach ($participants as $participant) {
                         $lastAttempt = $participant->attempts->first();
                         fputcsv($handle, [
                             $participant->student?->nis ?: '-',
                             $participant->student?->name ?: 'Siswa dihapus',
                             $participant->student?->classroom?->nama_kelas ?: ($participant->student?->class_name ?: '-'),
-                            $participant->status,
-                            $participant->score,
-                            optional($participant->submitted_at)->format('Y-m-d H:i:s'),
-                            optional($lastAttempt?->last_synced_at)->format('Y-m-d H:i:s'),
+                            $statusLabels[$participant->status] ?? $participant->status,
+                            $participant->score !== null ? number_format((float) $participant->score, 1, '.', '') : '',
+                            optional($participant->submitted_at)->format('d/m/Y H:i'),
+                            optional($lastAttempt?->last_synced_at)->format('d/m/Y H:i'),
                         ]);
                     }
                 });

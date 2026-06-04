@@ -39,7 +39,7 @@
             </div>
             <button class="btn primary">Import Peserta</button>
         </div>
-        <textarea name="students_text" rows="14" placeholder="4728;ACHMAD RAFA YUSAPUTRA;Siswa4728!;XII RPL 1;10&#10;4729;ADE RAHMANA;Siswa4729!;XII RPL 1;10"></textarea>
+        <textarea class="input" name="students_text" rows="14" placeholder="4728;ACHMAD RAFA YUSAPUTRA;Siswa4728!;XII RPL 1;10&#10;4729;ADE RAHMANA;Siswa4729!;XII RPL 1;10"></textarea>
         <p class="help">Jika NIS sudah ada, data dan password diperbarui, lalu siswa ditambahkan ke ujian ini. Baris dengan password kurang dari 8 karakter akan dilewati.</p>
     </form>
 
@@ -47,7 +47,7 @@
         @csrf
         <h2>Tambahkan dari Akun Siswa</h2>
         <p class="muted small">Masukkan NIS yang sudah ada, satu per baris atau pisahkan dengan koma.</p>
-        <textarea name="nis_text" rows="10" placeholder="4728&#10;4729"></textarea>
+        <textarea class="input" name="nis_text" rows="10" placeholder="4728&#10;4729"></textarea>
         <button class="btn soft">Tambahkan ke Ujian</button>
         <div class="alert info mb0">Untuk pelaksanaan produksi, cara paling rapi adalah memilih kelas di konfigurasi ujian lalu klik <b>Sinkron Peserta dari Kelas</b>.</div>
     </form>

@@ -399,37 +399,55 @@
 
 
 {{-- ===== ZONA BERBAHAYA ===== --}}
-@if(!in_array($exam->status, ['archived'], true))
 <div class="card mb" style="border:1px solid var(--line)">
     <details>
         <summary style="cursor:pointer;font-weight:800;color:var(--muted)">
-            ⚠️ Aksi Lanjutan (tutup / arsipkan / kembalikan ke draft)
+            ⚠️ Aksi Lanjutan (tutup / arsipkan / hapus / kembalikan ke draft)
         </summary>
         <div class="row" style="margin-top:1rem;flex-wrap:wrap">
             @if(in_array($exam->status, ['published','closed'], true))
-                <form method="POST" action="{{ route('exams.unpublish', $exam) }}" onsubmit="return confirm('Kembalikan ke draft? Hanya bisa jika belum ada siswa yang mulai mengerjakan.')">
+                <form method="POST" action="{{ route('exams.unpublish', $exam) }}"
+                      onsubmit="return confirm('Kembalikan ke draft?\n\nHanya bisa jika belum ada siswa yang mulai mengerjakan.')">
                     @csrf
-                    <button class="btn warning">Kembalikan ke Draft</button>
+                    <button class="btn warning">↩ Kembalikan ke Draft</button>
                 </form>
             @endif
+
             @if(!in_array($exam->status, ['closed','archived'], true))
-                <form method="POST" action="{{ route('exams.close', $exam) }}" onsubmit="return confirm('Tutup ujian ini? Siswa tidak bisa mengerjakan lagi.')">
+                <form method="POST" action="{{ route('exams.close', $exam) }}"
+                      onsubmit="return confirm('Tutup ujian?\n\nSiswa tidak bisa download atau submit lagi setelah ini.')">
                     @csrf
                     <button class="btn danger">Tutup Ujian</button>
                 </form>
             @endif
-            <form method="POST" action="{{ route('exams.archive', $exam) }}" onsubmit="return confirm('Arsipkan ujian? Ujian tidak akan muncul di daftar utama.')">
-                @csrf
-                <button class="btn">Arsipkan</button>
-            </form>
+
+            @if($exam->status !== 'archived')
+                <form method="POST" action="{{ route('exams.archive', $exam) }}"
+                      onsubmit="return confirm('Arsipkan ujian?\n\nUjian disembunyikan dari daftar aktif. Data hasil tetap tersimpan.')">
+                    @csrf
+                    <button class="btn">Arsipkan</button>
+                </form>
+            @endif
+
+            @if(!$exam->hasStartedWork())
+                <form method="POST" action="{{ route('exams.destroy', $exam) }}"
+                      onsubmit="return confirm('HAPUS PERMANEN ujian ini?\n\nSemua soal, peserta, dan data ujian akan dihapus selamanya.\nTindakan ini tidak bisa dibatalkan.\n\nKetik OK untuk melanjutkan.')">
+                    @csrf @method('DELETE')
+                    <button class="btn danger" style="background:#b42318;color:#fff">🗑 Hapus Permanen</button>
+                </form>
+            @else
+                <span class="help" style="align-self:center">
+                    Ujian tidak bisa dihapus karena sudah ada aktivitas siswa. Gunakan Arsipkan.
+                </span>
+            @endif
         </div>
-        <p class="help" style="margin-top:.5rem">
-            <b>Tutup</b>: ujian selesai, siswa tidak bisa submit lagi. &nbsp;
-            <b>Arsipkan</b>: sembunyikan dari daftar aktif. &nbsp;
-            <b>Kembalikan ke Draft</b>: hanya jika belum ada siswa yang mulai.
+        <p class="help" style="margin-top:.75rem">
+            <b>Tutup</b>: siswa tidak bisa submit baru. &nbsp;
+            <b>Arsipkan</b>: sembunyikan dari daftar, data tetap ada. &nbsp;
+            <b>Kembalikan ke Draft</b>: hanya jika belum ada aktivitas. &nbsp;
+            <b>Hapus Permanen</b>: hanya tersedia selama belum ada siswa yang login/download.
         </p>
     </details>
 </div>
-@endif
 
 @endsection

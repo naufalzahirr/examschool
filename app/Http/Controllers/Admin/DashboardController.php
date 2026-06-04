@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Classroom;
 use App\Models\Exam;
+use App\Models\SchoolSetting;
 use App\Models\ExamAttempt;
 use App\Models\ExamParticipant;
 use App\Models\QuestionBankItem;
@@ -14,6 +15,18 @@ use App\Models\Teacher;
 
 class DashboardController extends Controller
 {
+    public function guide()
+    {
+        $settings = [
+            'download_open_hours' => (int) SchoolSetting::getValue('package_download_open_hours', 12),
+            'concurrent_limit'    => (int) SchoolSetting::getValue('package_download_concurrent_limit', 50),
+            'late_tolerance'      => (int) SchoolSetting::getValue('late_tolerance_minutes', 15),
+            'upload_grace'        => (int) SchoolSetting::getValue('upload_grace_minutes', 30),
+        ];
+
+        return view('guide', compact('settings'));
+    }
+
     public function index()
     {
         $user = auth()->user();
@@ -41,6 +54,16 @@ class DashboardController extends Controller
             ->filter(fn ($e) => collect($e->readinessChecklist())->every(fn ($i) => $i['ok']))
             ->take(5);
 
+        // Ujian yang akan mulai dalam 48 jam ke depan (published, belum dimulai)
+        $upcomingExams = (clone $examQuery)
+            ->where('status', Exam::STATUS_PUBLISHED)
+            ->whereBetween('starts_at', [$today, $today->copy()->addHours(48)])
+            ->with('classrooms')
+            ->withCount('participants')
+            ->orderBy('starts_at')
+            ->take(5)
+            ->get();
+
         return view('dashboard', [
             'examCount' => (clone $examQuery)->count(),
             'publishedCount' => (clone $examQuery)->where('status', 'published')->count(),
@@ -55,6 +78,7 @@ class DashboardController extends Controller
             'recentExams' => (clone $examQuery)->with('classrooms')->latest()->take(8)->get(),
             'runningExams' => (clone $runningQuery)->with('classrooms')->latest()->take(8)->get(),
             'readyToPublishExams' => $readyToPublishExams,
+            'upcomingExams' => $upcomingExams,
             'recentAuditLogs' => $user->isAdmin() ? AuditLog::with('user')->latest()->take(8)->get() : collect(),
         ]);
     }

@@ -18,9 +18,24 @@
     </div>
 
     <div class="card form-head mb">
-        <h2 style="margin-bottom:0">{{ $exam->title }}</h2>
-        <p class="muted">{{ $exam->description ?: 'Tambahkan instruksi ujian di konfigurasi.' }}</p>
-        <div class="row small"><span class="badge">Kode: {{ $exam->access_code }}</span><span class="pill">Versi Paket: {{ $exam->package_version }}</span><span class="badge {{ $exam->status }}">{{ $exam->status }}</span></div>
+        <div class="between">
+            <div>
+                <h2 style="margin-bottom:0">{{ $exam->title }}</h2>
+                <p class="muted">{{ $exam->description ?: 'Tambahkan instruksi ujian di konfigurasi.' }}</p>
+                <div class="row small">
+                    <span class="badge">Kode: {{ $exam->access_code }}</span>
+                    <span class="pill">Versi Paket: {{ $exam->package_version }}</span>
+                    <span class="badge {{ $exam->status }}">{{ $exam->status }}</span>
+                </div>
+            </div>
+            <div style="text-align:right">
+                <div class="muted small">Total Poin</div>
+                <div id="totalPointsDisplay" class="stat" style="font-size:28px">
+                    {{ $exam->questions->sum('points') }}
+                </div>
+                <div class="muted small" id="questionCountDisplay">{{ $exam->questions->count() }} soal</div>
+            </div>
+        </div>
     </div>
 
     @unless($canEdit)
@@ -293,16 +308,51 @@ function lockBuilderIfNeeded(){
     });
 }
 
+// Update total poin dan jumlah soal setiap ada perubahan
+function updateTotals(){
+    const questions = document.querySelectorAll('.q-card');
+    let totalPts = 0;
+    questions.forEach(card => {
+        const pts = parseFloat(card.querySelector('.q-points')?.value || '0');
+        if(!isNaN(pts)) totalPts += pts;
+    });
+    const pts = document.getElementById('totalPointsDisplay');
+    const cnt = document.getElementById('questionCountDisplay');
+    if(pts) pts.textContent = totalPts % 1 === 0 ? totalPts : totalPts.toFixed(1);
+    if(cnt) cnt.textContent = questions.length + ' soal';
+}
+
+// Observasi perubahan di area soal
+const qContainer = document.getElementById('questions');
+if(qContainer){
+    new MutationObserver(updateTotals).observe(qContainer, {childList: true, subtree: true});
+    qContainer.addEventListener('input', updateTotals);
+}
+
+let _formDirty = false;
+if(builderCanEdit){
+    document.getElementById('questions').addEventListener('input', () => _formDirty = true);
+    document.getElementById('questions').addEventListener('click', () => _formDirty = true);
+    window.addEventListener('beforeunload', function(e){
+        if(_formDirty){
+            e.preventDefault();
+            e.returnValue = 'Perubahan soal belum disimpan. Yakin ingin meninggalkan halaman ini?';
+        }
+    });
+}
+
 document.getElementById('builderForm').addEventListener('submit', function(e){
     if(!builderCanEdit){ e.preventDefault(); alert('Soal sudah terkunci dan tidak bisa disimpan.'); return; }
     const questions = collectQuestions();
     if(questions.length < 1){ e.preventDefault(); alert('Minimal buat 1 pertanyaan.'); return; }
     const error = validateQuestions(questions);
     if(error){ e.preventDefault(); alert(error); return; }
+    _formDirty = false; // reset sebelum submit
     document.getElementById('questionsJson').value = JSON.stringify(questions);
 });
 
 if(initialQuestions.length){ initialQuestions.forEach(q => addQuestion(q)); }
 lockBuilderIfNeeded();
+updateTotals();
 </script>
 @endpush

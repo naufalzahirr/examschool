@@ -58,7 +58,7 @@
                     <th>Kelas</th>
                     <th>Status</th>
                     <th>Soal</th>
-                    <th>Peserta</th>
+                    <th>Peserta / Submit</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -91,7 +91,17 @@
                         @endif
                     </td>
                     <td>{{ $exam->questions_count }}</td>
-                    <td>{{ $exam->participants_count }}</td>
+                    <td>
+                        @if($exam->participants_count > 0)
+                            @php $pct = round($exam->submitted_count / $exam->participants_count * 100); @endphp
+                            <b>{{ $exam->submitted_count }}</b><span class="muted small"> / {{ $exam->participants_count }}</span><br>
+                            <div style="background:#ebeef0;border-radius:999px;height:5px;margin-top:.3rem;overflow:hidden;width:80px">
+                                <div style="height:100%;border-radius:999px;background:{{ $pct >= 100 ? 'var(--success)' : 'var(--primary)' }};width:{{ $pct }}%"></div>
+                            </div>
+                        @else
+                            <span class="muted small">–</span>
+                        @endif
+                    </td>
                     <td class="row">
                         <a class="btn soft" href="{{ route('exams.show', $exam) }}">Kelola</a>
                         @if($exam->canEditQuestions())

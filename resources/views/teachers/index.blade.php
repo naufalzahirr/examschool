@@ -38,7 +38,7 @@
             @forelse($teachers as $teacher)
                 <tr>
                     <td><span class="badge">{{ $teacher->nip ?: '-' }}</span></td>
-                    <td><b>{{ $teacher->name }}</b><br><span class="muted small">user_id: {{ $teacher->silap_user_id ?: '-' }}</span></td>
+                    <td><b>{{ $teacher->name }}</b></td>
                     <td>{{ $teacher->jenis_kelamin ?: '-' }}</td>
                     <td>{{ $teacher->kontak ?: '-' }}</td>
                     <td>@if($teacher->user)<span class="badge active">{{ $teacher->user->username ?: $teacher->user->email }}</span>@else<span class="badge warning">Belum ada akun</span>@endif</td>

@@ -20,7 +20,12 @@ class ExamController extends Controller
     public function index(Request $request)
     {
         $query = $this->examQuery()
-            ->withCount(['questions', 'participants', 'classrooms'])
+            ->withCount([
+                'questions',
+                'classrooms',
+                'participants',
+                'participants as submitted_count' => fn ($q) => $q->where('status', 'submitted'),
+            ])
             ->with('classrooms')
             ->latest();
 
@@ -310,6 +315,7 @@ class ExamController extends Controller
             'shuffle_questions' => ['nullable', 'boolean'],
             'shuffle_options' => ['nullable', 'boolean'],
             'lock_mode' => ['nullable', Rule::in(array_keys(Exam::LOCK_MODES))],
+            'exit_policy' => ['nullable', Rule::in(array_keys(Exam::EXIT_POLICIES))],
             'status' => ['nullable', Rule::in([Exam::STATUS_DRAFT, Exam::STATUS_READY])],
         ]);
 
@@ -318,8 +324,9 @@ class ExamController extends Controller
         $data['lock_mode'] = $data['lock_mode']
             ?? $exam?->lock_mode
             ?? SchoolSetting::getValue('default_exam_lock_mode', Exam::LOCK_STRICT_AIRPLANE);
-        $data['exit_policy'] = $data['exit_policy']
-            ?? Exam::normalizeExitPolicy($exam?->exit_policy ?? (string) SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_AFTER_SUBMIT));
+        $data['exit_policy'] = isset($data['exit_policy'])
+            ? Exam::normalizeExitPolicy($data['exit_policy'])
+            : Exam::normalizeExitPolicy($exam?->exit_policy ?? (string) SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_AFTER_SUBMIT));
         $data['classroom_ids'] = collect($request->input('classroom_ids', []))->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
         unset($data['status']);
 
