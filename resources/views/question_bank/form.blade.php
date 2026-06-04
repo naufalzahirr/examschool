@@ -1,4 +1,4 @@
-@extends('layouts.app', ['title' => $item->exists ? 'Edit Bank Soal' : 'Buat Bank Soal'])
+@extends('layouts.app', ['title' => $item->exists ? 'Edit Soal Bank' : 'Tambah Soal ke Bank'])
 
 @section('content')
 @php
@@ -25,10 +25,27 @@
 
 <div class="between mb">
     <div>
-        <h1>{{ $item->exists ? 'Edit Bank Soal' : 'Buat Bank Soal' }}</h1>
-        <p class="muted">{{ $item->exists ? 'Edit satu soal di bank soal.' : 'Buat banyak soal sekaligus. Setiap kartu akan disimpan sebagai satu soal di Bank Soal.' }}</p>
+        <h1>{{ $item->exists ? 'Edit Soal Bank' : 'Tambah Soal ke Bank' }}</h1>
+        <p class="muted">{{ $item->exists ? 'Perbaiki satu soal yang sudah tersimpan di Bank Soal.' : 'Tulis satu atau banyak soal sekaligus. Setiap kartu akan tersimpan sebagai satu soal yang bisa dipilih ke ujian.' }}</p>
     </div>
     <a class="btn" href="{{ route('question-bank.index') }}">Kembali</a>
+</div>
+
+<div class="card mb">
+    <div class="step-list">
+        <div class="step">
+            <span class="step-no">1</span>
+            <div><b>Isi keterangan</b><br><span class="muted small">Mapel, jenjang, topik, level, dan akses pemakaian.</span></div>
+        </div>
+        <div class="step">
+            <span class="step-no">2</span>
+            <div><b>Tulis soal</b><br><span class="muted small">Tambah kartu soal sebanyak yang dibutuhkan.</span></div>
+        </div>
+        <div class="step">
+            <span class="step-no">3</span>
+            <div><b>Pakai ke ujian</b><br><span class="muted small">Buka menu Ujian, lalu pilih soal dari Bank Soal.</span></div>
+        </div>
+    </div>
 </div>
 
 @if ($errors->any())
@@ -50,13 +67,13 @@
     <div class="card mb">
         <div class="between mb">
             <div>
-                <h3>Identitas Bank Soal</h3>
-                <p class="muted small">{{ $item->exists ? 'Identitas ini berlaku untuk soal yang sedang diedit.' : 'Identitas ini akan dipakai untuk semua soal yang dibuat di bawah.' }}</p>
+                <h2 class="mb0">Keterangan Soal</h2>
+                <p class="muted small mb0">{{ $item->exists ? 'Keterangan ini berlaku untuk soal yang sedang diedit.' : 'Keterangan ini akan dipakai untuk semua kartu soal di bawah.' }}</p>
             </div>
             @if($item->exists)
                 <span class="badge info">{{ $item->question_code }}</span>
             @else
-                <span class="badge info">Multi-soal</span>
+                <span class="badge info">Bisa banyak soal</span>
             @endif
         </div>
         <div class="three">
@@ -65,7 +82,7 @@
                 <input class="input" name="subject" value="{{ old('subject', $item->subject) }}" placeholder="Contoh: Bahasa Indonesia">
             </div>
             <div class="field">
-                <label>Tingkat/Kelas</label>
+                <label>Jenjang/Kelas</label>
                 <input class="input" name="grade_level" value="{{ old('grade_level', $item->grade_level) }}" placeholder="Contoh: XII / XI PPLG">
             </div>
             <div class="field">
@@ -99,11 +116,23 @@
         </div>
     </div>
 
+    <div class="card mb">
+        <div class="between">
+            <div>
+                <h2 class="mb0">Daftar Soal</h2>
+                <p class="muted small mb0"><b id="bankQuestionCount">0</b> kartu soal siap disimpan.</p>
+            </div>
+            @unless($isEdit)
+                <button class="btn soft js-add-question" type="button">+ Tambah Soal</button>
+            @endunless
+        </div>
+    </div>
+
     <div id="questionCards"></div>
 
     <div class="row mt">
         @unless($isEdit)
-            <button class="btn soft" type="button" id="addQuestionBtn">+ Tambah Soal</button>
+            <button class="btn soft js-add-question" type="button">+ Tambah Soal Lagi</button>
         @endunless
         <button class="btn primary">{{ $isEdit ? 'Simpan Perubahan Soal' : 'Simpan Semua Soal' }}</button>
         <a class="btn" href="{{ route('question-bank.index') }}">Batal</a>
@@ -136,7 +165,7 @@ function addQuestion(question = null){
             </div>
             <div class="row">
                 <select class="input q-type" style="max-width:320px">${typeOptions(q.type || 'multiple_choice')}</select>
-                ${isEdit ? '' : '<button type="button" class="btn danger q-remove">Hapus</button>'}
+                ${isEdit ? '' : '<button type="button" class="btn soft q-duplicate">Duplikat</button><button type="button" class="btn danger q-remove">Hapus</button>'}
             </div>
         </div>
         <div class="field">
@@ -162,6 +191,8 @@ function renumberCards(){
     document.querySelectorAll('.q-card').forEach((card, index) => {
         card.querySelector('.q-number').textContent = `Soal ${index + 1}`;
     });
+    const counter = document.getElementById('bankQuestionCount');
+    if(counter) counter.textContent = document.querySelectorAll('.q-card').length;
 }
 
 function renderAnswerArea(card, question = null){
@@ -299,13 +330,16 @@ document.getElementById('questionCards').addEventListener('click', function(e){
     if(e.target.classList.contains('remove-row')){
         e.target.closest('.option-row, .matching-row').remove();
     }
+    if(e.target.classList.contains('q-duplicate')){
+        addQuestion(collectQuestion(card));
+    }
     if(e.target.classList.contains('q-remove')){
         card.remove();
         renumberCards();
     }
 });
 
-document.getElementById('addQuestionBtn')?.addEventListener('click', () => addQuestion());
+document.querySelectorAll('.js-add-question').forEach(btn => btn.addEventListener('click', () => addQuestion()));
 
 initialQuestions.forEach((q) => addQuestion(q));
 

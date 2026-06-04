@@ -9,7 +9,7 @@
 <div class="card data-card">
     <div class="table-toolbar">
         <div class="table-title">
-            <h2>Live Table Hasil</h2>
+            <h2>Daftar Hasil</h2>
             <p class="muted small mb0">Menampilkan {{ $participants->firstItem() ?? 0 }}-{{ $participants->lastItem() ?? 0 }} dari {{ $participants->total() }} peserta.</p>
         </div>
         <form class="table-tools" method="GET" action="{{ route('exams.results', $exam) }}">
@@ -32,7 +32,7 @@
                 </select>
             </div>
             <div class="tool-field search">
-                <label>Live Search</label>
+                <label>Cari Cepat</label>
                 <div class="live-search-wrap"><input class="input" data-live-search="resultsTable" name="q" value="{{ request('q') }}" placeholder="Cari NIS, nama, kelas"></div>
             </div>
             <button class="btn primary">Cari</button>

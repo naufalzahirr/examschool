@@ -3,10 +3,27 @@
 @section('content')
 <div class="between mb">
     <div>
-        <h1>Tambah dari Bank Soal</h1>
-        <p class="muted">Pilih soal yang akan ditambahkan ke ujian: <b>{{ $exam->title }}</b>. Soal yang ditambahkan menjadi salinan ujian, jadi aman walaupun bank soal diedit lagi nanti.</p>
+        <h1>Pilih Soal dari Bank Soal</h1>
+        <p class="muted">Ujian: <b>{{ $exam->title }}</b>. Soal yang dipilih akan disalin ke ujian, jadi aman walaupun Bank Soal diedit lagi nanti.</p>
     </div>
     <a class="btn" href="{{ route('exams.show', $exam) }}">Kembali ke Ujian</a>
+</div>
+
+<div class="card mb">
+    <div class="step-list">
+        <div class="step">
+            <span class="step-no">1</span>
+            <div><b>Cari soal</b><br><span class="muted small">Filter berdasarkan mapel, jenjang, jenis, level, atau pembuat.</span></div>
+        </div>
+        <div class="step">
+            <span class="step-no">2</span>
+            <div><b>Centang soal</b><br><span class="muted small">Pilih satu atau banyak soal. Soal yang sudah masuk akan ditandai.</span></div>
+        </div>
+        <div class="step">
+            <span class="step-no">3</span>
+            <div><b>Tambahkan ke ujian</b><br><span class="muted small">Setelah ditambahkan, cek jumlah soal lalu publish ujian.</span></div>
+        </div>
+    </div>
 </div>
 
 <div class="card data-card mb">
@@ -62,7 +79,7 @@
                 </select>
             </div>
             <div class="tool-field search">
-                <label>Live Search</label>
+                <label>Cari Cepat</label>
                 <div class="live-search-wrap"><input class="input" data-live-search="selectBankTable" name="q" value="{{ request('q') }}" placeholder="Cari soal, kode, mapel, topik"></div>
             </div>
             <button class="btn primary">Cari</button>
@@ -74,12 +91,16 @@
 <form method="POST" action="{{ route('exams.question-bank.add', $exam) }}" class="card data-card">
     @csrf
     <div class="table-toolbar">
-        <div class="table-title"><h2>Pilih Soal</h2><p class="muted small mb0">Centang soal, lalu tambahkan ke ujian. Total tersedia: {{ $items->total() }} soal.</p></div>
-        <div class="table-tools"><button class="btn primary">Tambahkan yang Dipilih</button></div>
+        <div class="table-title"><h2>Pilih Soal</h2><p class="muted small mb0">Ujian ini sudah punya <b>{{ $exam->questions_count ?? 0 }}</b> soal. Total tersedia dari filter ini: {{ $items->total() }} soal.</p></div>
+        <div class="table-tools">
+            <span class="badge info"><b id="selectedBankCount">0</b> dipilih</span>
+            <button class="btn soft" type="button" id="selectVisibleQuestions">Pilih semua terlihat</button>
+            <button class="btn primary">Tambahkan yang Dipilih</button>
+        </div>
     </div>
     <div class="table-wrap">
         <table class="table" id="selectBankTable">
-            <thead><tr><th></th><th>Soal</th><th>Jenis</th><th>Opsi/Kunci</th><th>Mapel/Topik</th><th>Akses/Pembuat</th><th>Poin</th></tr></thead>
+            <thead><tr><th>Pilih</th><th>Soal</th><th>Jenis</th><th>Opsi/Kunci</th><th>Mapel/Topik</th><th>Akses/Pembuat</th><th>Poin</th></tr></thead>
             <tbody>
                 @forelse($items as $item)
                     @php($alreadyAdded = in_array($item->id, $existingBankItemIds, true))
@@ -88,7 +109,7 @@
                             @if($alreadyAdded)
                                 <span class="badge info">Sudah masuk</span>
                             @else
-                                <input type="checkbox" name="question_bank_ids[]" value="{{ $item->id }}">
+                                <label class="check-pill" style="justify-content:center"><input class="bank-select" type="checkbox" name="question_bank_ids[]" value="{{ $item->id }}"></label>
                             @endif
                         </td>
                         <td><b>{{ $item->title }}</b><br><span class="muted small">{{ $item->question_code }}</span></td>
@@ -111,6 +132,30 @@
             </tbody>
         </table>
     </div>
-    <div class="table-meta between"><div class="small muted">Terlihat: <b data-live-count="selectBankTable">{{ $items->count() }}</b> baris</div><div>{{ $items->links() }}</div></div>
+    <div class="table-meta between">
+        <div class="small muted">Terlihat: <b data-live-count="selectBankTable">{{ $items->count() }}</b> baris</div>
+        <div class="row"><button class="btn primary">Tambahkan yang Dipilih</button><div>{{ $items->links() }}</div></div>
+    </div>
 </form>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const checkboxes = [...document.querySelectorAll('.bank-select')];
+    const counter = document.getElementById('selectedBankCount');
+    const updateCounter = () => {
+        if(counter) counter.textContent = checkboxes.filter(item => item.checked).length;
+    };
+
+    checkboxes.forEach(item => item.addEventListener('change', updateCounter));
+    document.getElementById('selectVisibleQuestions')?.addEventListener('click', () => {
+        const visible = checkboxes.filter(item => item.closest('tr')?.style.display !== 'none');
+        const shouldCheck = visible.some(item => !item.checked);
+        visible.forEach(item => item.checked = shouldCheck);
+        updateCounter();
+    });
+    updateCounter();
+});
+</script>
+@endpush

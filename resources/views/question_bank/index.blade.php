@@ -2,19 +2,26 @@
 
 @section('content')
 <div class="between mb">
-    <div><h1>Bank Soal</h1><p class="muted">Kumpulan soal reusable. Soal bisa dibuat pribadi atau dibagikan sebagai bank soal sekolah untuk dipakai guru lain.</p></div>
-    <div class="row"><a class="btn" href="{{ route('question-bank.import') }}">Import</a><a class="btn primary" href="{{ route('question-bank.create') }}">+ Buat Banyak Soal</a></div>
+    <div><h1>Bank Soal</h1><p class="muted">Kumpulan soal yang bisa dipakai ulang saat membuat ujian.</p></div>
+    <div class="row"><a class="btn" href="{{ route('question-bank.import') }}">Import Massal</a><a class="btn primary" href="{{ route('question-bank.create') }}">+ Tambah Soal</a></div>
 </div>
 
 <div class="card data-card">
     <div class="table-toolbar">
-        <div class="table-title"><h2>Live Table Bank Soal</h2><p class="muted small mb0">Menampilkan {{ $items->firstItem() ?? 0 }}-{{ $items->lastItem() ?? 0 }} dari {{ $items->total() }} soal.</p></div>
+        <div class="table-title"><h2>Daftar Soal</h2><p class="muted small mb0">Menampilkan {{ $items->firstItem() ?? 0 }}-{{ $items->lastItem() ?? 0 }} dari {{ $items->total() }} soal.</p></div>
         <form class="table-tools" method="GET" action="{{ route('question-bank.index') }}">
+            <div class="tool-field"><label>Mapel</label><select class="input" name="subject" onchange="this.form.submit()"><option value="">Semua</option>@foreach($filters['subjects'] as $subject)<option value="{{ $subject }}" @selected(request('subject')===$subject)>{{ $subject }}</option>@endforeach</select></div>
+            <div class="tool-field"><label>Jenjang</label><select class="input" name="grade_level" onchange="this.form.submit()"><option value="">Semua</option>@foreach($filters['grades'] as $grade)<option value="{{ $grade }}" @selected(request('grade_level')===$grade)>{{ $grade }}</option>@endforeach</select></div>
             <div class="tool-field"><label>Jenis</label><select class="input" name="type" onchange="this.form.submit()"><option value="">Semua</option>@foreach($filters['types'] as $value=>$label)<option value="{{ $value }}" @selected(request('type')===$value)>{{ $label }}</option>@endforeach</select></div>
             <div class="tool-field"><label>Level</label><select class="input" name="difficulty" onchange="this.form.submit()"><option value="">Semua</option>@foreach($filters['difficulties'] as $value=>$label)<option value="{{ $value }}" @selected(request('difficulty')===$value)>{{ $label }}</option>@endforeach</select></div>
             <div class="tool-field"><label>Akses</label><select class="input" name="visibility" onchange="this.form.submit()"><option value="">Semua</option>@foreach($filters['visibilities'] as $value=>$label)<option value="{{ $value }}" @selected(request('visibility')===$value)>{{ $label }}</option>@endforeach</select></div>
-            <div class="tool-field search"><label>Live Search</label><div class="live-search-wrap"><input class="input" data-live-search="bankTable" name="q" value="{{ request('q') }}" placeholder="Cari soal, kode, mapel, topik"></div></div>
-            <button class="btn primary">Cari</button><button class="btn" type="button" data-live-reset="bankTable">Clear</button>
+            <div class="tool-field search"><label>Cari Cepat</label><div class="live-search-wrap"><input class="input" data-live-search="bankTable" name="q" value="{{ request('q') }}" placeholder="Cari soal, kode, mapel, topik"></div></div>
+            <button class="btn primary">Cari</button>
+            @if(request('q') || request('subject') || request('grade_level') || request('type') || request('difficulty') || request('visibility'))
+                <a class="btn" href="{{ route('question-bank.index') }}">Reset</a>
+            @else
+                <button class="btn" type="button" data-live-reset="bankTable">Clear</button>
+            @endif
         </form>
     </div>
     <div class="table-wrap"><table class="table" id="bankTable">

@@ -4,41 +4,79 @@
 <div class="between mb">
     <div>
         <h1>{{ $exam->exists ? 'Edit Ujian' : 'Buat Ujian' }}</h1>
-        <p class="muted">Atur judul, jadwal, durasi, dan kelas peserta. Setelah disimpan, soal ujian bisa langsung dipilih dari Bank Soal.</p>
+        <p class="muted">Isi informasi ujian, pilih kelas peserta, lalu ambil soal dari Bank Soal.</p>
     </div>
     <a class="btn" href="{{ $exam->exists ? route('exams.show', $exam) : route('exams.index') }}">Kembali</a>
 </div>
 
-<form method="POST" action="{{ $exam->exists ? route('exams.update', $exam) : route('exams.store') }}" class="card form">
+<div class="card mb">
+    <div class="step-list">
+        <div class="step">
+            <span class="step-no">1</span>
+            <div><b>Atur ujian</b><br><span class="muted small">Judul, mapel, kelas peserta, jadwal, dan durasi.</span></div>
+        </div>
+        <div class="step">
+            <span class="step-no">2</span>
+            <div><b>Pilih soal</b><br><span class="muted small">Setelah disimpan, ambil soal dari Bank Soal.</span></div>
+        </div>
+        <div class="step">
+            <span class="step-no">3</span>
+            <div><b>Publish</b><br><span class="muted small">Sistem membuat paket soal terenkripsi untuk aplikasi siswa.</span></div>
+        </div>
+    </div>
+</div>
+
+<form method="POST" action="{{ $exam->exists ? route('exams.update', $exam) : route('exams.store') }}" class="form">
     @csrf
     @if($exam->exists) @method('PUT') @endif
 
-    @if($exam->exists)
-        <div class="alert info" style="margin-bottom:0">
+    <div class="card">
+        <div class="between mb">
+            <div>
+                <h2 class="mb0">Informasi Ujian</h2>
+                <p class="muted small mb0">Data ini tampil di dashboard guru dan aplikasi siswa.</p>
+            </div>
+            @if($exam->exists)
+                <span class="badge info">{{ $exam->access_code }}</span>
+            @else
+                <span class="badge info">Kode otomatis</span>
+            @endif
+        </div>
+
+        @if($exam->exists)
+            <div class="alert info" style="margin-bottom:0">
             <b>Kode ujian otomatis:</b> {{ $exam->access_code }}<br>
             <span class="small">Kode ini dipakai siswa saat login di aplikasi Android bersama NIS dan password.</span>
-        </div>
-        @if($exam->hasStartedWork())
-            <div class="alert warning" style="margin-bottom:0">
-                Ujian sudah memiliki aktivitas siswa. Demi konsistensi paket soal, kelas, durasi, dan aturan acak tidak boleh diubah.
             </div>
+            @if($exam->hasStartedWork())
+                <div class="alert warning" style="margin-bottom:0">
+                    Ujian sudah memiliki aktivitas siswa. Demi konsistensi paket soal, kelas, durasi, dan aturan acak tidak boleh diubah.
+                </div>
+            @endif
+        @else
+            <div class="alert info" style="margin-bottom:0">Kode ujian akan otomatis dibuat setelah konfigurasi disimpan.</div>
         @endif
-    @else
-        <div class="alert info" style="margin-bottom:0">Kode ujian akan otomatis dibuat setelah konfigurasi disimpan. Langkah berikutnya langsung memilih soal dari Bank Soal.</div>
-    @endif
 
-    <div class="field">
-        <label>Judul Ujian</label>
-        <input class="input" name="title" value="{{ old('title', $exam->title) }}" required>
+        <div class="field">
+            <label>Judul Ujian</label>
+            <input class="input" name="title" value="{{ old('title', $exam->title) }}" placeholder="Contoh: Ujian Sekolah Bahasa Indonesia XII" required>
+        </div>
+
+        <div class="two">
+            <div class="field"><label>Mata Pelajaran</label><input class="input" name="subject" value="{{ old('subject', $exam->subject) }}" placeholder="Contoh: Bahasa Indonesia"></div>
+            <div class="field"><label>Jenjang / Label</label><input class="input" name="grade_level" value="{{ old('grade_level', $exam->grade_level) }}" placeholder="Contoh: XII / Sumatif Akhir"></div>
+        </div>
+
+        <div class="field"><label>Instruksi untuk Siswa</label><textarea class="input" name="description" rows="4" placeholder="Opsional. Contoh: Kerjakan dengan teliti, jangan keluar dari aplikasi sebelum submit.">{{ old('description', $exam->description) }}</textarea></div>
     </div>
 
-    <div class="two">
-        <div class="field"><label>Mata Pelajaran</label><input class="input" name="subject" value="{{ old('subject', $exam->subject) }}"></div>
-        <div class="field"><label>Tingkat/Label Ujian</label><input class="input" name="grade_level" value="{{ old('grade_level', $exam->grade_level) }}" placeholder="Contoh: Ujian Sekolah XII / Sumatif XI"></div>
-    </div>
-
-    <div class="field">
-        <label>Kelas Peserta</label>
+    <div class="card">
+        <div class="between mb">
+            <div>
+                <h2 class="mb0">Peserta</h2>
+                <p class="muted small mb0">Pilih kelas yang mengikuti ujian. Siswa aktif di kelas terpilih otomatis menjadi peserta.</p>
+            </div>
+        </div>
         @if($classrooms->count())
             @php($oldClassrooms = collect(old('classroom_ids', $selectedClassroomIds ?? []))->map(fn($id) => (string) $id)->all())
             <div class="class-grid">
@@ -64,50 +102,36 @@
         @endif
     </div>
 
-    <div class="field"><label>Deskripsi/Instruksi</label><textarea name="description" rows="4">{{ old('description', $exam->description) }}</textarea></div>
-
-    <div class="three">
-        <div class="field"><label>Mulai</label><input class="input" type="datetime-local" name="starts_at" value="{{ old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')) }}"></div>
-        <div class="field"><label>Selesai</label><input class="input" type="datetime-local" name="ends_at" value="{{ old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')) }}"></div>
-        <div class="field"><label>Durasi (menit)</label><input class="input" type="number" name="duration_minutes" value="{{ old('duration_minutes', $exam->duration_minutes ?: 90) }}" min="1" required></div>
-    </div>
-
-    <div class="card" style="box-shadow:none;background:#fafafa">
-        <h3>Aturan Paket Soal</h3>
+    <div class="card">
+        <div class="between mb">
+            <div>
+                <h2 class="mb0">Jadwal & Aturan Soal</h2>
+                <p class="muted small mb0">Jadwal menentukan kapan unlock key diberikan ke aplikasi siswa.</p>
+            </div>
+        </div>
+        <div class="three">
+            <div class="field"><label>Mulai</label><input class="input" type="datetime-local" name="starts_at" value="{{ old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')) }}"></div>
+            <div class="field"><label>Selesai</label><input class="input" type="datetime-local" name="ends_at" value="{{ old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')) }}"></div>
+            <div class="field"><label>Durasi Pengerjaan (menit)</label><input class="input" type="number" name="duration_minutes" value="{{ old('duration_minutes', $exam->duration_minutes ?: 90) }}" min="1" required></div>
+        </div>
         <div class="row">
-            <label class="row"><input type="checkbox" name="shuffle_questions" value="1" @checked(old('shuffle_questions', $exam->shuffle_questions))> Acak urutan soal</label>
-            <label class="row"><input type="checkbox" name="shuffle_options" value="1" @checked(old('shuffle_options', $exam->shuffle_options))> Acak urutan opsi/bank pasangan</label>
+            <label class="check-pill"><input type="checkbox" name="shuffle_questions" value="1" @checked(old('shuffle_questions', $exam->shuffle_questions))> Acak urutan soal</label>
+            <label class="check-pill"><input type="checkbox" name="shuffle_options" value="1" @checked(old('shuffle_options', $exam->shuffle_options))> Acak urutan opsi jawaban</label>
         </div>
         <p class="help">Kunci jawaban tetap hanya tersimpan di server, tidak ikut dikirim ke aplikasi siswa.</p>
     </div>
 
-
-    @if($exam->exists)
-        <div class="card" style="box-shadow:none;background:#fbfbff;border-color:#dbe3ff">
-            <div class="between">
-                <div>
-                    <h3>Mode Ujian Offline & Kunci Aplikasi</h3>
-                    <p class="muted small mb0">Konfigurasi ini diambil dari default sekolah saat ujian dibuat.</p>
-                </div>
-                <span class="badge warning">Edit hati-hati</span>
+    <div class="card">
+        <div class="between">
+            <div>
+                <h2 class="mb0">{{ $exam->exists ? 'Simpan Perubahan' : 'Simpan & Lanjut Pilih Soal' }}</h2>
+                <p class="muted small mb0">{{ $exam->exists ? 'Jika soal atau kelas berubah, paket ujian akan ditandai perlu dibuat ulang.' : 'Setelah disimpan, Anda langsung diarahkan ke Bank Soal untuk memilih soal ujian.' }}</p>
             </div>
-
-            <div class="field">
-                <label>Mode Kunci Android</label>
-                <select class="input" name="lock_mode">
-                    @foreach(($lockModes ?? \App\Models\Exam::LOCK_MODES) as $value => $label)
-                        <option value="{{ $value }}" @selected(old('lock_mode', $exam->lock_mode ?: \App\Models\Exam::LOCK_STRICT_AIRPLANE) === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-                <p class="help">Jika siswa keluar paksa atau internet aktif saat mengerjakan, mobile mengunci layar ujian, membunyikan alarm/notifikasi, dan mencatat event integritas.</p>
+            <div class="row">
+                <a class="btn" href="{{ $exam->exists ? route('exams.show', $exam) : route('exams.index') }}">Batal</a>
+                <button class="btn primary">{{ $exam->exists ? 'Simpan Konfigurasi' : 'Simpan & Pilih Soal' }}</button>
             </div>
         </div>
-    @endif
-
-    @if($exam->exists)
-        <button class="btn primary">Simpan Konfigurasi</button>
-    @else
-        <button class="btn primary">Simpan & Pilih Bank Soal</button>
-    @endif
+    </div>
 </form>
 @endsection

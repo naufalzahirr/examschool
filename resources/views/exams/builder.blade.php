@@ -1,8 +1,8 @@
-@extends('layouts.app', ['title' => 'Builder Soal'])
+@extends('layouts.app', ['title' => 'Review/Edit Soal Ujian'])
 
 @push('head')
 <style>
-    .builder-wrap{max-width:980px;margin:0 auto}.form-head{background:linear-gradient(135deg,#fff,#eef2ff);border-top:10px solid var(--primary)}.q-card{position:relative;margin-bottom:16px;border-left:6px solid transparent}.q-card.active{border-left-color:var(--primary)}.q-tools{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;border-top:1px solid var(--line);padding-top:14px}.option-row{display:grid;grid-template-columns:32px 1fr 86px 42px;gap:10px;align-items:center;margin:8px 0}.option-row input[type="radio"],.option-row input[type="checkbox"]{width:18px;height:18px}.matching-row{display:grid;grid-template-columns:1fr 1fr 42px;gap:10px;align-items:center;margin:8px 0}.pill{border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:#fff;font-weight:900}.floating-add{position:sticky;bottom:18px;text-align:center}.add-btn{box-shadow:0 18px 40px rgba(91,103,241,.32)}.type-note{border:1px dashed var(--line);border-radius:18px;padding:12px;background:#fafafa}.answer-area{margin-top:12px}.mini-title{font-weight:900;margin:12px 0 6px}.split-note{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tf-card{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fff}
+    .builder-wrap{max-width:980px;margin:0 auto}.form-head{background:linear-gradient(135deg,#fff,#eef2ff);border-top:10px solid var(--primary)}.q-card{position:relative;margin-bottom:16px;border-left:6px solid transparent}.q-card.active{border-left-color:var(--primary)}.q-tools{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;border-top:1px solid var(--line);padding-top:14px}.option-row{display:grid;grid-template-columns:32px 1fr 86px auto;gap:10px;align-items:center;margin:8px 0}.option-row input[type="radio"],.option-row input[type="checkbox"]{width:18px;height:18px}.matching-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:center;margin:8px 0}.pill{border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:#fff;font-weight:900}.floating-add{position:sticky;bottom:18px;text-align:center}.add-btn{box-shadow:0 18px 40px rgba(91,103,241,.32)}.type-note{border:1px dashed var(--line);border-radius:18px;padding:12px;background:#fafafa}.answer-area{margin-top:12px}.mini-title{font-weight:900;margin:12px 0 6px}.split-note{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tf-card{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fff}
     @media(max-width:700px){.option-row,.matching-row,.split-note,.tf-grid{grid-template-columns:1fr}.option-row{border:1px solid var(--line);border-radius:18px;padding:12px}}
 </style>
 @endpush
@@ -11,8 +11,8 @@
 <div class="builder-wrap">
     <div class="between mb">
         <div>
-            <h1>Builder Soal</h1>
-            <p class="muted">Soal ujian diambil dari Bank Soal. Guru membuat soal di Bank Soal terlebih dahulu, lalu memilih soal yang sesuai untuk ujian ini.</p>
+            <h1>Review/Edit Soal Ujian</h1>
+            <p class="muted">Soal utama tetap dipilih dari Bank Soal. Halaman ini dipakai untuk meninjau salinan soal yang sudah masuk ke ujian.</p>
         </div>
         <a class="btn" href="{{ route('exams.show', $exam) }}">Kembali</a>
     </div>
@@ -57,7 +57,7 @@
         @else
             <div class="card mt">
                 <b>Mode lihat saja</b><br>
-                <span class="muted small">Builder ini hanya untuk review soal karena ujian sudah dikunci.</span>
+                <span class="muted small">Halaman ini hanya untuk melihat soal karena ujian sudah dikunci.</span>
             </div>
         @endif
     </form>
@@ -133,8 +133,8 @@ function renderQuestion(q){
             <label class="row">Poin <input class="input q-points" type="number" min="0" step="0.5" value="${esc(q.points ?? 1)}" style="width:110px"></label>
         </div>
         <div class="q-tools">
-            <button type="button" class="btn ghost" onclick="moveCard(this,-1)">↑</button>
-            <button type="button" class="btn ghost" onclick="moveCard(this,1)">↓</button>
+            <button type="button" class="btn ghost" onclick="moveCard(this,-1)">Naik</button>
+            <button type="button" class="btn ghost" onclick="moveCard(this,1)">Turun</button>
             <button type="button" class="btn danger" onclick="deleteCard(this)">Hapus</button>
         </div>`;
 }
@@ -189,7 +189,7 @@ function choiceOptionHtml(cardUid, inputType, opt = {}){
         <input class="opt-correct" name="correct_${cardUid}" type="${inputType}" ${opt.is_correct?'checked':''}>
         <input class="input opt-label" placeholder="Opsi jawaban" value="${esc(opt.label)}">
         <span class="muted small">Kunci</span>
-        <button type="button" class="btn danger" onclick="this.closest('.option-row').remove()">×</button>
+        <button type="button" class="btn danger" onclick="this.closest('.option-row').remove()">Hapus</button>
     </div>`;
 }
 
@@ -197,7 +197,7 @@ function matchingRowHtml(row = {}){
     return `<div class="matching-row">
         <input class="input match-left" placeholder="Item kiri" value="${esc(row.label)}">
         <input class="input match-right" placeholder="Pasangan benar" value="${esc(row.match || row.meta?.match || '')}">
-        <button type="button" class="btn danger" onclick="this.closest('.matching-row').remove()">×</button>
+        <button type="button" class="btn danger" onclick="this.closest('.matching-row').remove()">Hapus</button>
     </div>`;
 }
 

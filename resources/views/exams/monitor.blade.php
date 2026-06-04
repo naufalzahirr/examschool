@@ -90,7 +90,7 @@
                 </select>
             </div>
             <div class="tool-field search">
-                <label>Live Search</label>
+                <label>Cari Cepat</label>
                 <div class="live-search-wrap"><input class="input" data-live-search="monitorTable" name="q" value="{{ request('q') }}" placeholder="Cari NIS, nama, kelas, device"></div>
             </div>
             <button class="btn primary">Cari</button>

@@ -263,6 +263,12 @@ class QuestionBankController extends Controller
     public function selectForExam(Request $request, Exam $exam)
     {
         abort_unless(auth()->user()->canManageExam($exam), 403);
+        if (! $exam->canEditQuestions()) {
+            return redirect()->route('exams.show', $exam)
+                ->withErrors(['bank' => 'Soal ujian sudah dikunci. Pemilihan dari Bank Soal hanya bisa dilakukan saat ujian masih draft/siap dan belum ada aktivitas siswa.']);
+        }
+
+        $exam->loadCount('questions');
         $query = QuestionBankItem::query()
             ->visibleToUser(auth()->user(), forSelection: true)
             ->where('is_active', true)

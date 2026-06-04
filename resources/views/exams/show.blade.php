@@ -17,7 +17,7 @@
             @if($exam->canEditQuestions())
                 <a class="btn primary" href="{{ route('exams.question-bank.select', $exam) }}">Ambil dari Bank Soal</a>
             @endif
-            <a class="btn primary" href="{{ route('exams.builder', $exam) }}">Builder Soal</a>
+            <a class="btn soft" href="{{ route('exams.builder', $exam) }}">{{ $exam->canEditQuestions() ? 'Review/Edit Soal' : 'Lihat Soal' }}</a>
             <a class="btn soft" href="{{ route('exams.monitor', $exam) }}">Monitor</a>
         </div>
     </div>
@@ -53,13 +53,13 @@
     </div>
 
     <div class="card">
-        <h2>Aturan Teknis</h2>
+        <h2>Prosedur Ujian</h2>
         <div class="check-list">
-            <div class="check-pill">🔒 Soal dikunci setelah publish</div>
-            <div class="check-pill">📥 Siswa download paket soal di awal</div>
-            <div class="check-pill">📴 Pengerjaan bisa offline di aplikasi</div>
-            <div class="check-pill">📤 Jawaban dikirim saat online kembali</div>
-            <div class="check-pill">📱 Akun siswa terkunci ke perangkat pertama</div>
+            <div class="check-pill">1. Pilih kelas peserta</div>
+            <div class="check-pill">2. Ambil soal dari Bank Soal</div>
+            <div class="check-pill">3. Cek checklist, lalu publish</div>
+            <div class="check-pill">4. Siswa download paket dan mulai sesuai jadwal</div>
+            <div class="check-pill">5. Monitor pelaksanaan dan hasil</div>
         </div>
     </div>
 </div>
@@ -149,6 +149,12 @@
 <div class="card mb">
     <h2>Aksi Cepat</h2>
     <div class="row">
+        @if($exam->canEditQuestions())
+            <a class="btn primary" href="{{ route('exams.question-bank.select', $exam) }}">Ambil dari Bank Soal</a>
+            <a class="btn soft" href="{{ route('exams.builder', $exam) }}">Review/Edit Soal</a>
+        @else
+            <a class="btn soft" href="{{ route('exams.builder', $exam) }}">Lihat Soal</a>
+        @endif
         <a class="btn soft" href="{{ route('exams.participants', $exam) }}">Kelola Peserta</a>
         <a class="btn soft" href="{{ route('exams.monitor', $exam) }}">Monitor Pelaksanaan</a>
         <a class="btn soft" href="{{ route('exams.results', $exam) }}">Lihat Hasil</a>
@@ -172,24 +178,4 @@
     @endif
 </div>
 
-<div class="card">
-    <h2>Endpoint Mobile</h2>
-    <p class="muted">Aplikasi Android login memakai <b>kode ujian + NIS + password</b>. Setelah login, API mengembalikan Bearer token untuk download paket soal dan submit jawaban.</p>
-    <pre class="code">POST /api/mobile/login
-Body: access_code={{ $exam->access_code }}, nis=4728, password=******, device_id=ANDROID_DEVICE_ID
-
-POST /api/mobile/exam-package/queue
-Body: access_code={{ $exam->access_code }}, device_id=ANDROID_DEVICE_ID
-Response granted: download_url, queue_token, active, limit, position
-
-GET /api/mobile/exam-package?access_code={{ $exam->access_code }}&queue_token=QUEUE_TOKEN
-Header: Authorization: Bearer TOKEN_DARI_LOGIN
-Header opsional: If-None-Match: {{ $exam->package_checksum ?: 'CHECKSUM_LOKAL' }}
-
-POST /api/mobile/exam-package/download-complete
-POST /api/mobile/exam-package/unlock
-POST /api/mobile/attempt/start
-POST /api/mobile/attempt/sync   # opsional; progress utama tetap lokal HP
-POST /api/mobile/attempt/submit # final upload + idempotency_key + exit_events</pre>
-</div>
 @endsection

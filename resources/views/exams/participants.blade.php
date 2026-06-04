@@ -35,7 +35,7 @@
 <div class="card data-card">
     <div class="table-toolbar">
         <div class="table-title">
-            <h2>Live Table Peserta</h2>
+            <h2>Daftar Peserta</h2>
             <p class="muted small mb0">Reset perangkat dipakai jika siswa ganti HP atau aplikasi terkunci di device lama.</p>
         </div>
         <form class="table-tools" method="GET" action="{{ route('exams.participants', $exam) }}">
@@ -58,7 +58,7 @@
                 </select>
             </div>
             <div class="tool-field search">
-                <label>Live Search</label>
+                <label>Cari Cepat</label>
                 <div class="live-search-wrap"><input class="input" data-live-search="participantsTable" name="q" value="{{ request('q') }}" placeholder="Cari NIS, nama, kelas, device"></div>
             </div>
             <button class="btn primary">Cari</button>
