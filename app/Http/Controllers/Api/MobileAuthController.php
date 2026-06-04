@@ -142,6 +142,7 @@ class MobileAuthController extends Controller
         $data = $request->validate([
             'access_code' => ['required', 'string'],
             'device_id' => ['nullable', 'string', 'max:120'],
+            'needs_package' => ['nullable', 'boolean'],
         ]);
 
         [$exam, $participant] = $this->resolveAuthenticatedParticipant($request, $data['access_code']);
@@ -166,7 +167,9 @@ class MobileAuthController extends Controller
             return response()->json(['message' => 'Akun ini sudah terkunci di perangkat lain.'], 423);
         }
 
-        $result = DB::transaction(function () use ($exam, $participant, $settings) {
+        $needsPackage = (bool) ($data['needs_package'] ?? false);
+
+        $result = DB::transaction(function () use ($exam, $participant, $settings, $needsPackage) {
             $now = now();
 
             ExamParticipant::where('exam_id', $exam->id)
@@ -198,7 +201,7 @@ class MobileAuthController extends Controller
                 ];
             }
 
-            if ($fresh->package_download_finished_at) {
+            if ($fresh->package_download_finished_at && ! $needsPackage) {
                 return [
                     'granted' => true,
                     'already_downloaded' => true,
@@ -208,6 +211,21 @@ class MobileAuthController extends Controller
                     'limit' => $settings['concurrent_limit'],
                     'position' => 0,
                 ];
+            }
+
+            // Aplikasi mobile mungkin kehilangan cache lokal walaupun server pernah mencatat download selesai
+            // (contoh: reinstall aplikasi, clear data, atau bug versi lama yang menandai complete tanpa file lokal).
+            // Jika mobile mengirim needs_package=true, beri slot download ulang dengan tetap melewati antrean normal.
+            if ($fresh->package_download_finished_at && $needsPackage) {
+                $fresh->forceFill([
+                    'package_download_finished_at' => null,
+                    'package_queue_token' => null,
+                    'package_queue_started_at' => null,
+                    'package_queue_expires_at' => null,
+                    'package_download_started_at' => null,
+                    'package_queue_joined_at' => $now,
+                    'status' => in_array($fresh->status, ['downloaded', 'unlocked'], true) ? 'download_ready' : $fresh->status,
+                ])->save();
             }
 
             if (! $fresh->package_queue_joined_at) {
