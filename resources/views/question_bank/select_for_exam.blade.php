@@ -4,7 +4,7 @@
 <div class="between mb">
     <div>
         <h1>Pilih Soal dari Bank Soal</h1>
-        <p class="muted">Ujian: <b>{{ $exam->title }}</b>. Soal yang dipilih akan disalin ke ujian, jadi aman walaupun Bank Soal diedit lagi nanti.</p>
+        <p class="muted">Ujian: <b>{{ $exam->title }}</b>. Pilih satu paket Bank Soal, lalu semua soal aktif di dalam paket itu akan disalin ke ujian.</p>
     </div>
     <a class="btn" href="{{ route('exams.show', $exam) }}">Kembali ke Ujian</a>
 </div>
@@ -17,7 +17,7 @@
         </div>
         <div class="step">
             <span class="step-no">2</span>
-            <div><b>Centang soal</b><br><span class="muted small">Pilih satu atau banyak soal. Soal yang sudah masuk akan ditandai.</span></div>
+            <div><b>Pilih satu paket</b><br><span class="muted small">Satu paket Bank Soal bisa berisi banyak soal.</span></div>
         </div>
         <div class="step">
             <span class="step-no">3</span>
@@ -91,50 +91,56 @@
 <form method="POST" action="{{ route('exams.question-bank.add', $exam) }}" class="card data-card">
     @csrf
     <div class="table-toolbar">
-        <div class="table-title"><h2>Pilih Soal</h2><p class="muted small mb0">Ujian ini sudah punya <b>{{ $exam->questions_count ?? 0 }}</b> soal. Total tersedia dari filter ini: {{ $items->total() }} soal.</p></div>
+        <div class="table-title"><h2>Pilih Paket Bank Soal</h2><p class="muted small mb0">Ujian ini sudah punya <b>{{ $exam->questions_count ?? 0 }}</b> soal. Total paket dari filter ini: {{ $bankGroups->total() }}.</p></div>
         <div class="table-tools">
-            <span class="badge info"><b id="selectedBankCount">0</b> dipilih</span>
-            <button class="btn soft" type="button" id="selectVisibleQuestions">Pilih semua terlihat</button>
-            <button class="btn primary">Tambahkan yang Dipilih</button>
+            <span class="badge info" id="selectedBankLabel">Belum memilih paket</span>
+            <button class="btn primary">Gunakan Paket Ini</button>
         </div>
     </div>
     <div class="table-wrap">
         <table class="table" id="selectBankTable">
-            <thead><tr><th>Pilih</th><th>Soal</th><th>Jenis</th><th>Opsi/Kunci</th><th>Mapel/Topik</th><th>Akses/Pembuat</th><th>Poin</th></tr></thead>
+            <thead><tr><th>Pilih</th><th>Paket Bank Soal</th><th>Jumlah Soal</th><th>Jenis</th><th>Level</th><th>Akses/Pembuat</th><th>Total Poin</th></tr></thead>
             <tbody>
-                @forelse($items as $item)
-                    @php($alreadyAdded = in_array($item->id, $existingBankItemIds, true))
+                @forelse($bankGroups as $group)
                     <tr>
                         <td>
-                            @if($alreadyAdded)
+                            @if(($group['available_count'] ?? 0) < 1)
                                 <span class="badge info">Sudah masuk</span>
                             @else
-                                <label class="check-pill" style="justify-content:center"><input class="bank-select" type="checkbox" name="question_bank_ids[]" value="{{ $item->id }}"></label>
+                                <label class="check-pill" style="justify-content:center">
+                                    <input class="bank-select" type="radio" name="bank_key" value="{{ $group['key'] }}" data-title="{{ $group['title'] }}">
+                                </label>
                             @endif
                         </td>
-                        <td><b>{{ $item->title }}</b><br><span class="muted small">{{ $item->question_code }}</span></td>
-                        <td>{{ \App\Models\QuestionBankItem::typeLabels()[$item->type] ?? $item->type }}</td>
-                        <td><span class="muted small">Opsi:</span> {{ Str::limit($item->optionsPreview() ?: '-', 90) }}<br><span class="muted small">Kunci:</span> <b>{{ Str::limit($item->answerPreview(), 90) }}</b></td>
-                        <td>{{ $item->subject ?: '-' }}<br><span class="muted small">{{ $item->topic ?: '-' }} - {{ $item->grade_level ?: '-' }}</span></td>
                         <td>
-                            @if($item->isSharedToSchool())
+                            <b>{{ $group['title'] }}</b><br>
+                            <span class="muted small">{{ $group['subject'] ?: '-' }} / {{ $group['grade_level'] ?: '-' }} / {{ $group['topic'] ?: '-' }}</span>
+                        </td>
+                        <td>
+                            <b>{{ $group['questions_count'] }}</b> soal<br>
+                            <span class="muted small">{{ $group['available_count'] }} belum masuk ujian ini</span>
+                        </td>
+                        <td>{{ $group['types'] ?: '-' }}</td>
+                        <td>{{ $group['difficulties'] ?: '-' }}</td>
+                        <td>
+                            @if(($group['visibility'] ?? '') === \App\Models\QuestionBankItem::VISIBILITY_SCHOOL)
                                 <span class="badge success">Bersama</span>
                             @else
                                 <span class="badge draft">Pribadi</span>
                             @endif
-                            <br><span class="muted small">{{ $item->teacher?->name ?: '-' }}</span>
+                            <br><span class="muted small">{{ $group['teacher_name'] ?: '-' }}</span>
                         </td>
-                        <td>{{ $item->points }}</td>
+                        <td>{{ number_format((float) $group['total_points'], 2) }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="7">Belum ada soal di bank.</td></tr>
+                    <tr><td colspan="7">Belum ada paket Bank Soal yang cocok dengan filter.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
     <div class="table-meta between">
-        <div class="small muted">Terlihat: <b data-live-count="selectBankTable">{{ $items->count() }}</b> baris</div>
-        <div class="row"><button class="btn primary">Tambahkan yang Dipilih</button><div>{{ $items->links() }}</div></div>
+        <div class="small muted">Terlihat: <b data-live-count="selectBankTable">{{ $bankGroups->count() }}</b> paket</div>
+        <div class="row"><button class="btn primary">Gunakan Paket Ini</button><div>{{ $bankGroups->links() }}</div></div>
     </div>
 </form>
 @endsection
@@ -142,19 +148,14 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const checkboxes = [...document.querySelectorAll('.bank-select')];
-    const counter = document.getElementById('selectedBankCount');
+    const radios = [...document.querySelectorAll('.bank-select')];
+    const label = document.getElementById('selectedBankLabel');
     const updateCounter = () => {
-        if(counter) counter.textContent = checkboxes.filter(item => item.checked).length;
+        const selected = radios.find(item => item.checked);
+        if(label) label.textContent = selected ? selected.dataset.title : 'Belum memilih paket';
     };
 
-    checkboxes.forEach(item => item.addEventListener('change', updateCounter));
-    document.getElementById('selectVisibleQuestions')?.addEventListener('click', () => {
-        const visible = checkboxes.filter(item => item.closest('tr')?.style.display !== 'none');
-        const shouldCheck = visible.some(item => !item.checked);
-        visible.forEach(item => item.checked = shouldCheck);
-        updateCounter();
-    });
+    radios.forEach(item => item.addEventListener('change', updateCounter));
     updateCounter();
 });
 </script>

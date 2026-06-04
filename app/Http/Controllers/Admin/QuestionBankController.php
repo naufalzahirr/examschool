@@ -8,6 +8,7 @@ use App\Models\Exam;
 use App\Models\Question;
 use App\Models\QuestionBankItem;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -203,20 +204,22 @@ class QuestionBankController extends Controller
         }
 
         $data = $request->validate([
-            'question_bank_ids' => ['required', 'array'],
-            'question_bank_ids.*' => ['integer', 'exists:question_bank_items,id'],
+            'bank_key' => ['required', 'string'],
         ]);
 
+        $group = $this->decodeBankGroupKey($data['bank_key']);
         $existingBankItemIds = $this->examBankItemIds($exam);
-        $items = QuestionBankItem::query()
+        $groupQuery = QuestionBankItem::query()
             ->visibleToUser(auth()->user(), forSelection: true)
-            ->whereIn('id', $data['question_bank_ids'])
-            ->whereNotIn('id', $existingBankItemIds)
-            ->where('is_active', true)
-            ->get();
+            ->where('is_active', true);
+
+        $this->applyBankGroupWhere($groupQuery, $group);
+
+        $selectedCount = (clone $groupQuery)->count();
+        $items = $groupQuery->whereNotIn('id', $existingBankItemIds)->orderBy('id')->get();
 
         if ($items->isEmpty()) {
-            return back()->withErrors(['bank' => 'Belum ada soal baru yang bisa ditambahkan. Soal mungkin sudah ada di ujian atau tidak aktif.']);
+            return back()->withErrors(['bank' => 'Belum ada soal baru dari bank ini yang bisa ditambahkan. Soal mungkin sudah masuk semua ke ujian atau tidak aktif.']);
         }
 
         $added = 0;
@@ -251,8 +254,8 @@ class QuestionBankController extends Controller
         });
 
         AuditLog::record('exam.questions_added_from_bank', $exam, ['added' => $added]);
-        $skipped = count($data['question_bank_ids']) - $added;
-        $message = "{$added} soal berhasil ditambahkan dari bank soal.";
+        $skipped = max(0, $selectedCount - $added);
+        $message = "{$added} soal berhasil ditambahkan dari paket Bank Soal.";
         if ($skipped > 0) {
             $message .= " {$skipped} soal dilewati karena sudah ada di ujian atau tidak bisa dipakai.";
         }
@@ -300,11 +303,13 @@ class QuestionBankController extends Controller
             }
         }
 
-        $items = $query->paginate(30)->withQueryString();
+        $bankGroups = $this->paginateBankGroups(
+            $this->bankGroupsFromItems($query->get(), $exam),
+            $request
+        );
         $filters = $this->selectionFilterOptions();
-        $existingBankItemIds = $this->examBankItemIds($exam);
 
-        return view('question_bank.select_for_exam', compact('exam', 'items', 'filters', 'existingBankItemIds'));
+        return view('question_bank.select_for_exam', compact('exam', 'bankGroups', 'filters'));
     }
 
     private function validated(Request $request, bool $multiple = false): array
@@ -618,6 +623,119 @@ class QuestionBankController extends Controller
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function bankGroupsFromItems($items, Exam $exam)
+    {
+        $existingBankItemIds = $this->examBankItemIds($exam);
+
+        return $items
+            ->groupBy(fn (QuestionBankItem $item) => $this->bankGroupKey($item))
+            ->map(function ($groupItems, string $key) use ($existingBankItemIds) {
+                /** @var QuestionBankItem $first */
+                $first = $groupItems->first();
+                $available = $groupItems->reject(fn (QuestionBankItem $item) => in_array($item->id, $existingBankItemIds, true));
+
+                return [
+                    'key' => $key,
+                    'title' => $this->bankGroupTitle($first),
+                    'subject' => $first->subject,
+                    'grade_level' => $first->grade_level,
+                    'topic' => $first->topic,
+                    'visibility' => $first->visibility,
+                    'teacher_name' => $first->teacher?->name ?: '-',
+                    'questions_count' => $groupItems->count(),
+                    'available_count' => $available->count(),
+                    'total_points' => $groupItems->sum(fn (QuestionBankItem $item) => (float) $item->points),
+                    'types' => $groupItems->pluck('type')->unique()->map(fn ($type) => QuestionBankItem::typeLabels()[$type] ?? $type)->implode(', '),
+                    'difficulties' => $groupItems->pluck('difficulty')->filter()->unique()->map(fn ($value) => ucfirst((string) $value))->implode(', '),
+                    'updated_at' => $groupItems->max('updated_at'),
+                ];
+            })
+            ->sortBy([
+                ['subject', 'asc'],
+                ['grade_level', 'asc'],
+                ['topic', 'asc'],
+                ['teacher_name', 'asc'],
+            ])
+            ->values();
+    }
+
+    private function paginateBankGroups($groups, Request $request): LengthAwarePaginator
+    {
+        $perPage = 20;
+        $page = max(1, (int) $request->get('page', 1));
+
+        return new LengthAwarePaginator(
+            $groups->forPage($page, $perPage)->values(),
+            $groups->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+    }
+
+    private function bankGroupKey(QuestionBankItem $item): string
+    {
+        $payload = [
+            'teacher_id' => (int) ($item->teacher_id ?: 0),
+            'subject' => trim((string) $item->subject),
+            'grade_level' => trim((string) $item->grade_level),
+            'topic' => trim((string) $item->topic),
+            'visibility' => trim((string) ($item->visibility ?: QuestionBankItem::VISIBILITY_SCHOOL)),
+        ];
+
+        return rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+    }
+
+    private function decodeBankGroupKey(string $key): array
+    {
+        $decoded = base64_decode(strtr($key, '-_', '+/').str_repeat('=', (4 - strlen($key) % 4) % 4), true);
+        $payload = $decoded ? json_decode($decoded, true) : null;
+        if (! is_array($payload)) {
+            throw ValidationException::withMessages(['bank_key' => 'Paket Bank Soal tidak valid.']);
+        }
+
+        return [
+            'teacher_id' => (int) ($payload['teacher_id'] ?? 0),
+            'subject' => trim((string) ($payload['subject'] ?? '')),
+            'grade_level' => trim((string) ($payload['grade_level'] ?? '')),
+            'topic' => trim((string) ($payload['topic'] ?? '')),
+            'visibility' => trim((string) ($payload['visibility'] ?? QuestionBankItem::VISIBILITY_SCHOOL)),
+        ];
+    }
+
+    private function applyBankGroupWhere($query, array $group): void
+    {
+        $group['teacher_id'] > 0
+            ? $query->where('teacher_id', $group['teacher_id'])
+            : $query->whereNull('teacher_id');
+
+        foreach (['subject', 'grade_level', 'topic'] as $field) {
+            $value = $group[$field] ?? '';
+            $query->where(function ($nested) use ($field, $value) {
+                if ($value === '') {
+                    $nested->whereNull($field)->orWhere($field, '');
+
+                    return;
+                }
+
+                $nested->where($field, $value);
+            });
+        }
+
+        $query->where('visibility', $group['visibility'] ?: QuestionBankItem::VISIBILITY_SCHOOL);
+    }
+
+    private function bankGroupTitle(QuestionBankItem $item): string
+    {
+        return collect([$item->subject, $item->grade_level, $item->topic])
+            ->map(fn ($value) => trim((string) $value))
+            ->filter()
+            ->implode(' - ') ?: 'Bank Soal Tanpa Label';
     }
 
     private function ensureCanManage(QuestionBankItem $item): void

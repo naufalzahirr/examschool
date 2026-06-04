@@ -68,7 +68,7 @@
         <div class="between mb">
             <div>
                 <h2 class="mb0">Keterangan Soal</h2>
-                <p class="muted small mb0">{{ $item->exists ? 'Keterangan ini berlaku untuk soal yang sedang diedit.' : 'Keterangan ini akan dipakai untuk semua kartu soal di bawah.' }}</p>
+                <p class="muted small mb0">{{ $item->exists ? 'Keterangan ini berlaku untuk soal yang sedang diedit.' : 'Keterangan ini akan dipakai untuk semua kartu soal di bawah. Saat membuat ujian, paket dengan keterangan yang sama dipilih satu kali.' }}</p>
             </div>
             @if($item->exists)
                 <span class="badge info">{{ $item->question_code }}</span>
