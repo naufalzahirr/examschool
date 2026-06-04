@@ -2,7 +2,10 @@
 
 @section('content')
 <div class="between mb">
-    <div><h1>Daftar Ujian</h1><p class="muted">Kelola ujian dari draft sampai hasil. Soal ujian dipilih dari Bank Soal setelah konfigurasi ujian dibuat.</p></div>
+    <div>
+        <h1>Daftar Ujian</h1>
+        <p class="muted">Kelola ujian dari pembuatan hingga hasil. Soal ujian dipilih dari Bank Soal.</p>
+    </div>
     <a class="btn primary" href="{{ route('exams.create') }}">+ Buat Ujian</a>
 </div>
 
@@ -10,7 +13,7 @@
     <div class="table-toolbar">
         <div class="table-title">
             <h2>Daftar Ujian</h2>
-            <p class="muted small mb0">Menampilkan {{ $exams->firstItem() ?? 0 }}-{{ $exams->lastItem() ?? 0 }} dari {{ $exams->total() }} ujian.</p>
+            <p class="muted small mb0">Menampilkan {{ $exams->firstItem() ?? 0 }}–{{ $exams->lastItem() ?? 0 }} dari {{ $exams->total() }} ujian.</p>
         </div>
         <form class="table-tools" method="GET" action="{{ route('exams.index') }}">
             <div class="tool-field">
@@ -48,36 +51,57 @@
 
     <div class="table-wrap">
         <table class="table" id="examsTable">
-            <thead><tr><th>Ujian</th><th>Kode</th><th>Kelas</th><th>Status</th><th>Paket</th><th>Soal</th><th>Peserta</th><th>Aksi</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Ujian</th>
+                    <th>Kode</th>
+                    <th>Kelas</th>
+                    <th>Status</th>
+                    <th>Soal</th>
+                    <th>Peserta</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
             <tbody>
             @forelse($exams as $exam)
                 <tr>
-                    <td><b>{{ $exam->title }}</b><br><span class="muted small">{{ $exam->subject ?: '-' }} · {{ $exam->grade_level ?: '-' }}</span></td>
+                    <td>
+                        <b>{{ $exam->title }}</b><br>
+                        <span class="muted small">{{ $exam->subject ?: '-' }}
+                            @if($exam->starts_at)
+                                · {{ $exam->starts_at->format('d M Y H:i') }}
+                            @endif
+                        </span>
+                    </td>
                     <td><span class="badge">{{ $exam->access_code }}</span></td>
                     <td>
-                        @forelse($exam->classrooms->take(4) as $classroom)
+                        @forelse($exam->classrooms->take(3) as $classroom)
                             <span class="badge">{{ $classroom->nama_kelas }}</span>
                         @empty
                             <span class="muted small">Belum dipilih</span>
                         @endforelse
-                        @if($exam->classrooms_count > 4)<span class="muted small">+{{ $exam->classrooms_count - 4 }} kelas</span>@endif
+                        @if($exam->classrooms_count > 3)
+                            <span class="muted small">+{{ $exam->classrooms_count - 3 }} kelas</span>
+                        @endif
                     </td>
-                    <td><span class="badge {{ $exam->status }}">{{ $exam->operationalStatus() }}</span><br><span class="muted tiny">{{ $exam->status }}</span></td>
-                    <td><span class="badge {{ $exam->hasGeneratedPackage() ? 'active' : 'warning' }}">{{ $exam->hasGeneratedPackage() ? 'siap' : 'belum' }}</span><br><span class="muted tiny">v{{ $exam->package_version }} · {{ $exam->package_downloads_count ?? 0 }} dl</span></td>
+                    <td>
+                        <span class="badge {{ $exam->status }}">{{ $exam->operationalStatus() }}</span>
+                        @if(!$exam->hasGeneratedPackage())
+                            <br><span class="muted tiny">paket belum ada</span>
+                        @endif
+                    </td>
                     <td>{{ $exam->questions_count }}</td>
                     <td>{{ $exam->participants_count }}</td>
                     <td class="row">
                         <a class="btn soft" href="{{ route('exams.show', $exam) }}">Kelola</a>
                         @if($exam->canEditQuestions())
                             <a class="btn primary" href="{{ route('exams.question-bank.select', $exam) }}">Pilih Soal</a>
-                        @else
-                            <a class="btn" href="{{ route('exams.builder', $exam) }}">Lihat Soal</a>
                         @endif
                         <a class="btn" href="{{ route('exams.monitor', $exam) }}">Monitor</a>
                     </td>
                 </tr>
             @empty
-                <tr data-empty-row><td colspan="8">Belum ada ujian.</td></tr>
+                <tr data-empty-row><td colspan="7">Belum ada ujian. <a href="{{ route('exams.create') }}">Buat ujian pertama →</a></td></tr>
             @endforelse
             </tbody>
         </table>
