@@ -17,6 +17,7 @@ Route::prefix('mobile')->group(function () {
         Route::post('/exam-package/unlock', [MobileAuthController::class, 'unlock']);
         Route::post('/attempt/start', [AttemptController::class, 'start']);
         Route::post('/attempt/sync', [AttemptController::class, 'sync']);
+        Route::post('/attempt/integrity-event', [AttemptController::class, 'integrityEvent']);
         Route::post('/attempt/submit', [AttemptController::class, 'submit']);
     });
 });

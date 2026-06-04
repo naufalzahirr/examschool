@@ -235,7 +235,21 @@ class ParticipantController extends Controller
             'limit' => (int) \App\Models\SchoolSetting::getValue('package_download_concurrent_limit', 50),
         ];
 
-        return view('exams.monitor', compact('exam', 'statusCounts', 'participants', 'queueStats'));
+        $integrityStats = [
+            'locked' => (int) ($statusCounts['locked'] ?? 0),
+            'events' => 0,
+            'internet_active' => 0,
+            'app_left' => 0,
+        ];
+
+        $exam->participants()->whereNotNull('meta')->get(['id', 'meta'])->each(function ($participant) use (&$integrityStats) {
+            $summary = $participant->meta['integrity_summary'] ?? [];
+            $integrityStats['events'] += (int) ($summary['total'] ?? 0);
+            $integrityStats['internet_active'] += (int) ($summary['internet_active'] ?? 0);
+            $integrityStats['app_left'] += (int) ($summary['app_left'] ?? 0);
+        });
+
+        return view('exams.monitor', compact('exam', 'statusCounts', 'participants', 'queueStats', 'integrityStats'));
     }
 
     public function results(Request $request, Exam $exam)

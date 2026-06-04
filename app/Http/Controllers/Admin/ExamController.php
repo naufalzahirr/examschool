@@ -57,7 +57,7 @@ class ExamController extends Controller
             'exam' => new Exam([
                 'duration_minutes' => 90,
                 'status' => Exam::STATUS_DRAFT,
-                'lock_mode' => SchoolSetting::getValue('default_exam_lock_mode', Exam::LOCK_STANDARD),
+                'lock_mode' => SchoolSetting::getValue('default_exam_lock_mode', Exam::LOCK_STRICT_AIRPLANE),
                 'exit_policy' => SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_PROCTOR_CODE),
             ]),
             'classrooms' => $this->availableClassrooms(),
@@ -336,7 +336,7 @@ class ExamController extends Controller
 
         $data['shuffle_questions'] = $request->boolean('shuffle_questions');
         $data['shuffle_options'] = $request->boolean('shuffle_options');
-        $data['lock_mode'] = $data['lock_mode'] ?? Exam::LOCK_STANDARD;
+        $data['lock_mode'] = $data['lock_mode'] ?? Exam::LOCK_STRICT_AIRPLANE;
         $data['exit_policy'] = $data['exit_policy'] ?? Exam::EXIT_PROCTOR_CODE;
         $data['classroom_ids'] = collect($request->input('classroom_ids', []))->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
         unset($data['status']);

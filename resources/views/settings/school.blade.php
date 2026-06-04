@@ -27,6 +27,7 @@
     <div class="field">
         <label>Mode Kunci Default</label>
         <select class="input" name="default_exam_lock_mode">
+            <option value="strict_airplane" @selected(old('default_exam_lock_mode', $settings['default_exam_lock_mode'])==='strict_airplane')>Ketat / mode pesawat wajib</option>
             <option value="standard" @selected(old('default_exam_lock_mode', $settings['default_exam_lock_mode'])==='standard')>Standar / deteksi pelanggaran</option>
             <option value="strict_kiosk" @selected(old('default_exam_lock_mode', $settings['default_exam_lock_mode'])==='strict_kiosk')>Ketat / coba kiosk lock</option>
         </select>
@@ -43,7 +44,7 @@
     <div class="field"><label>Maks. Toleransi Pelanggaran Keluar</label><input class="input" type="number" name="exit_violation_max_allowed" value="{{ old('exit_violation_max_allowed', $settings['exit_violation_max_allowed']) }}"></div>
 </div>
 <div class="alert warning" style="margin-bottom:0">
-    Untuk perangkat Android pribadi siswa, mode kunci penuh tidak bisa dijamin seperti iOS Guided Access/SEB. Produksi paling aman: mode offline, paket terenkripsi, kode keluar pengawas, dan log pelanggaran lokal yang dikirim bersama jawaban.
+    Mode utama yang direkomendasikan: siswa download paket online, mengambil unlock key saat jadwal dibuka, lalu wajib mode pesawat/offline sebelum mulai menjawab. Jika internet aktif atau keluar aplikasi, ujian terkunci dan wajib kode pengawas.
 </div>
 
 <div class="field"><label>Mode Password Awal Siswa</label><select class="input" name="default_student_password_mode"><option value="nis" @selected(old('default_student_password_mode', $settings['default_student_password_mode'])==='nis')>Gunakan NIS masing-masing</option><option value="custom" @selected(old('default_student_password_mode', $settings['default_student_password_mode'])==='custom')>Custom dari proses sinkron/import</option></select></div>

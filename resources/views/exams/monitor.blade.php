@@ -18,6 +18,8 @@
     <div class="card"><div class="muted">Antrean Aktif</div><div class="stat">{{ $queueStats['active'] }} / {{ $queueStats['limit'] }}</div></div>
     <div class="card"><div class="muted">Sudah Download</div><div class="stat">{{ $queueStats['downloaded'] }}</div></div>
     <div class="card"><div class="muted">Submit</div><div class="stat">{{ $statusCounts['submitted'] ?? 0 }}</div></div>
+    <div class="card"><div class="muted">Terkunci</div><div class="stat">{{ $integrityStats['locked'] ?? 0 }}</div></div>
+    <div class="card"><div class="muted">Event Pelanggaran</div><div class="stat">{{ $integrityStats['events'] ?? 0 }}</div></div>
 </div>
 
 <div class="card mb">
@@ -27,6 +29,22 @@
             <p class="muted small mb0">Status server: <b>{{ $exam->status }}</b>. Jadwal: {{ optional($exam->starts_at)->format('d M Y H:i') ?: 'fleksibel' }} - {{ optional($exam->ends_at)->format('d M Y H:i') ?: 'fleksibel' }}. Download paket: {{ $queueStats['download_window_open'] ? 'sudah dibuka' : 'dibuka '.$queueStats['download_opens_at'] }}.</p>
         </div>
         <span class="badge {{ $exam->isOpenNow() ? 'active' : 'warning' }}">{{ $exam->isOpenNow() ? 'ujian sedang dibuka' : 'ujian belum/tidak dibuka' }}</span>
+    </div>
+</div>
+
+<div class="card mb">
+    <div class="between">
+        <div>
+            <h2 class="mb0">Integritas & Kunci Ujian</h2>
+            <p class="muted small mb0">Pantau siswa yang ujiannya terkunci karena keluar aplikasi, internet aktif, atau gagal kode pengawas. Saat HP benar-benar mode pesawat, event akan masuk setelah siswa upload jawaban.</p>
+        </div>
+        <span class="badge {{ ($integrityStats['locked'] ?? 0) > 0 ? 'warning' : 'active' }}">{{ ($integrityStats['locked'] ?? 0) > 0 ? 'perlu pengawas' : 'normal' }}</span>
+    </div>
+    <div class="grid mt">
+        <div class="mini-card"><div class="muted small">Sedang Terkunci</div><div class="stat">{{ $integrityStats['locked'] ?? 0 }}</div></div>
+        <div class="mini-card"><div class="muted small">Total Event</div><div class="stat">{{ $integrityStats['events'] ?? 0 }}</div></div>
+        <div class="mini-card"><div class="muted small">Keluar/Minimize</div><div class="stat">{{ $integrityStats['app_left'] ?? 0 }}</div></div>
+        <div class="mini-card"><div class="muted small">Internet Aktif</div><div class="stat">{{ $integrityStats['internet_active'] ?? 0 }}</div></div>
     </div>
 </div>
 
@@ -57,7 +75,7 @@
                 <label>Status</label>
                 <select class="input" name="status" onchange="this.form.submit()">
                     <option value="">Semua</option>
-                    @foreach(['assigned' => 'Belum login', 'download_ready' => 'Login/siap download', 'downloading' => 'Sedang download', 'downloaded' => 'Paket terunduh', 'unlocked' => 'Soal terbuka', 'in_progress' => 'Mengerjakan', 'synced' => 'Tersinkron', 'submitted' => 'Submit'] as $value => $label)
+                    @foreach(['assigned' => 'Belum login', 'download_ready' => 'Login/siap download', 'downloading' => 'Sedang download', 'downloaded' => 'Paket terunduh', 'unlocked' => 'Soal terbuka', 'in_progress' => 'Mengerjakan', 'locked' => 'Terkunci/Pelanggaran', 'synced' => 'Tersinkron', 'submitted' => 'Submit'] as $value => $label)
                         <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
@@ -82,7 +100,7 @@
     </div>
     <div class="table-wrap">
         <table class="table" id="monitorTable">
-            <thead><tr><th>NIS</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Download</th><th>Unlock</th><th>Device</th><th>Mulai</th><th>Last Sync</th><th>Submit</th><th>Nilai</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>NIS</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Integritas</th><th>Download</th><th>Unlock</th><th>Device</th><th>Mulai</th><th>Last Sync</th><th>Submit</th><th>Nilai</th><th>Aksi</th></tr></thead>
             <tbody>
             @forelse($participants as $p)
                 @php($last = $p->attempts->first())
@@ -91,6 +109,19 @@
                     <td><b>{{ $p->student?->name ?: 'Siswa dihapus' }}</b></td>
                     <td>{{ $p->student?->classroom?->nama_kelas ?: ($p->student?->class_name ?: '-') }}</td>
                     <td><span class="badge {{ $p->status }}">{{ $p->status }}</span></td>
+                    @php($summary = $p->meta['integrity_summary'] ?? [])
+                    @php($lastIntegrity = $p->meta['last_integrity_event'] ?? null)
+                    <td class="small">
+                        @if(($summary['total'] ?? 0) > 0)
+                            <span class="badge warning">{{ $summary['total'] }} event</span><br>
+                            <span class="muted">{{ $summary['last_reason'] ?? ($lastIntegrity['reason'] ?? '-') }}</span>
+                            @if(!empty($summary['last_at']))<br><span class="muted">{{ \Illuminate\Support\Carbon::parse($summary['last_at'])->format('H:i:s') }}</span>@endif
+                        @elseif($p->status === 'locked')
+                            <span class="badge warning">terkunci</span>
+                        @else
+                            <span class="muted">normal</span>
+                        @endif
+                    </td>
                     <td class="small">{{ optional($p->package_download_finished_at)->format('H:i:s') ?: (optional($p->package_queue_started_at)->format('H:i:s') ?: '-') }}</td>
                     <td class="small">{{ optional($p->package_unlock_key_issued_at)->format('H:i:s') ?: '-' }}</td>
                     <td class="small">{{ $p->device_id ?: '-' }}</td>
@@ -110,7 +141,7 @@
                     </td>
                 </tr>
             @empty
-                <tr data-empty-row><td colspan="12">Belum ada peserta.</td></tr>
+                <tr data-empty-row><td colspan="13">Belum ada peserta.</td></tr>
             @endforelse
             </tbody>
         </table>

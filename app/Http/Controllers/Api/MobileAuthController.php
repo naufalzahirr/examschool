@@ -130,9 +130,12 @@ class MobileAuthController extends Controller
             'offline_lock' => [
                 'lock_mode' => $exam->lock_mode,
                 'exit_policy' => $exam->exit_policy,
+                'airplane_mode_required' => true,
+                'internet_active_locks_exam' => true,
+                'app_exit_locks_exam' => true,
                 'note' => $exam->lock_mode === Exam::LOCK_STRICT_KIOSK
-                    ? 'Mobile akan mencoba mode kiosk/lock-task. Mode penuh membutuhkan perangkat sekolah/device owner.'
-                    : 'Mobile memakai mode standar: cegah lewat UI, catat pelanggaran keluar aplikasi lokal.',
+                    ? 'Mobile akan mencoba mode kiosk/lock-task jika perangkat mendukung, tetap wajib offline saat menjawab.'
+                    : 'Mobile memakai Strict Airplane Exam Mode: setelah unlock key siswa wajib mode pesawat/offline, keluar aplikasi/internet aktif langsung terkunci dan butuh kode pengawas.',
             ],
         ]);
     }

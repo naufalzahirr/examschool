@@ -22,9 +22,11 @@ class Exam extends Model
     public const STATUS_ARCHIVED = 'archived';
 
     public const LOCK_STANDARD = 'standard';
+    public const LOCK_STRICT_AIRPLANE = 'strict_airplane';
     public const LOCK_STRICT_KIOSK = 'strict_kiosk';
 
     public const LOCK_MODES = [
+        self::LOCK_STRICT_AIRPLANE => 'Ketat / Mode Pesawat: wajib offline, keluar/internet aktif terkunci',
         self::LOCK_STANDARD => 'Standar / BYOD: deteksi pelanggaran',
         self::LOCK_STRICT_KIOSK => 'Ketat / Kiosk: coba kunci aplikasi',
     ];
@@ -75,7 +77,7 @@ class Exam extends Model
     {
         static::creating(function (Exam $exam) {
             if (! $exam->lock_mode) {
-                $exam->lock_mode = (string) \App\Models\SchoolSetting::getValue('default_exam_lock_mode', self::LOCK_STANDARD);
+                $exam->lock_mode = (string) \App\Models\SchoolSetting::getValue('default_exam_lock_mode', self::LOCK_STRICT_AIRPLANE);
             }
             if (! $exam->exit_policy) {
                 $exam->exit_policy = (string) \App\Models\SchoolSetting::getValue('default_exam_exit_policy', self::EXIT_PROCTOR_CODE);
@@ -157,7 +159,13 @@ class Exam extends Model
             'offline_exit_code_hash' => $this->offline_exit_code_hash,
             'offline_exit_code_algorithm' => 'SHA256(UPPERCASE_CODE|salt|access_code)',
             'exit_code_generated_at' => optional($this->offline_exit_code_generated_at)->toIso8601String(),
-            'strict_android_note' => 'Android BYOD tidak bisa dijamin terkunci 100% tanpa mode device owner/kiosk. Mobile tetap wajib mencatat pelanggaran keluar aplikasi secara lokal.',
+            'airplane_mode_required' => true,
+            'internet_active_locks_exam' => true,
+            'app_exit_locks_exam' => true,
+            'reopen_requires_offline' => true,
+            'reopen_requires_proctor_code' => true,
+            'timer_continues_when_locked' => true,
+            'strict_android_note' => 'Mode utama: siswa wajib mode pesawat/offline setelah unlock key. Android BYOD tidak bisa dijamin 100% anti tombol Home tanpa device owner/kiosk, tetapi mobile akan fullscreen, menolak lanjut saat online, mengunci saat keluar aplikasi, dan mewajibkan kode pengawas.',
         ];
     }
 

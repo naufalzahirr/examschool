@@ -47,7 +47,7 @@ class SchoolSetting extends Model
             'package_download_concurrent_limit' => 50,
             'package_queue_slot_ttl_minutes' => 10,
             'package_download_max_attempts' => 3,
-            'default_exam_lock_mode' => 'standard',
+            'default_exam_lock_mode' => 'strict_airplane',
             'default_exam_exit_policy' => 'proctor_code',
             'offline_exit_code_length' => 8,
             'exit_violation_max_allowed' => 3,

@@ -94,6 +94,75 @@ class AttemptController extends Controller
         ]);
     }
 
+
+    public function integrityEvent(Request $request)
+    {
+        $data = $request->validate([
+            'access_code' => ['required', 'string'],
+            'client_attempt_id' => ['required', 'string', 'max:80'],
+            'device_id' => ['nullable', 'string', 'max:120'],
+            'event_type' => ['required', 'string', 'max:80'],
+            'reason' => ['nullable', 'string', 'max:120'],
+            'at' => ['nullable', 'date'],
+            'meta' => ['nullable', 'array'],
+        ]);
+
+        [$exam, $participant] = $this->resolve($request, $data['access_code']);
+        $this->ensureCanContinue($exam, $participant, $data['device_id'] ?? null, allowSubmitted: true, allowUploadGrace: true);
+
+        $event = [
+            'type' => $data['event_type'],
+            'reason' => $data['reason'] ?? null,
+            'at' => $data['at'] ?? now()->toIso8601String(),
+            'meta' => $data['meta'] ?? [],
+            'received_at' => now()->toIso8601String(),
+        ];
+
+        DB::transaction(function () use ($exam, $participant, $data, $event) {
+            $attempt = ExamAttempt::firstOrCreate(
+                [
+                    'participant_id' => $participant->id,
+                    'client_attempt_id' => $data['client_attempt_id'],
+                ],
+                [
+                    'exam_id' => $exam->id,
+                    'device_id' => $data['device_id'] ?? null,
+                    'started_at' => now(),
+                    'status' => 'started',
+                ]
+            );
+
+            $meta = $attempt->meta ?: [];
+            $events = $meta['integrity_events'] ?? [];
+            $events[] = $event;
+            $meta['integrity_events'] = array_slice($events, -100);
+            $meta['integrity_summary'] = $this->summarizeIntegrityEvents($meta['integrity_events']);
+
+            $attempt->update([
+                'last_synced_at' => now(),
+                'status' => $attempt->status === 'submitted' ? 'submitted' : 'locked',
+                'meta' => $meta,
+            ]);
+
+            $participantMeta = $participant->meta ?: [];
+            $participantEvents = $participantMeta['integrity_events'] ?? [];
+            $participantEvents[] = $event;
+            $participantMeta['integrity_events'] = array_slice($participantEvents, -100);
+            $participantMeta['integrity_summary'] = $this->summarizeIntegrityEvents($participantMeta['integrity_events']);
+            $participantMeta['last_integrity_event'] = $event;
+
+            $participant->update([
+                'status' => $participant->submitted_at ? 'submitted' : 'locked',
+                'meta' => $participantMeta,
+            ]);
+        });
+
+        return response()->json([
+            'message' => 'Event integritas ujian tercatat.',
+            'status' => $participant->fresh()->status,
+        ]);
+    }
+
     public function submit(Request $request)
     {
         $data = $request->validate([
@@ -174,10 +243,19 @@ class AttemptController extends Controller
                 ]),
             ]);
 
+            $participantMeta = $participant->meta ?: [];
+            $submittedEvents = $data['exit_events'] ?? [];
+            if ($submittedEvents) {
+                $participantMeta['submitted_exit_events'] = $submittedEvents;
+                $participantMeta['integrity_summary'] = $this->summarizeIntegrityEvents(array_merge($participantMeta['integrity_events'] ?? [], $submittedEvents));
+                $participantMeta['last_integrity_event'] = collect($submittedEvents)->last();
+            }
+
             $participant->update([
                 'status' => 'submitted',
                 'submitted_at' => $attempt->submitted_at,
                 'score' => $score,
+                'meta' => $participantMeta,
             ]);
 
             return [$attempt, $score];
@@ -191,6 +269,45 @@ class AttemptController extends Controller
             'upload_received_at' => optional($attempt->upload_received_at)->toIso8601String(),
             'submission_checksum' => $attempt->submission_checksum,
         ]);
+    }
+
+
+    private function summarizeIntegrityEvents(array $events): array
+    {
+        $summary = [
+            'total' => count($events),
+            'locked' => 0,
+            'app_left' => 0,
+            'internet_active' => 0,
+            'unlock_failed' => 0,
+            'unlocked_by_proctor' => 0,
+            'last_reason' => null,
+            'last_at' => null,
+        ];
+
+        foreach ($events as $event) {
+            $type = (string) ($event['type'] ?? '');
+            $reason = (string) ($event['reason'] ?? ($event['meta']['reason'] ?? ''));
+            if (str_contains($type, 'locked') || str_contains($reason, 'locked')) {
+                $summary['locked']++;
+            }
+            if (str_contains($type, 'app_') || str_contains($reason, 'app_left') || str_contains($reason, 'exit_button')) {
+                $summary['app_left']++;
+            }
+            if (str_contains($reason, 'internet') || str_contains($type, 'internet')) {
+                $summary['internet_active']++;
+            }
+            if (str_contains($type, 'failed')) {
+                $summary['unlock_failed']++;
+            }
+            if (str_contains($type, 'unlocked_by_proctor')) {
+                $summary['unlocked_by_proctor']++;
+            }
+            $summary['last_reason'] = $reason ?: $type;
+            $summary['last_at'] = $event['at'] ?? $event['received_at'] ?? $summary['last_at'];
+        }
+
+        return $summary;
     }
 
     private function resolve(Request $request, string $accessCode): array

@@ -32,7 +32,7 @@ class SchoolSettingController extends Controller
             'package_download_concurrent_limit' => ['required', 'integer', 'min:1', 'max:1000'],
             'package_queue_slot_ttl_minutes' => ['required', 'integer', 'min:1', 'max:60'],
             'package_download_max_attempts' => ['required', 'integer', 'min:1', 'max:20'],
-            'default_exam_lock_mode' => ['required', 'in:standard,strict_kiosk'],
+            'default_exam_lock_mode' => ['required', 'in:strict_airplane,standard,strict_kiosk'],
             'default_exam_exit_policy' => ['required', 'in:after_submit,after_time_end,proctor_code'],
             'offline_exit_code_length' => ['required', 'integer', 'min:6', 'max:16'],
             'exit_violation_max_allowed' => ['required', 'integer', 'min:0', 'max:50'],

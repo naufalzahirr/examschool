@@ -96,10 +96,10 @@
                 <label>Mode Kunci Android</label>
                 <select class="input" name="lock_mode">
                     @foreach(($lockModes ?? \App\Models\Exam::LOCK_MODES) as $value => $label)
-                        <option value="{{ $value }}" @selected(old('lock_mode', $exam->lock_mode ?: \App\Models\Exam::LOCK_STANDARD) === $value)>{{ $label }}</option>
+                        <option value="{{ $value }}" @selected(old('lock_mode', $exam->lock_mode ?: \App\Models\Exam::LOCK_STRICT_AIRPLANE) === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
-                <p class="help">Standar cocok untuk HP pribadi: aplikasi mencegah lewat UI dan mencatat pelanggaran. Kiosk cocok untuk perangkat sekolah yang bisa disiapkan sebagai dedicated/device-owner.</p>
+                <p class="help">Rekomendasi: Ketat / Mode Pesawat. Siswa wajib offline saat menjawab; keluar aplikasi/internet aktif langsung terkunci dan butuh kode pengawas.</p>
             </div>
             <div class="field">
                 <label>Aturan Keluar Saat Offline</label>
@@ -113,7 +113,7 @@
         </div>
 
         <div class="alert info" style="margin-bottom:0">
-            <b>Catatan teknis:</b> untuk Android biasa/BYOD, sistem tidak boleh dijanjikan 100% anti keluar aplikasi. Yang aman adalah: coba lock-task/kiosk jika memungkinkan, simpan progres lokal, kunci jawaban lokal setelah selesai, dan kirim log pelanggaran saat submit.
+            <b>Catatan teknis:</b> aplikasi akan memaksa alur mode pesawat/offline sebelum mulai jawab, fullscreen, menolak tombol back, dan mengunci ujian saat keluar aplikasi atau internet aktif. Tanpa device-owner/kiosk, Android tetap tidak bisa dijamin 100% memblokir tombol Home, maka pengawas tetap perlu memantau ruangan.
         </div>
     </div>
 
