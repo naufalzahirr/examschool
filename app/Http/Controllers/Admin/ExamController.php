@@ -15,9 +15,7 @@ use Illuminate\Validation\Rule;
 
 class ExamController extends Controller
 {
-    public function __construct(private readonly ExamPackageService $examPackageService)
-    {
-    }
+    public function __construct(private readonly ExamPackageService $examPackageService) {}
 
     public function index(Request $request)
     {
@@ -88,9 +86,13 @@ class ExamController extends Controller
             return $exam;
         });
 
-        $message = 'Ujian dibuat. Kode ujian otomatis: ' . $exam->access_code;
+        $message = 'Ujian dibuat. Kode ujian otomatis: '.$exam->access_code;
         if (($exam->created_participants_count ?? 0) > 0) {
-            $message .= ' Peserta otomatis dari kelas terpilih: ' . $exam->created_participants_count . ' siswa.';
+            $message .= ' Peserta otomatis dari kelas terpilih: '.$exam->created_participants_count.' siswa.';
+        }
+
+        if ($request->boolean('choose_from_bank')) {
+            return redirect()->route('exams.question-bank.select', $exam)->with('success', $message.' Sekarang pilih soal dari Bank Soal untuk ujian ini.');
         }
 
         return redirect()->route('exams.builder', $exam)->with('success', $message);
@@ -108,7 +110,7 @@ class ExamController extends Controller
             'active' => $exam->participants()->whereNotNull('package_queue_token')->whereNotNull('package_queue_expires_at')->where('package_queue_expires_at', '>', now())->whereNull('package_download_finished_at')->count(),
             'downloaded' => $exam->participants()->whereNotNull('package_download_finished_at')->count(),
             'unlocked' => $exam->participants()->whereNotNull('package_unlock_key_issued_at')->count(),
-            'limit' => (int) \App\Models\SchoolSetting::getValue('package_download_concurrent_limit', 50),
+            'limit' => (int) SchoolSetting::getValue('package_download_concurrent_limit', 50),
         ];
 
         return view('exams.show', compact('exam', 'readiness', 'queueStats'));
@@ -158,18 +160,18 @@ class ExamController extends Controller
             return ['created' => $createdParticipants, 'removed' => $removedParticipants];
         });
 
-        $message = 'Konfigurasi ujian diperbarui. Kode ujian tetap: ' . $exam->access_code;
+        $message = 'Konfigurasi ujian diperbarui. Kode ujian tetap: '.$exam->access_code;
         if (($createdParticipants['created'] ?? 0) > 0) {
-            $message .= ' Peserta baru dari kelas terpilih: ' . $createdParticipants['created'] . ' siswa.';
+            $message .= ' Peserta baru dari kelas terpilih: '.$createdParticipants['created'].' siswa.';
         }
         if (($createdParticipants['removed'] ?? 0) > 0) {
-            $message .= ' Peserta draft di luar kelas terpilih dihapus: ' . $createdParticipants['removed'] . ' siswa.';
+            $message .= ' Peserta draft di luar kelas terpilih dihapus: '.$createdParticipants['removed'].' siswa.';
         }
 
         $exam->refresh();
         if ($exam->status === Exam::STATUS_PUBLISHED && ! $exam->hasStartedWork()) {
             $package = $this->examPackageService->generate($exam->fresh(['questions.options', 'classrooms']));
-            $message .= ' Paket soal published digenerate ulang. Checksum: ' . $package['checksum'];
+            $message .= ' Paket soal published digenerate ulang. Checksum: '.$package['checksum'];
         } elseif ($exam->status === Exam::STATUS_PUBLISHED && ! $exam->hasGeneratedPackage()) {
             $message .= ' Perhatian: paket soal perlu digenerate ulang dari halaman detail ujian sebelum siswa download.';
         }
@@ -196,7 +198,7 @@ class ExamController extends Controller
         $exam->bumpPackageVersion();
         AuditLog::record('exam.exit_code_regenerated', $exam, ['access_code' => $exam->access_code]);
 
-        return back()->with('success', 'Kode keluar offline pengawas berhasil digenerate ulang: ' . $code . '. Simpan kode ini untuk pengawas. Paket soal perlu digenerate/publish ulang.');
+        return back()->with('success', 'Kode keluar offline pengawas berhasil digenerate ulang: '.$code.'. Simpan kode ini untuk pengawas. Paket soal perlu digenerate/publish ulang.');
     }
 
     public function regenerateCode(Exam $exam)
@@ -210,7 +212,7 @@ class ExamController extends Controller
         }
         AuditLog::record('exam.code_regenerated', $exam, ['access_code' => $exam->access_code]);
 
-        return back()->with('success', 'Kode ujian berhasil digenerate ulang: ' . $exam->access_code);
+        return back()->with('success', 'Kode ujian berhasil digenerate ulang: '.$exam->access_code);
     }
 
     public function publish(Exam $exam)
@@ -246,7 +248,7 @@ class ExamController extends Controller
             return $package;
         });
 
-        return back()->with('success', 'Ujian dipublish dan paket soal statis sudah dibuat. Siswa bisa download paket sebelum jam mulai. Checksum: ' . $package['checksum']);
+        return back()->with('success', 'Ujian dipublish dan paket soal statis sudah dibuat. Siswa bisa download paket sebelum jam mulai. Checksum: '.$package['checksum']);
     }
 
     public function regeneratePackage(Exam $exam)
@@ -271,7 +273,7 @@ class ExamController extends Controller
             'package_size_bytes' => $package['size_bytes'],
         ]);
 
-        return back()->with('success', 'Paket soal berhasil dibuat ulang. Checksum: ' . $package['checksum']);
+        return back()->with('success', 'Paket soal berhasil dibuat ulang. Checksum: '.$package['checksum']);
     }
 
     public function unpublish(Exam $exam)
@@ -288,6 +290,7 @@ class ExamController extends Controller
         ])->save();
 
         AuditLog::record('exam.unpublished', $exam, ['access_code' => $exam->access_code]);
+
         return back()->with('success', 'Ujian dikembalikan ke draft. Soal dan konfigurasi bisa diedit kembali.');
     }
 
@@ -300,6 +303,7 @@ class ExamController extends Controller
         ])->save();
 
         AuditLog::record('exam.closed', $exam, ['access_code' => $exam->access_code]);
+
         return back()->with('success', 'Ujian ditutup. Siswa tidak bisa download paket atau submit baru kecuali dibuka ulang oleh admin/guru terkait.');
     }
 

@@ -2,8 +2,8 @@
 
 @section('content')
 <div class="between mb">
-    <div><h1>Daftar Ujian</h1><p class="muted">Kelola ujian dari draft sampai hasil. Search, filter status, filter kelas, dan tabel sudah menyatu.</p></div>
-    <a class="btn primary" href="{{ route('exams.create') }}">+ Buat Ujian</a>
+    <div><h1>Daftar Ujian</h1><p class="muted">Kelola ujian dari draft sampai hasil. Soal ujian dipilih dari Bank Soal setelah konfigurasi ujian dibuat.</p></div>
+    <a class="btn primary" href="{{ route('exams.create') }}">+ Buat Ujian dari Bank Soal</a>
 </div>
 
 <div class="card data-card">

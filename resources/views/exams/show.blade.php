@@ -14,6 +14,9 @@
         </div>
         <div class="row">
             <a class="btn" href="{{ route('exams.edit', $exam) }}">Edit Konfigurasi</a>
+            @if($exam->canEditQuestions())
+                <a class="btn primary" href="{{ route('exams.question-bank.select', $exam) }}">Ambil dari Bank Soal</a>
+            @endif
             <a class="btn primary" href="{{ route('exams.builder', $exam) }}">Builder Soal</a>
             <a class="btn soft" href="{{ route('exams.monitor', $exam) }}">Monitor</a>
         </div>

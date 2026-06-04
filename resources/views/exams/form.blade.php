@@ -4,7 +4,7 @@
 <div class="between mb">
     <div>
         <h1>{{ $exam->exists ? 'Edit Ujian' : 'Buat Ujian' }}</h1>
-        <p class="muted">Atur judul, jadwal, durasi, dan kelas peserta. Kode ujian dibuat otomatis agar tidak bentrok.</p>
+        <p class="muted">Atur judul, jadwal, durasi, dan kelas peserta. Setelah disimpan, soal ujian bisa langsung dipilih dari Bank Soal.</p>
     </div>
     <a class="btn" href="{{ $exam->exists ? route('exams.show', $exam) : route('exams.index') }}">Kembali</a>
 </div>
@@ -24,7 +24,7 @@
             </div>
         @endif
     @else
-        <div class="alert info" style="margin-bottom:0">Kode ujian akan otomatis dibuat setelah konfigurasi disimpan.</div>
+        <div class="alert info" style="margin-bottom:0">Kode ujian akan otomatis dibuat setelah konfigurasi disimpan. Setelah itu guru bisa langsung memilih soal dari Bank Soal.</div>
     @endif
 
     <div class="field">
@@ -117,6 +117,13 @@
         </div>
     </div>
 
-    <button class="btn primary">Simpan Konfigurasi</button>
+    @if($exam->exists)
+        <button class="btn primary">Simpan Konfigurasi</button>
+    @else
+        <div class="row">
+            <button class="btn primary" name="choose_from_bank" value="1">Simpan & Pilih Bank Soal</button>
+            <button class="btn" name="choose_from_bank" value="0">Simpan Saja</button>
+        </div>
+    @endif
 </form>
 @endsection
