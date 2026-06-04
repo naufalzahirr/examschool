@@ -12,7 +12,7 @@
             <label>Password</label>
             <div style="position:relative">
                 <input class="input" type="password" id="loginPassword" name="password" placeholder="Password" autocomplete="current-password" required style="padding-right:3rem">
-                <button type="button" id="togglePwd" onclick="togglePassword()" style="position:absolute;right:.65rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:0">👁</button>
+                <button type="button" id="togglePwd" onclick="togglePassword()" style="position:absolute;right:.5rem;top:50%;transform:translateY(-50%);border:0;border-radius:8px;cursor:pointer;color:var(--primary-strong);background:var(--primary-soft);font-size:12px;font-weight:900;line-height:1;padding:.45rem .55rem">Lihat</button>
             </div>
         </div>
         <label class="row small"><input type="checkbox" name="remember" value="1"> Ingat perangkat ini</label>
@@ -28,10 +28,10 @@ function togglePassword(){
     const btn = document.getElementById('togglePwd');
     if(input.type === 'password'){
         input.type = 'text';
-        btn.textContent = '🙈';
+        btn.textContent = 'Sembunyi';
     } else {
         input.type = 'password';
-        btn.textContent = '👁';
+        btn.textContent = 'Lihat';
     }
 }
 </script>

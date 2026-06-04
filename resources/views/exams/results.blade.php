@@ -10,7 +10,7 @@
 
 @section('content')
 <div class="between mb">
-    <div><h1>Hasil Ujian</h1><p class="muted">{{ $exam->title }} · Kode: <b>{{ $exam->access_code }}</b></p></div>
+    <div><h1>Hasil Ujian</h1><p class="muted">{{ $exam->title }} | Kode: <b>{{ $exam->access_code }}</b></p></div>
     <div class="row"><a class="btn soft" href="{{ route('exams.results.export', $exam) }}">Export CSV</a><a class="btn" href="{{ route('exams.show', $exam) }}">Kembali</a></div>
 </div>
 
@@ -23,17 +23,17 @@
     </div>
     <div class="card">
         <div class="muted small">Rata-rata Nilai</div>
-        <div class="stat-big">{{ $stats['avg_score'] ?? '–' }}</div>
+        <div class="stat-big">{{ $stats['avg_score'] ?? '-' }}</div>
         <div class="muted small">&nbsp;</div>
     </div>
     <div class="card">
         <div class="muted small">Nilai Tertinggi</div>
-        <div class="stat-big" style="color:var(--success)">{{ $stats['max_score'] ?? '–' }}</div>
+        <div class="stat-big" style="color:var(--success)">{{ $stats['max_score'] ?? '-' }}</div>
         <div class="muted small">&nbsp;</div>
     </div>
     <div class="card">
         <div class="muted small">Nilai Terendah</div>
-        <div class="stat-big" style="color:{{ $stats['min_score'] !== null && $stats['min_score'] < 60 ? '#ff3e1d' : 'inherit' }}">{{ $stats['min_score'] ?? '–' }}</div>
+        <div class="stat-big" style="color:{{ $stats['min_score'] !== null && $stats['min_score'] < 60 ? '#ff3e1d' : 'inherit' }}">{{ $stats['min_score'] ?? '-' }}</div>
         <div class="muted small">&nbsp;</div>
     </div>
 </div>
@@ -65,7 +65,7 @@
         <div style="margin-bottom:.85rem">
             <div class="between" style="gap:.5rem;margin-bottom:.3rem">
                 <span class="small" style="font-weight:800">
-                    No.{{ $q['no'] }} · {{ Str::limit($q['title'], 55) }}
+                    No.{{ $q['no'] }} | {{ Str::limit($q['title'], 55) }}
                 </span>
                 <span class="badge {{ $q['wrong_pct'] >= 60 ? 'danger' : ($q['wrong_pct'] >= 40 ? 'warning' : '') }}" style="white-space:nowrap">
                     {{ $q['wrong_pct'] }}% salah

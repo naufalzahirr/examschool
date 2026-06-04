@@ -4,7 +4,7 @@
 <div class="between mb">
     <div>
         <h1>Peserta Ujian</h1>
-        <p class="muted">{{ $exam->title }} · Kode: <b>{{ $exam->access_code }}</b></p>
+        <p class="muted">{{ $exam->title }} | Kode: <b>{{ $exam->access_code }}</b></p>
     </div>
     <div class="row">
         <a class="btn soft" href="{{ route('exams.monitor', $exam) }}">Monitor</a>
@@ -23,7 +23,7 @@
             <a class="btn soft" href="{{ route('exams.participants.import', $exam) }}">Import Peserta</a>
             <form method="POST" action="{{ route('exams.participants.syncClassrooms', $exam) }}">
                 @csrf
-                <button class="btn primary">↻ Sinkron dari Kelas</button>
+                <button class="btn primary">Sinkron dari Kelas</button>
             </form>
         </div>
     </div>
@@ -31,7 +31,7 @@
         @forelse($exam->classrooms as $classroom)
             <span class="badge">{{ $classroom->nama_kelas }}</span>
         @empty
-            <span class="muted">Belum ada kelas. <a href="{{ route('exams.edit', $exam) }}">Pilih kelas →</a></span>
+            <span class="muted">Belum ada kelas. <a href="{{ route('exams.edit', $exam) }}">Pilih kelas</a></span>
         @endforelse
     </div>
 </div>
@@ -128,9 +128,9 @@
                         </form>
                         {{-- Reset Ujian: hapus semua (attempt, nilai, device) --}}
                         <form method="POST" action="{{ route('exams.participants.resetAttempt', [$exam, $p]) }}"
-                              onsubmit="return confirm('Reset ujian siswa ini?\n\nIni MENGHAPUS:\n• Jawaban yang sudah dikerjakan\n• Nilai / skor\n• Status submit\n• Kunci perangkat\n\nSiswa harus mulai dari awal.\n\nYakin lanjutkan?')">
+                              onsubmit="return confirm('Reset ujian siswa ini?\n\nIni MENGHAPUS:\n- Jawaban yang sudah dikerjakan\n- Nilai / skor\n- Status submit\n- Kunci perangkat\n\nSiswa harus mulai dari awal.\n\nYakin lanjutkan?')">
                             @csrf
-                            <button class="btn danger" title="Hapus semua data ujian siswa ini — siswa mulai dari awal">
+                            <button class="btn danger" title="Hapus semua data ujian siswa ini - siswa mulai dari awal">
                                 Ulangi Ujian
                             </button>
                         </form>
@@ -156,7 +156,7 @@
     <div class="table-meta between">
         <div class="small muted">
             Terlihat: <b data-live-count="participantsTable">{{ $participants->count() }}</b> baris
-            &nbsp;·&nbsp;
+            &nbsp;|&nbsp;
             <span class="help">
                 <b>Ganti HP</b>: hanya hapus kunci perangkat. &nbsp;
                 <b>Ulangi Ujian</b>: hapus semua jawaban & nilai, siswa mulai dari nol. &nbsp;

@@ -60,13 +60,11 @@ class ExamController extends Controller
             'exam' => new Exam([
                 'duration_minutes' => 90,
                 'status' => Exam::STATUS_DRAFT,
-                'lock_mode' => SchoolSetting::getValue('default_exam_lock_mode', Exam::LOCK_STRICT_AIRPLANE),
-                'exit_policy' => Exam::normalizeExitPolicy((string) SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_AFTER_SUBMIT)),
+                'lock_mode' => Exam::LOCK_STRICT_AIRPLANE,
+                'exit_policy' => Exam::EXIT_AFTER_SUBMIT,
             ]),
             'classrooms' => $this->availableClassrooms(),
             'selectedClassroomIds' => [],
-            'lockModes' => Exam::LOCK_MODES,
-            'exitPolicies' => Exam::EXIT_POLICIES,
         ]);
     }
 
@@ -126,8 +124,6 @@ class ExamController extends Controller
             'exam' => $exam,
             'classrooms' => $this->availableClassrooms(),
             'selectedClassroomIds' => $exam->classrooms->pluck('id')->map(fn ($id) => (string) $id)->all(),
-            'lockModes' => Exam::LOCK_MODES,
-            'exitPolicies' => Exam::EXIT_POLICIES,
         ]);
     }
 
@@ -146,7 +142,7 @@ class ExamController extends Controller
 
         if ($exam->hasStartedWork()) {
             return back()->withErrors([
-                'exam' => 'Konfigurasi ujian sudah dikunci karena ada aktivitas siswa/download/unlock/attempt. Ini untuk menjaga paket soal, checksum, jadwal, dan aturan perangkat tetap sama di semua HP. Jika perlu perubahan besar, buat ujian baru atau hubungi admin untuk prosedur darurat.',
+                'exam' => 'Konfigurasi ujian sudah dikunci karena sudah ada aktivitas siswa. Ini untuk menjaga jadwal, kelas, soal, dan penilaian tetap konsisten. Jika perlu perubahan besar, buat ujian baru atau hubungi admin untuk prosedur darurat.',
             ])->withInput();
         }
 
@@ -171,10 +167,10 @@ class ExamController extends Controller
 
         $exam->refresh();
         if ($exam->status === Exam::STATUS_PUBLISHED && ! $exam->hasStartedWork()) {
-            $package = $this->examPackageService->generate($exam->fresh(['questions.options', 'classrooms']));
-            $message .= ' Paket soal published digenerate ulang. Checksum: '.$package['checksum'];
+            $this->examPackageService->generate($exam->fresh(['questions.options', 'classrooms']));
+            $message .= ' Soal untuk aplikasi siswa sudah disiapkan ulang.';
         } elseif ($exam->status === Exam::STATUS_PUBLISHED && ! $exam->hasGeneratedPackage()) {
-            $message .= ' Perhatian: paket soal perlu digenerate ulang dari halaman detail ujian sebelum siswa download.';
+            $message .= ' Perhatian: soal untuk aplikasi siswa perlu disiapkan ulang dari halaman detail ujian.';
         }
 
         return redirect()->route('exams.show', $exam)->with('success', $message);
@@ -198,7 +194,7 @@ class ExamController extends Controller
         $exam->forceFill(['access_code' => Exam::generateAccessCode()])->save();
         AuditLog::record('exam.code_regenerated', $exam, ['access_code' => $exam->access_code]);
 
-        return back()->with('success', 'Kode ujian berhasil digenerate ulang: '.$exam->access_code);
+        return back()->with('success', 'Kode ujian berhasil dibuat ulang: '.$exam->access_code);
     }
 
     public function publish(Exam $exam)
@@ -229,17 +225,17 @@ class ExamController extends Controller
             return $package;
         });
 
-        return back()->with('success', 'Ujian dipublish dan paket soal statis sudah dibuat. Siswa bisa download paket sebelum jam mulai. Checksum: '.$package['checksum']);
+        return back()->with('success', 'Ujian dipublish dan soal siap diunduh siswa. Siswa tetap bisa download saat ujian berlangsung selama belum melewati jadwal selesai.');
     }
 
     public function regeneratePackage(Exam $exam)
     {
         $this->ensureCanManage($exam);
-        abort_if(in_array($exam->status, [Exam::STATUS_CLOSED, Exam::STATUS_ARCHIVED], true), 422, 'Paket soal ujian yang sudah ditutup/diarsipkan tidak bisa digenerate ulang.');
+        abort_if(in_array($exam->status, [Exam::STATUS_CLOSED, Exam::STATUS_ARCHIVED], true), 422, 'Soal ujian yang sudah ditutup/diarsipkan tidak bisa disiapkan ulang.');
 
         if ($exam->hasStartedWork() && $exam->hasGeneratedPackage()) {
             return back()->withErrors([
-                'package' => 'Paket tidak digenerate ulang karena sudah ada aktivitas siswa. Ini untuk menjaga checksum paket soal tetap sama di semua perangkat.',
+                'package' => 'Soal tidak disiapkan ulang karena sudah ada aktivitas siswa. Ini untuk menjaga soal tetap konsisten di semua perangkat.',
             ]);
         }
 
@@ -254,7 +250,7 @@ class ExamController extends Controller
             'package_size_bytes' => $package['size_bytes'],
         ]);
 
-        return back()->with('success', 'Paket soal berhasil dibuat ulang. Checksum: '.$package['checksum']);
+        return back()->with('success', 'Soal untuk aplikasi siswa berhasil disiapkan ulang.');
     }
 
     public function unpublish(Exam $exam)
@@ -314,19 +310,13 @@ class ExamController extends Controller
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
             'shuffle_questions' => ['nullable', 'boolean'],
             'shuffle_options' => ['nullable', 'boolean'],
-            'lock_mode' => ['nullable', Rule::in(array_keys(Exam::LOCK_MODES))],
-            'exit_policy' => ['nullable', Rule::in(array_keys(Exam::EXIT_POLICIES))],
             'status' => ['nullable', Rule::in([Exam::STATUS_DRAFT, Exam::STATUS_READY])],
         ]);
 
         $data['shuffle_questions'] = $request->boolean('shuffle_questions');
         $data['shuffle_options'] = $request->boolean('shuffle_options');
-        $data['lock_mode'] = $data['lock_mode']
-            ?? $exam?->lock_mode
-            ?? SchoolSetting::getValue('default_exam_lock_mode', Exam::LOCK_STRICT_AIRPLANE);
-        $data['exit_policy'] = isset($data['exit_policy'])
-            ? Exam::normalizeExitPolicy($data['exit_policy'])
-            : Exam::normalizeExitPolicy($exam?->exit_policy ?? (string) SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_AFTER_SUBMIT));
+        $data['lock_mode'] = $exam?->lock_mode ?: Exam::LOCK_STRICT_AIRPLANE;
+        $data['exit_policy'] = Exam::normalizeExitPolicy($exam?->exit_policy ?? Exam::EXIT_AFTER_SUBMIT);
         $data['classroom_ids'] = collect($request->input('classroom_ids', []))->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
         unset($data['status']);
 

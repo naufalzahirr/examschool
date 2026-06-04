@@ -3,17 +3,18 @@
 @section('content')
 <div class="between mb">
     <div>
+        <span class="badge info">Ujian</span>
         <h1>Daftar Ujian</h1>
-        <p class="muted">Kelola ujian dari pembuatan hingga hasil. Soal ujian dipilih dari Bank Soal.</p>
+        <p class="muted">Buat, publish, monitor, dan lihat hasil ujian dari satu daftar yang mudah dipindai.</p>
     </div>
-    <a class="btn primary" href="{{ route('exams.create') }}">+ Buat Ujian</a>
+    <a class="btn primary" href="{{ route('exams.create') }}">Buat Ujian Baru</a>
 </div>
 
 <div class="card data-card">
     <div class="table-toolbar">
         <div class="table-title">
             <h2>Daftar Ujian</h2>
-            <p class="muted small mb0">Menampilkan {{ $exams->firstItem() ?? 0 }}–{{ $exams->lastItem() ?? 0 }} dari {{ $exams->total() }} ujian.</p>
+            <p class="muted small mb0">Menampilkan {{ $exams->firstItem() ?? 0 }}-{{ $exams->lastItem() ?? 0 }} dari {{ $exams->total() }} ujian.</p>
         </div>
         <form class="table-tools" method="GET" action="{{ route('exams.index') }}">
             <div class="tool-field">
@@ -69,7 +70,7 @@
                         <b>{{ $exam->title }}</b><br>
                         <span class="muted small">{{ $exam->subject ?: '-' }}
                             @if($exam->starts_at)
-                                · {{ $exam->starts_at->format('d M Y H:i') }}
+                                | {{ $exam->starts_at->format('d M Y H:i') }}
                             @endif
                         </span>
                     </td>
@@ -87,7 +88,7 @@
                     <td>
                         <span class="badge {{ $exam->status }}">{{ $exam->operationalStatus() }}</span>
                         @if(!$exam->hasGeneratedPackage())
-                            <br><span class="muted tiny">paket belum ada</span>
+                            <br><span class="muted tiny">soal belum siap</span>
                         @endif
                     </td>
                     <td>{{ $exam->questions_count }}</td>
@@ -99,7 +100,7 @@
                                 <div style="height:100%;border-radius:999px;background:{{ $pct >= 100 ? 'var(--success)' : 'var(--primary)' }};width:{{ $pct }}%"></div>
                             </div>
                         @else
-                            <span class="muted small">–</span>
+                            <span class="muted small">-</span>
                         @endif
                     </td>
                     <td class="row">
@@ -111,7 +112,7 @@
                     </td>
                 </tr>
             @empty
-                <tr data-empty-row><td colspan="7">Belum ada ujian. <a href="{{ route('exams.create') }}">Buat ujian pertama →</a></td></tr>
+                <tr data-empty-row><td colspan="7">Belum ada ujian. <a href="{{ route('exams.create') }}">Buat ujian pertama</a></td></tr>
             @endforelse
             </tbody>
         </table>

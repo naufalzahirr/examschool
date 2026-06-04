@@ -4,7 +4,7 @@
 <div class="between mb">
     <div>
         <h1>{{ $student->exists ? 'Edit Akun Siswa' : 'Tambah Akun Siswa' }}</h1>
-        <p class="muted">Password ini dipakai siswa untuk login di aplikasi ujian Android. Kelas diambil dari data classrooms SILAP.</p>
+        <p class="muted">Password ini dipakai siswa untuk login di aplikasi ujian. Kelas diambil dari data classrooms SILAP.</p>
     </div>
     <a class="btn" href="{{ route('students.index') }}">Kembali</a>
 </div>
@@ -20,7 +20,7 @@
             <select class="input" name="classroom_id">
                 <option value="">Pilih kelas</option>
                 @foreach($classrooms as $classroom)
-                    <option value="{{ $classroom->id }}" @selected((string) old('classroom_id', $student->classroom_id) === (string) $classroom->id)>{{ $classroom->nama_kelas }} · ID {{ $classroom->id }}</option>
+                    <option value="{{ $classroom->id }}" @selected((string) old('classroom_id', $student->classroom_id) === (string) $classroom->id)>{{ $classroom->nama_kelas }} | ID {{ $classroom->id }}</option>
                 @endforeach
             </select>
             @if($classrooms->isEmpty())<p class="help">Belum ada data kelas. Isi menu Kelas dulu.</p>@endif

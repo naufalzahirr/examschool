@@ -12,14 +12,14 @@
 <div class="between mb">
     <div>
         <h1>Monitor Pelaksanaan</h1>
-        <p class="muted">{{ $exam->title }} · Kode: <b>{{ $exam->access_code }}</b></p>
+        <p class="muted">{{ $exam->title }} | Kode: <b>{{ $exam->access_code }}</b></p>
     </div>
     <div class="row">
         @if(auth()->user()->canManageExam($exam))
             <a class="btn" href="{{ route('exams.show', $exam) }}">Kembali</a>
         @endif
         <span class="refresh-badge" id="refreshCountdown">Auto-refresh: 30s</span>
-        <a class="btn primary" href="{{ route('exams.monitor', $exam) }}" style="font-weight:900">↻ Refresh Sekarang</a>
+        <a class="btn primary" href="{{ route('exams.monitor', $exam) }}" style="font-weight:900">Refresh Sekarang</a>
     </div>
 </div>
 
@@ -27,9 +27,9 @@
 <div class="card mb">
     <div class="between">
         <div>
-            <b>Status server:</b> {{ $exam->operationalStatus() }} &nbsp;·&nbsp;
+            <b>Status server:</b> {{ $exam->operationalStatus() }} &nbsp;|&nbsp;
             <b>Jadwal:</b> {{ optional($exam->starts_at)->format('d M Y H:i') ?: 'fleksibel' }}
-            – {{ optional($exam->ends_at)->format('H:i') ?: 'fleksibel' }} &nbsp;·&nbsp;
+            - {{ optional($exam->ends_at)->format('H:i') ?: 'fleksibel' }} &nbsp;|&nbsp;
             <b>Download:</b>
             @if($queueStats['download_window_open'])
                 sedang dibuka
@@ -207,7 +207,7 @@ $inProg    = ($statusCounts['in_progress'] ?? 0) + ($statusCounts['synced'] ?? 0
                         @elseif($p->status === 'locked')
                             <span class="badge warning">terkunci</span>
                         @else
-                            <span class="muted">–</span>
+                            <span class="muted">-</span>
                         @endif
                     </td>
                     <td class="small">{{ optional($last?->started_at)->format('H:i') ?: '-' }}</td>
@@ -222,7 +222,7 @@ $inProg    = ($statusCounts['in_progress'] ?? 0) + ($statusCounts['synced'] ?? 0
                                 <button class="btn warning" title="Pakai jika siswa ganti HP">Ganti HP</button>
                             </form>
                         @else
-                            <span class="muted small">–</span>
+                            <span class="muted small">-</span>
                         @endif
                     </td>
                 </tr>

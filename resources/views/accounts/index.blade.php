@@ -3,7 +3,7 @@
 @section('content')
 <div class="between mb">
     <div><h1>Akun Pengguna</h1><p class="muted">Kelola akun admin, guru, dan pengawas. Guru dapat dibuat otomatis dari data guru SILAP.</p></div>
-    <a class="btn primary" href="{{ route('accounts.create') }}">+ Buat Akun</a>
+    <a class="btn primary" href="{{ route('accounts.create') }}">Buat Akun</a>
 </div>
 
 <div class="two mb">
@@ -20,9 +20,9 @@
     <div class="card">
         <h2>Role Produksi</h2>
         <div class="check-list">
-            <div class="check-pill">👑 Admin: data master, akun, pengaturan, semua ujian</div>
-            <div class="check-pill">👨‍🏫 Guru: bank soal, ujian miliknya, hasil ujian miliknya</div>
-            <div class="check-pill">🛡️ Pengawas: monitor pelaksanaan ujian</div>
+            <div class="check-pill"><span class="badge danger">Admin</span> Data master, akun, pengaturan, semua ujian</div>
+            <div class="check-pill"><span class="badge info">Guru</span> Bank soal, ujian miliknya, hasil ujian miliknya</div>
+            <div class="check-pill"><span class="badge warning">Pengawas</span> Monitor pelaksanaan ujian</div>
         </div>
     </div>
 </div>

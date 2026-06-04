@@ -2,17 +2,17 @@
     <nav class="us-pagination" role="navigation" aria-label="Pagination Navigation">
         <div class="us-pagination-mobile">
             @if ($paginator->onFirstPage())
-                <span class="us-page-btn disabled" aria-disabled="true">‹ Sebelumnya</span>
+                <span class="us-page-btn disabled" aria-disabled="true">&lt; Sebelumnya</span>
             @else
-                <a class="us-page-btn" href="{{ $paginator->previousPageUrl() }}" rel="prev">‹ Sebelumnya</a>
+                <a class="us-page-btn" href="{{ $paginator->previousPageUrl() }}" rel="prev">&lt; Sebelumnya</a>
             @endif
 
             <span class="us-page-summary">Halaman {{ $paginator->currentPage() }} dari {{ $paginator->lastPage() }}</span>
 
             @if ($paginator->hasMorePages())
-                <a class="us-page-btn" href="{{ $paginator->nextPageUrl() }}" rel="next">Berikutnya ›</a>
+                <a class="us-page-btn" href="{{ $paginator->nextPageUrl() }}" rel="next">Berikutnya &gt;</a>
             @else
-                <span class="us-page-btn disabled" aria-disabled="true">Berikutnya ›</span>
+                <span class="us-page-btn disabled" aria-disabled="true">Berikutnya &gt;</span>
             @endif
         </div>
 
@@ -29,9 +29,9 @@
 
             <div class="us-page-list">
                 @if ($paginator->onFirstPage())
-                    <span class="us-page-square disabled" aria-disabled="true" aria-label="Sebelumnya">‹</span>
+                    <span class="us-page-square disabled" aria-disabled="true" aria-label="Sebelumnya">&lt;</span>
                 @else
-                    <a class="us-page-square" href="{{ $paginator->previousPageUrl() }}" rel="prev" aria-label="Sebelumnya">‹</a>
+                    <a class="us-page-square" href="{{ $paginator->previousPageUrl() }}" rel="prev" aria-label="Sebelumnya">&lt;</a>
                 @endif
 
                 @foreach ($elements as $element)
@@ -51,9 +51,9 @@
                 @endforeach
 
                 @if ($paginator->hasMorePages())
-                    <a class="us-page-square" href="{{ $paginator->nextPageUrl() }}" rel="next" aria-label="Berikutnya">›</a>
+                    <a class="us-page-square" href="{{ $paginator->nextPageUrl() }}" rel="next" aria-label="Berikutnya">&gt;</a>
                 @else
-                    <span class="us-page-square disabled" aria-disabled="true" aria-label="Berikutnya">›</span>
+                    <span class="us-page-square disabled" aria-disabled="true" aria-label="Berikutnya">&gt;</span>
                 @endif
             </div>
         </div>

@@ -3,7 +3,7 @@
 @section('content')
 <div class="between mb">
     <div><h1>Bank Soal</h1><p class="muted">Kumpulan soal yang bisa dipakai ulang saat membuat ujian.</p></div>
-    <div class="row"><a class="btn" href="{{ route('question-bank.import') }}">Import Massal</a><a class="btn primary" href="{{ route('question-bank.create') }}">+ Tambah Soal</a></div>
+    <div class="row"><a class="btn" href="{{ route('question-bank.import') }}">Import Massal</a><a class="btn primary" href="{{ route('question-bank.create') }}">Tambah Soal</a></div>
 </div>
 
 <div class="card data-card">
@@ -32,7 +32,7 @@
                 <td><b>{{ $item->title }}</b><br><span class="muted small">{{ $item->question_code }}</span></td>
                 <td><span class="badge info">{{ $filters['types'][$item->type] ?? $item->type }}</span></td>
                 <td><span class="muted small">Opsi:</span> {{ Str::limit($item->optionsPreview() ?: '-', 90) }}<br><span class="muted small">Kunci:</span> <b>{{ Str::limit($item->answerPreview(), 90) }}</b></td>
-                <td>{{ $item->subject ?: '-' }}<br><span class="muted small">{{ $item->topic ?: '-' }} · {{ $item->grade_level ?: '-' }}</span></td>
+                <td>{{ $item->subject ?: '-' }}<br><span class="muted small">{{ $item->topic ?: '-' }} | {{ $item->grade_level ?: '-' }}</span></td>
                 <td><span class="badge {{ $item->difficulty === 'sulit' ? 'warning' : 'draft' }}">{{ ucfirst($item->difficulty) }}</span></td>
                 <td>
                     @if($item->isSharedToSchool())

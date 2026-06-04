@@ -86,7 +86,7 @@
                                 @endforeach
                             </div>
                         @else
-                            <span class="muted small">–</span>
+                            <span class="muted small">-</span>
                         @endif
                     </td>
                 </tr>

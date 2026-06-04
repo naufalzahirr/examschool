@@ -21,7 +21,7 @@
         </div>
         <div class="step">
             <span class="step-no">3</span>
-            <div><b>Publish</b><br><span class="muted small">Sistem membuat paket soal terenkripsi untuk aplikasi siswa.</span></div>
+            <div><b>Publish</b><br><span class="muted small">Sistem menyiapkan soal untuk aplikasi siswa.</span></div>
         </div>
     </div>
 </div>
@@ -46,11 +46,11 @@
         @if($exam->exists)
             <div class="alert info" style="margin-bottom:0">
             <b>Kode ujian otomatis:</b> {{ $exam->access_code }}<br>
-            <span class="small">Kode ini dipakai siswa saat login di aplikasi Android bersama NIS dan password.</span>
+            <span class="small">Kode ini dipakai siswa saat login di aplikasi siswa bersama NIS dan password.</span>
             </div>
             @if($exam->hasStartedWork())
                 <div class="alert warning" style="margin-bottom:0">
-                    Ujian sudah memiliki aktivitas siswa. Demi konsistensi paket soal, kelas, durasi, dan aturan acak tidak boleh diubah.
+                    Ujian sudah memiliki aktivitas siswa. Demi konsistensi soal, kelas, durasi, dan aturan acak tidak boleh diubah.
                 </div>
             @endif
         @else
@@ -106,15 +106,15 @@
         <div class="between mb">
             <div>
                 <h2 class="mb0">Jadwal & Aturan Soal</h2>
-                <p class="muted small mb0">Jadwal menentukan kapan siswa bisa download paket dan kapan soal bisa dibuka.</p>
+                <p class="muted small mb0">Jadwal menentukan kapan siswa bisa download soal dan kapan soal bisa dibuka.</p>
             </div>
         </div>
         <div class="alert info" style="padding:.65rem .9rem;margin-bottom:.75rem">
-            📱 <b>Alur di HP siswa:</b>
-            <span class="muted">Download paket</span> (12 jam sebelum Mulai)
-            → <span class="muted">Soal terbuka</span> (saat jam Mulai)
-            → <span class="muted">Tidak bisa lagi</span> (setelah jam Selesai).
-            Pastikan <b>Selesai</b> ≥ <b>Mulai</b> + durasi ujian.
+            <b>Alur di aplikasi siswa:</b>
+            <span class="muted">Download soal</span> sebelum atau saat ujian berlangsung,
+            <span class="muted">buka soal</span> sesuai jam mulai,
+            lalu <span class="muted">submit</span> sebelum batas selesai.
+            Pastikan <b>Selesai</b> tidak lebih cepat dari <b>Mulai</b> + durasi ujian.
         </div>
         <div class="three">
             <div class="field">
@@ -142,7 +142,7 @@
             <div class="field"><label>Durasi Pengerjaan (menit)</label><input class="input" type="number" name="duration_minutes" value="{{ old('duration_minutes', $exam->duration_minutes ?: 90) }}" min="1" required></div>
         </div>
         <div class="alert warning" style="padding:.65rem .9rem;margin:.5rem 0">
-            ⚠️ <b>Perhatikan jam:</b> Di beberapa browser Windows, jam tampil dalam format 12 jam (AM/PM).
+            <b>Perhatikan jam:</b> Di beberapa browser Windows, jam tampil dalam format 12 jam (AM/PM).
             Jam 7 malam harus dipilih sebagai <b>7:20 PM</b> (bukan AM). Cek tulisan di bawah kolom Mulai/Selesai untuk konfirmasi.
         </div>
         <div class="row">
@@ -151,27 +151,8 @@
         </div>
         <p class="help">Kunci jawaban tetap hanya tersimpan di server, tidak ikut dikirim ke aplikasi siswa.</p>
 
-        <hr style="border:0;border-top:1px solid var(--line);margin:1rem 0">
-
-        <div class="two">
-            <div class="field">
-                <label>Mode Keamanan Ujian</label>
-                <select class="input" name="lock_mode">
-                    @foreach($lockModes as $value => $label)
-                        <option value="{{ $value }}" @selected(old('lock_mode', $exam->lock_mode ?? \App\Models\Exam::LOCK_STRICT_AIRPLANE) === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-                <p class="help">Menentukan cara aplikasi siswa mengunci HP selama ujian berlangsung.</p>
-            </div>
-            <div class="field">
-                <label>Aturan Keluar Ujian</label>
-                <select class="input" name="exit_policy">
-                    @foreach($exitPolicies as $value => $label)
-                        <option value="{{ $value }}" @selected(old('exit_policy', $exam->exit_policy ?? \App\Models\Exam::EXIT_AFTER_SUBMIT) === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-                <p class="help">Kapan siswa diizinkan keluar dari aplikasi ujian.</p>
-            </div>
+        <div class="alert info" style="padding:.65rem .9rem;margin:.75rem 0 0">
+            Mode penguncian aplikasi, alarm pelanggaran, dan aturan keluar sudah otomatis dari sistem.
         </div>
     </div>
 

@@ -12,7 +12,7 @@
     <div class="between mb">
         <div>
             <h1>{{ $canEdit ? 'Edit Soal Ujian' : 'Lihat Soal Ujian' }}</h1>
-            <p class="muted">{{ $canEdit ? 'Tinjau dan edit salinan soal ujian ini. Soal baru tetap dipilih dari Bank Soal.' : 'Ujian sudah dikunci — soal hanya bisa dilihat, tidak bisa diubah.' }}</p>
+            <p class="muted">{{ $canEdit ? 'Tinjau dan edit salinan soal ujian ini. Soal baru tetap dipilih dari Bank Soal.' : 'Ujian sudah dikunci - soal hanya bisa dilihat, tidak bisa diubah.' }}</p>
         </div>
         <a class="btn" href="{{ route('exams.show', $exam) }}">Kembali</a>
     </div>
@@ -24,7 +24,7 @@
                 <p class="muted">{{ $exam->description ?: 'Tambahkan instruksi ujian di konfigurasi.' }}</p>
                 <div class="row small">
                     <span class="badge">Kode: {{ $exam->access_code }}</span>
-                    <span class="pill">Versi Paket: {{ $exam->package_version }}</span>
+                    <span class="pill">Versi Soal: {{ $exam->package_version }}</span>
                     <span class="badge {{ $exam->status }}">{{ $exam->status }}</span>
                 </div>
             </div>
@@ -40,7 +40,7 @@
 
     @unless($canEdit)
         <div class="alert warning">
-            <b>Soal terkunci.</b> Untuk menjaga konsistensi paket soal dan penilaian, soal hanya bisa diedit saat status ujian masih <b>draft/siap publish</b> dan belum ada siswa yang login/mulai mengerjakan.
+            <b>Soal terkunci.</b> Untuk menjaga konsistensi soal dan penilaian, soal hanya bisa diedit saat status ujian masih <b>draft/siap publish</b> dan belum ada siswa yang login/mulai mengerjakan.
             @if(!in_array($exam->status, ['draft','ready'], true) && ! $exam->hasStartedWork())
                 Jika perlu revisi, kembalikan ujian ke draft dari halaman detail ujian.
             @endif
@@ -65,7 +65,7 @@
             @if($exam->questions->isNotEmpty())
                 <div class="floating-add row" style="justify-content:center"><a class="btn primary add-btn" href="{{ route('exams.question-bank.select', $exam) }}">Ambil dari Bank Soal</a><a class="btn soft" href="{{ route('question-bank.create') }}">Buat Soal di Bank Soal</a></div>
                 <div class="card mt between">
-                    <div><b>Simpan perubahan</b><br><span class="muted small">Perubahan pada salinan soal ujian akan menaikkan versi paket soal yang di-download siswa.</span></div>
+                    <div><b>Simpan perubahan</b><br><span class="muted small">Perubahan pada salinan soal ujian akan menaikkan versi soal yang diterima aplikasi siswa.</span></div>
                     <button class="btn primary">Simpan Soal</button>
                 </div>
             @endif
@@ -177,7 +177,7 @@ function renderAnswerArea(card, q = null){
     } else if(type === 'true_false') {
         const answer = data.answer_key?.answer ?? true;
         area.innerHTML = `
-            <div class="type-note muted small">Siswa memilih Benar atau Salah. Kunci jawaban disimpan di server dan tidak ikut dikirim ke paket soal.</div>
+            <div class="type-note muted small">Siswa memilih Benar atau Salah. Kunci jawaban disimpan di server dan tidak ikut dikirim ke aplikasi siswa.</div>
             <div class="tf-grid mt">
                 <label class="tf-card row"><input type="radio" class="q-tf-answer" name="tf_${card.dataset.uid}" value="true" ${answer === true || answer === 'true' ? 'checked' : ''}> Kunci: Benar</label>
                 <label class="tf-card row"><input type="radio" class="q-tf-answer" name="tf_${card.dataset.uid}" value="false" ${answer === false || answer === 'false' ? 'checked' : ''}> Kunci: Salah</label>

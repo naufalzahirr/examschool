@@ -4,18 +4,53 @@
 <div class="hero mb">
     <div class="between">
         <div>
+            <div class="badge info" style="margin-bottom:.65rem">Ruang kendali ujian</div>
             <h1 style="margin:0">Dashboard Ujian Sekolah</h1>
-            <p class="muted mb0">Backend produksi: konfigurasi ujian, bank soal, akun guru/pengawas, audit log, dan monitor pelaksanaan.</p>
+            <p class="muted mb0">Pantau kesiapan ujian, bank soal, peserta, dan pelaksanaan dari satu tempat.</p>
         </div>
         <div class="row">
             @if(auth()->user()->isAdmin() || auth()->user()->isTeacher())
-                <a class="btn primary" href="{{ route('exams.create') }}">+ Buat Ujian</a>
+                <a class="btn primary" href="{{ route('exams.create') }}">Buat Ujian Baru</a>
                 <a class="btn soft" href="{{ route('question-bank.index') }}">Bank Soal</a>
             @endif
-            @if(auth()->user()->isAdmin())<a class="btn" href="{{ route('silap.index') }}">Sinkron SILAP</a>@endif
+            @if(auth()->user()->isAdmin())<a class="btn" href="{{ route('silap.index') }}">Sinkron Data</a>@endif
         </div>
     </div>
 </div>
+
+@if(auth()->user()->isAdmin() || auth()->user()->isTeacher())
+<div class="card mb">
+    <div class="between mb">
+        <div>
+            <h2 class="mb0">Alur Cepat Guru</h2>
+            <p class="muted small mb0">Urutan paling aman agar ujian siap tanpa bolak-balik halaman.</p>
+        </div>
+        <a class="btn soft" href="{{ route('guide') }}">Lihat Panduan</a>
+    </div>
+    <div class="grid">
+        <div class="mini-card">
+            <span class="badge">1</span>
+            <h3 class="mb-sm mt-sm">Bank Soal</h3>
+            <p class="muted small mb0">Susun kumpulan soal sesuai mapel dan jenjang.</p>
+        </div>
+        <div class="mini-card">
+            <span class="badge info">2</span>
+            <h3 class="mb-sm mt-sm">Buat Ujian</h3>
+            <p class="muted small mb0">Isi jadwal, durasi, dan kelas peserta.</p>
+        </div>
+        <div class="mini-card">
+            <span class="badge warning">3</span>
+            <h3 class="mb-sm mt-sm">Publish</h3>
+            <p class="muted small mb0">Pastikan checklist hijau lalu publish untuk siswa.</p>
+        </div>
+        <div class="mini-card">
+            <span class="badge success">4</span>
+            <h3 class="mb-sm mt-sm">Monitor</h3>
+            <p class="muted small mb0">Pantau download, pengerjaan, pelanggaran, dan submit.</p>
+        </div>
+    </div>
+</div>
+@endif
 
 <div class="grid mb">
     <div class="card"><div class="muted">Total Ujian</div><div class="stat">{{ $examCount }}</div></div>
@@ -61,7 +96,7 @@
             <div class="check-pill" style="justify-content:space-between;margin-bottom:.4rem">
                 <span>
                     <b>{{ $exam->title }}</b><br>
-                    <span class="muted small">{{ $exam->questions_count }} soal · {{ $exam->participants_count }} peserta{{ $exam->starts_at ? ' · ' . $exam->starts_at->format('d M H:i') : '' }}</span>
+                    <span class="muted small">{{ $exam->questions_count }} soal | {{ $exam->participants_count }} peserta{{ $exam->starts_at ? ' | ' . $exam->starts_at->format('d M H:i') : '' }}</span>
                 </span>
                 <form method="POST" action="{{ route('exams.publish', $exam) }}">
                     @csrf
@@ -93,7 +128,7 @@
                 <tr>
                     <td>
                         <b>{{ $exam->title }}</b><br>
-                        <span class="muted small">{{ $exam->access_code }} · {{ $exam->subject ?: '-' }}</span>
+                        <span class="muted small">{{ $exam->access_code }} | {{ $exam->subject ?: '-' }}</span>
                     </td>
                     <td>
                         <b>{{ $exam->starts_at->format('d M Y H:i') }}</b><br>
@@ -126,7 +161,7 @@
             <tbody>
             @forelse($recentExams as $exam)
                 <tr>
-                    <td><b>{{ $exam->title }}</b><br><span class="muted small">{{ $exam->subject ?: '-' }} · {{ $exam->grade_level ?: '-' }}</span></td>
+                    <td><b>{{ $exam->title }}</b><br><span class="muted small">{{ $exam->subject ?: '-' }} | {{ $exam->grade_level ?: '-' }}</span></td>
                     <td><span class="badge">{{ $exam->access_code }}</span></td>
                     <td><span class="badge {{ $exam->status }}">{{ $exam->operationalStatus() }}</span></td>
                     <td class="small">{{ optional($exam->starts_at)->format('d M Y H:i') ?: '-' }}<br>{{ optional($exam->ends_at)->format('d M Y H:i') ?: '-' }}</td>

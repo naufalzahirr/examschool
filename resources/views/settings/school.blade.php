@@ -4,7 +4,7 @@
 <div class="between mb">
     <div>
         <h1>Pengaturan Sekolah</h1>
-        <p class="muted">Konfigurasi identitas sekolah, jadwal download, keamanan ujian, dan akun default.</p>
+        <p class="muted">Konfigurasi identitas sekolah, jadwal download soal, pelaksanaan ujian, dan akun default.</p>
     </div>
 </div>
 
@@ -69,21 +69,20 @@
 <div class="card mb">
     <div class="between mb">
         <div>
-            <h2 class="mb0">Jadwal & Antrean Download Paket Soal</h2>
-            <p class="muted small mb0">Mengatur kapan dan berapa banyak siswa bisa mengunduh paket soal terenkripsi sebelum ujian.</p>
+            <h2 class="mb0">Jadwal Download Soal</h2>
+            <p class="muted small mb0">Mengatur kapan dan berapa banyak siswa bisa mengunduh soal dari aplikasi.</p>
         </div>
     </div>
     <div class="alert info" style="margin-bottom:1rem">
-        Alur download: Siswa bisa download paket soal <b>N jam sebelum ujian mulai</b>.
-        Jumlah download bersamaan dibatasi agar server tidak kewalahan.
-        Saat jam ujian tiba, server memberikan unlock key kecil — siswa wajib mode pesawat sebelum menjawab.
+        Siswa bisa download soal mulai <b>N jam sebelum ujian</b> dan tetap bisa download saat ujian berlangsung,
+        selama belum melewati jadwal selesai. Jumlah download bersamaan dibatasi agar server tetap stabil.
     </div>
     <div class="two">
         <div class="field">
-            <label>Buka Download Sebelum Ujian (jam)</label>
+            <label>Download Dibuka Sebelum Mulai (jam)</label>
             <input class="input" type="number" name="package_download_open_hours" min="0" max="168"
                    value="{{ old('package_download_open_hours', $settings['package_download_open_hours']) }}" required>
-            <p class="help">Default 12 jam. Siswa bisa download mulai N jam sebelum <code>starts_at</code>.</p>
+            <p class="help">Default 12 jam. Setelah ujian dimulai, siswa tetap bisa download jika belum melewati jadwal selesai.</p>
         </div>
         <div class="field">
             <label>Slot Download Bersamaan</label>
@@ -94,13 +93,13 @@
     </div>
     <div class="two">
         <div class="field">
-            <label>Masa Berlaku Slot Download (menit)</label>
+            <label>Masa Slot Download (menit)</label>
             <input class="input" type="number" name="package_queue_slot_ttl_minutes" min="1" max="60"
                    value="{{ old('package_queue_slot_ttl_minutes', $settings['package_queue_slot_ttl_minutes']) }}" required>
             <p class="help">Slot yang tidak dipakai dalam waktu ini akan dibebaskan untuk siswa lain.</p>
         </div>
         <div class="field">
-            <label>Maks. Percobaan Download per Siswa</label>
+            <label>Maks. Percobaan Download</label>
             <input class="input" type="number" name="package_download_max_attempts" min="1" max="20"
                    value="{{ old('package_download_max_attempts', $settings['package_download_max_attempts']) }}" required>
             <p class="help">Setelah batas ini tercapai, siswa perlu di-reset oleh pengawas.</p>
@@ -122,39 +121,25 @@
     </div>
 </div>
 
-{{-- ===== MODE KEAMANAN DEFAULT ===== --}}
+{{-- ===== PELAKSANAAN UJIAN ===== --}}
 <div class="card mb">
     <div class="between mb">
         <div>
-            <h2 class="mb0">Mode Keamanan Ujian Default</h2>
-            <p class="muted small mb0">Dipakai saat membuat ujian baru. Setiap ujian bisa diubah secara individual dari form ujian.</p>
+            <h2 class="mb0">Pelaksanaan Ujian</h2>
+            <p class="muted small mb0">Penguncian aplikasi dan alarm pelanggaran sudah otomatis dari aplikasi siswa.</p>
         </div>
     </div>
     <div class="two">
-        <div class="field">
-            <label>Mode Kunci Layar Default</label>
-            <select class="input" name="default_exam_lock_mode">
-                <option value="strict_airplane" @selected(old('default_exam_lock_mode', $settings['default_exam_lock_mode'])==='strict_airplane')>
-                    Ketat / Mode Pesawat wajib (Rekomendasi)
-                </option>
-                <option value="standard" @selected(old('default_exam_lock_mode', $settings['default_exam_lock_mode'])==='standard')>
-                    Standar / BYOD: deteksi pelanggaran saja
-                </option>
-                <option value="strict_kiosk" @selected(old('default_exam_lock_mode', $settings['default_exam_lock_mode'])==='strict_kiosk')>
-                    Ketat / Kiosk: coba kunci tombol Home/Recent
-                </option>
-            </select>
-        </div>
         <div class="field">
             <label>Maks. Toleransi Pelanggaran Keluar</label>
             <input class="input" type="number" name="exit_violation_max_allowed" min="0" max="50"
                    value="{{ old('exit_violation_max_allowed', $settings['exit_violation_max_allowed']) }}" required>
             <p class="help">Berapa kali siswa boleh keluar aplikasi sebelum ujian dikunci permanen. 0 = tidak ada toleransi.</p>
         </div>
-    </div>
-    <div class="alert warning" style="margin-bottom:0">
-        <b>Rekomendasi produksi:</b> gunakan Mode Pesawat Wajib. Siswa mengambil unlock key saat jadwal dibuka, lalu wajib aktifkan mode pesawat sebelum menjawab.
-        Jika internet aktif atau keluar aplikasi, ujian langsung terkunci di mobile dan pelanggaran tercatat otomatis.
+        <div class="alert info" style="margin-bottom:0">
+            Guru tidak perlu memilih mode lock. Aplikasi siswa otomatis mencegah keluar, mencatat pelanggaran,
+            dan membunyikan alarm jika siswa memaksa keluar saat ujian.
+        </div>
     </div>
 </div>
 

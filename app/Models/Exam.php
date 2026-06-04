@@ -33,7 +33,7 @@ class Exam extends Model
     public const LOCK_MODES = [
         self::LOCK_STRICT_AIRPLANE => 'Ketat / Mode Pesawat: wajib offline, keluar/internet aktif terkunci',
         self::LOCK_STANDARD => 'Standar / BYOD: deteksi pelanggaran',
-        self::LOCK_STRICT_KIOSK => 'Ketat / Kiosk: coba kunci aplikasi',
+        self::LOCK_STRICT_KIOSK => 'Ketat: kunci aplikasi otomatis',
     ];
 
     public const EXIT_AFTER_SUBMIT = 'after_submit';
@@ -134,7 +134,7 @@ class Exam extends Model
             'reopen_requires_offline' => true,
             'reopen_requires_proctor_code' => false,
             'timer_continues_when_locked' => true,
-            'strict_android_note' => 'Mode utama: siswa wajib mode pesawat/offline setelah unlock key. Android BYOD tidak bisa dijamin 100% anti tombol Home tanpa device owner/kiosk, tetapi mobile akan fullscreen, menolak lanjut saat online, mengunci saat keluar aplikasi, dan membunyikan alarm/notifikasi pelanggaran tanpa input pengawas.',
+            'strict_android_note' => 'Aplikasi siswa otomatis fullscreen, menolak lanjut saat online, mengunci saat keluar aplikasi, dan membunyikan alarm/notifikasi pelanggaran tanpa input pengawas.',
         ];
     }
 
@@ -280,9 +280,9 @@ class Exam extends Model
                 'note' => $this->duration_minutes.' menit',
             ],
             [
-                'label' => 'Paket soal terenkripsi akan bisa dibuat',
+                'label' => 'Soal siap untuk aplikasi siswa',
                 'ok' => $questionsCount > 0 && (int) $this->package_version > 0,
-                'note' => $this->hasGeneratedPackage() ? 'paket tersedia' : 'dibuat otomatis saat publish',
+                'note' => $this->hasGeneratedPackage() ? 'soal sudah siap' : 'disiapkan otomatis saat publish',
             ],
             [
                 'label' => 'Jadwal selesai tidak lebih awal dari jadwal mulai',

@@ -4,7 +4,7 @@
 <div class="between mb">
     <div>
         <h1>Import Peserta</h1>
-        <p class="muted">{{ $exam->title }} · Kode: <b>{{ $exam->access_code }}</b>. Halaman import dipisah dari live table peserta.</p>
+        <p class="muted">{{ $exam->title }} | Kode: <b>{{ $exam->access_code }}</b>. Halaman import dipisah dari live table peserta.</p>
     </div>
     <a class="btn" href="{{ route('exams.participants', $exam) }}">Kembali ke Peserta</a>
 </div>
