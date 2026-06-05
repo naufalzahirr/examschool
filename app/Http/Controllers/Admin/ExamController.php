@@ -59,12 +59,14 @@ class ExamController extends Controller
         return view('exams.form', [
             'exam' => new Exam([
                 'duration_minutes' => 90,
-                'status' => Exam::STATUS_DRAFT,
-                'lock_mode' => Exam::LOCK_STRICT_AIRPLANE,
-                'exit_policy' => Exam::EXIT_AFTER_SUBMIT,
+                'status'      => Exam::STATUS_DRAFT,
+                'lock_mode'   => SchoolSetting::getValue('default_exam_lock_mode', Exam::LOCK_STRICT_AIRPLANE),
+                'exit_policy' => Exam::normalizeExitPolicy((string) SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_AFTER_SUBMIT)),
             ]),
-            'classrooms' => $this->availableClassrooms(),
+            'classrooms'          => $this->availableClassrooms(),
             'selectedClassroomIds' => [],
+            'lockModes'           => Exam::LOCK_MODES,
+            'exitPolicies'        => Exam::EXIT_POLICIES,
         ]);
     }
 
@@ -121,9 +123,11 @@ class ExamController extends Controller
         $exam->load('classrooms');
 
         return view('exams.form', [
-            'exam' => $exam,
-            'classrooms' => $this->availableClassrooms(),
+            'exam'                => $exam,
+            'classrooms'          => $this->availableClassrooms(),
             'selectedClassroomIds' => $exam->classrooms->pluck('id')->map(fn ($id) => (string) $id)->all(),
+            'lockModes'           => Exam::LOCK_MODES,
+            'exitPolicies'        => Exam::EXIT_POLICIES,
         ]);
     }
 
