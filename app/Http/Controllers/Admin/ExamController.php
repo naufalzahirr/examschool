@@ -235,7 +235,12 @@ class ExamController extends Controller
             return $package;
         });
 
-        return back()->with('success', 'Ujian dipublish dan soal siap diunduh siswa. Siswa tetap bisa download saat ujian berlangsung selama belum melewati jadwal selesai.');
+        $message = 'Ujian dipublish dan soal sudah siap untuk aplikasi siswa.';
+        $message .= $exam->isManualMode()
+            ? ' Ujian masih tertutup. Nyalakan "menerima jawaban" saat siswa siap mulai.'
+            : ' Ujian akan terbuka otomatis sesuai jadwal.';
+
+        return back()->with('success', $message);
     }
 
     public function toggleManual(Request $request, Exam $exam)
@@ -258,14 +263,14 @@ class ExamController extends Controller
             if ($state) {
                 $exam->manual_download_open = true;
             }
-            $msg = $state ? 'Ujian DIBUKA. Siswa sekarang bisa membuka soal.' : 'Ujian DITUTUP. Siswa tidak bisa membuka soal baru.';
+            $msg = $state ? 'Menerima jawaban dinyalakan. Siswa sekarang bisa membuka soal dan mulai mengerjakan.' : 'Menerima jawaban dimatikan. Siswa tidak bisa membuka soal baru.';
         } else {
             $exam->manual_download_open = $state;
             // Menutup download juga menutup ujian (tidak mungkin ujian terbuka tanpa download)
             if (! $state) {
                 $exam->manual_exam_open = false;
             }
-            $msg = $state ? 'Download soal DIBUKA. Siswa bisa mulai mengunduh.' : 'Download soal DITUTUP.';
+            $msg = $state ? 'Download soal dibuka. Siswa bisa mengunduh paket soal lebih dulu.' : 'Download soal ditutup.';
         }
 
         $exam->save();

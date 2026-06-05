@@ -44,6 +44,18 @@
 .tl-step.active{background:var(--success-soft);border-color:#bbf7d0}
 .tl-step.done{background:#f8fafc;border-color:var(--line)}
 .tl-num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:950;font-size:13px;flex-shrink:0;color:#fff}
+.response-control{border:1px solid {{ $exam->manual_exam_open ? '#bbf7d0' : 'var(--line)' }};background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-soft);padding:1.25rem;margin-bottom:1.25rem}
+.response-head{display:flex;align-items:center;justify-content:space-between;gap:1.25rem}
+.response-state{font-size:22px;font-weight:950;color:var(--heading);margin:.1rem 0}
+.response-switch{min-width:132px;height:48px;border-radius:999px;border:0;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-weight:950;cursor:pointer;box-shadow:0 10px 20px rgba(15,23,42,.10);transition:.16s ease}
+.response-switch.on{background:var(--danger-soft);color:#991b1b}
+.response-switch.off{background:linear-gradient(135deg,var(--primary),#10b981);color:#fff}
+.response-dot{width:12px;height:12px;border-radius:50%;background:currentColor;opacity:.75}
+.response-note{margin-top:1rem;padding:.85rem 1rem;border-radius:var(--radius);background:#f8fafc;border:1px solid var(--line);font-size:13px;color:var(--muted)}
+.inline-advanced{border:1px solid var(--line);border-radius:var(--radius);margin-top:1rem;background:#fff;overflow:hidden}
+.inline-advanced summary{padding:.85rem 1rem;cursor:pointer;font-weight:900;color:var(--heading);list-style:none}
+.inline-advanced[open] summary{border-bottom:1px solid var(--line)}
+.inline-advanced-body{padding:1rem}
 </style>
 @endpush
 
@@ -60,6 +72,8 @@
     $isDraft     = in_array($exam->status, ['draft','ready']);
     $isPublished = $exam->status === 'published';
     $isClosed    = in_array($exam->status, ['closed','archived']);
+    $isManual    = $exam->isManualMode();
+    $examOpenNow = $isManual ? (bool) $exam->manual_exam_open : ($started && ! $ended);
 @endphp
 
 {{-- ═══ HERO ═══ --}}
@@ -103,14 +117,14 @@
 <div class="next-action-banner published">
     <div class="next-action-icon" style="background:var(--success-soft)">OK</div>
     <div style="flex:1">
-        <b style="font-size:15px;color:#166534">Semua siap! Ujian bisa dipublish sekarang.</b>
+        <b style="font-size:15px;color:#166534">Semua siap! Publish dulu, lalu buka ujian saat siswa siap.</b>
         <p class="mb0" style="font-size:13px;color:#14532d;margin-top:.2rem">
-            Setelah dipublish, sistem otomatis menyiapkan soal. Bagikan kode <b>{{ $exam->access_code }}</b> ke siswa - mereka bisa download soal mulai sekarang.
+            Setelah dipublish, sistem menyiapkan soal dan menampilkan tombol buka/tutup seperti Google Form. Kode ujian: <b>{{ $exam->access_code }}</b>.
         </p>
     </div>
     <form method="POST" action="{{ route('exams.publish', $exam) }}">
         @csrf
-        <button class="btn primary" style="white-space:nowrap;min-width:130px">Publish Sekarang</button>
+        <button class="btn primary" style="white-space:nowrap;min-width:130px">Publish Ujian</button>
     </form>
 </div>
 
@@ -119,10 +133,14 @@
 <div class="next-action-banner published">
     <div class="next-action-icon" style="background:var(--primary-soft)">ON</div>
     <div style="flex:1">
-        <b style="font-size:15px;color:#0f766e">Ujian aktif - bagikan kode ini ke siswa</b>
+        <b style="font-size:15px;color:#0f766e">{{ $isManual ? 'Ujian sudah dipublish - atur menerima jawaban di bawah' : 'Ujian aktif sesuai jadwal' }}</b>
         <p class="mb0" style="font-size:13px;color:#134e4a;margin-top:.2rem">
             Siswa login di aplikasi menggunakan kode ujian, NIS, dan password mereka.
-            @if($exam->starts_at && !$started) Download soal dibuka, soal bisa diakses mulai <b>{{ $exam->starts_at->format('d M H:i') }}</b>. @endif
+            @if($isManual)
+                {{ $exam->manual_exam_open ? 'Saat ini siswa bisa mulai mengerjakan.' : 'Saat ini siswa belum bisa mulai mengerjakan.' }}
+            @elseif($exam->starts_at && !$started)
+                Download soal dibuka, soal bisa diakses mulai <b>{{ $exam->starts_at->format('d M H:i') }}</b>.
+            @endif
         </p>
     </div>
 </div>
@@ -138,62 +156,57 @@
     </div>
 </div>
 
-{{-- Panel kontrol manual (hanya mode manual) --}}
+{{-- Kontrol seperti Google Form: menerima jawaban ON/OFF --}}
 @if($exam->isManualMode())
-<div class="card mb" style="border:2px solid {{ $exam->manual_exam_open ? '#bbf7d0' : 'var(--line)' }};background:{{ $exam->manual_exam_open ? 'linear-gradient(135deg,#f0fdf9,#ecfdf5)' : '#fff' }}">
-    <div class="between" style="margin-bottom:1rem">
+<div class="response-control">
+    <div class="response-head">
         <div>
-            <h2 class="mb0" style="font-size:16px">Kontrol Manual Ujian</h2>
-            <p class="muted small mb0">Buka/tutup download dan ujian kapan saja - cocok untuk ujian susulan.</p>
+            <div class="muted small" style="font-weight:900;text-transform:uppercase;letter-spacing:.08em">Form siswa</div>
+            <div class="response-state">{{ $exam->manual_exam_open ? 'Menerima jawaban' : 'Tidak menerima jawaban' }}</div>
+            <p class="muted mb0" style="font-size:13px">
+                {{ $exam->manual_exam_open
+                    ? 'Siswa bisa membuka soal dan mulai mengerjakan.'
+                    : 'Siswa masih bisa melihat kode ujian, tetapi belum bisa mulai mengerjakan sampai tombol ini dibuka.' }}
+            </p>
         </div>
-        @if($exam->manual_exam_open)
-            <span class="badge published" style="font-size:12px">Ujian Sedang Dibuka</span>
-        @elseif($exam->manual_download_open)
-            <span class="badge warning" style="font-size:12px">Download Dibuka</span>
-        @else
-            <span class="badge archived" style="font-size:12px">Belum Dibuka</span>
-        @endif
+        <form method="POST" action="{{ route('exams.toggleManual', $exam) }}">
+            @csrf
+            <input type="hidden" name="target" value="exam">
+            <input type="hidden" name="state" value="{{ $exam->manual_exam_open ? 0 : 1 }}">
+            <button class="response-switch {{ $exam->manual_exam_open ? 'on' : 'off' }}">
+                <span class="response-dot"></span>
+                {{ $exam->manual_exam_open ? 'Tutup' : 'Buka' }}
+            </button>
+        </form>
     </div>
 
-    <div class="two" style="gap:1rem">
-        {{-- Toggle Download --}}
-        <div class="mini-card" style="display:flex;align-items:center;gap:1rem">
-            <div style="flex:1">
-                <b style="font-size:14px">1. Download Soal</b>
-                <p class="muted small mb0" style="margin-top:.15rem">
-                    {{ $exam->manual_download_open ? 'Siswa bisa mengunduh soal sekarang.' : 'Siswa belum bisa mengunduh.' }}
-                </p>
-            </div>
-            <form method="POST" action="{{ route('exams.toggleManual', $exam) }}">
-                @csrf
-                <input type="hidden" name="target" value="download">
-                <input type="hidden" name="state" value="{{ $exam->manual_download_open ? 0 : 1 }}">
-                <button class="btn {{ $exam->manual_download_open ? 'danger' : 'green' }}" style="white-space:nowrap"
-                        @if($exam->manual_exam_open && $exam->manual_download_open) disabled title="Tutup ujian dulu sebelum menutup download" @endif>
-                    {{ $exam->manual_download_open ? 'Tutup Download' : 'Buka Download' }}
-                </button>
-            </form>
-        </div>
-
-        {{-- Toggle Ujian --}}
-        <div class="mini-card" style="display:flex;align-items:center;gap:1rem">
-            <div style="flex:1">
-                <b style="font-size:14px">2. Buka Ujian</b>
-                <p class="muted small mb0" style="margin-top:.15rem">
-                    {{ $exam->manual_exam_open ? 'Siswa bisa membuka & mengerjakan soal.' : 'Soal belum bisa dibuka siswa.' }}
-                </p>
-            </div>
-            <form method="POST" action="{{ route('exams.toggleManual', $exam) }}">
-                @csrf
-                <input type="hidden" name="target" value="exam">
-                <input type="hidden" name="state" value="{{ $exam->manual_exam_open ? 0 : 1 }}">
-                <button class="btn {{ $exam->manual_exam_open ? 'danger' : 'primary' }}" style="white-space:nowrap">
-                    {{ $exam->manual_exam_open ? 'Tutup Ujian' : 'Buka Ujian' }}
-                </button>
-            </form>
-        </div>
+    <div class="response-note">
+        Membuka ujian otomatis membuka akses download soal. Untuk ujian susulan, guru cukup buka tombol ini saat siswa siap, lalu tutup lagi setelah selesai.
     </div>
-    <p class="help" style="margin-top:.75rem">Membuka ujian otomatis membuka download. Menutup download otomatis menutup ujian.</p>
+
+    <details class="inline-advanced">
+        <summary>Opsi lanjutan download soal</summary>
+        <div class="inline-advanced-body">
+            <div class="mini-card" style="display:flex;align-items:center;gap:1rem">
+                <div style="flex:1">
+                    <b style="font-size:14px">Download soal tanpa mulai ujian</b>
+                    <p class="muted small mb0" style="margin-top:.15rem">
+                        {{ $exam->manual_download_open ? 'Siswa bisa mengunduh paket soal, tetapi belum bisa mengerjakan kalau menerima jawaban masih ditutup.' : 'Siswa belum bisa mengunduh paket soal.' }}
+                    </p>
+                </div>
+                <form method="POST" action="{{ route('exams.toggleManual', $exam) }}">
+                    @csrf
+                    <input type="hidden" name="target" value="download">
+                    <input type="hidden" name="state" value="{{ $exam->manual_download_open ? 0 : 1 }}">
+                    <button class="btn {{ $exam->manual_download_open ? 'danger' : 'soft' }}" style="white-space:nowrap"
+                            @if($exam->manual_exam_open && $exam->manual_download_open) disabled title="Tutup menerima jawaban dulu sebelum menutup download" @endif>
+                        {{ $exam->manual_download_open ? 'Tutup Download' : 'Buka Download Saja' }}
+                    </button>
+                </form>
+            </div>
+            <p class="help">Umumnya bagian ini tidak perlu disentuh. Pakai hanya jika siswa diminta download paket lebih dulu sebelum ujian dibuka.</p>
+        </div>
+    </details>
 </div>
 @endif
 
@@ -343,8 +356,8 @@
         {{-- Timeline --}}
         <div class="card">
             <div class="between" style="margin-bottom:.85rem">
-                <h2 class="mb0" style="font-size:16px">Alur Waktu Ujian</h2>
-                <a href="{{ route('exams.edit', $exam) }}" class="btn ghost" style="font-size:12px;padding:.3rem .65rem">Ubah Jadwal</a>
+                <h2 class="mb0" style="font-size:16px">{{ $isManual ? 'Status Akses Siswa' : 'Alur Waktu Ujian' }}</h2>
+                <a href="{{ route('exams.edit', $exam) }}" class="btn ghost" style="font-size:12px;padding:.3rem .65rem">{{ $isManual ? 'Ubah Pengaturan' : 'Ubah Jadwal' }}</a>
             </div>
 
             <div class="tl-step {{ $dlOpen ? 'active' : '' }}">
@@ -354,18 +367,21 @@
                     <div class="muted small">Paket terenkripsi, belum bisa dibaca</div>
                 </div>
                 @if($dlOpen) <span class="badge published" style="font-size:11px">Sedang dibuka</span>
+                @elseif($isManual) <span class="badge warning" style="font-size:11px">Menunggu dibuka</span>
                 @elseif($dlAt) <span class="badge" style="font-size:11px">{{ $dlAt }}</span>
                 @else <span class="badge warning" style="font-size:11px">Setelah publish</span>
                 @endif
             </div>
 
-            <div class="tl-step {{ $started && !$ended ? 'active' : '' }}">
-                <div class="tl-num" style="background:{{ $started && !$ended ? 'var(--success)' : '#94a3b8' }}">2</div>
+            <div class="tl-step {{ $examOpenNow ? 'active' : '' }}">
+                <div class="tl-num" style="background:{{ $examOpenNow ? 'var(--success)' : '#94a3b8' }}">2</div>
                 <div style="flex:1">
                     <div style="font-size:13px;font-weight:800">Ujian dimulai</div>
-                    <div class="muted small">Siswa aktifkan mode pesawat, lalu soal terbuka</div>
+                    <div class="muted small">{{ $isManual ? 'Mengikuti tombol menerima jawaban' : 'Siswa aktifkan mode pesawat, lalu soal terbuka' }}</div>
                 </div>
-                @if($exam->starts_at)
+                @if($isManual)
+                    <span class="badge {{ $exam->manual_exam_open ? 'published' : 'warning' }}" style="font-size:11px">{{ $exam->manual_exam_open ? 'Dibuka manual' : 'Belum dibuka' }}</span>
+                @elseif($exam->starts_at)
                     <span class="badge {{ $started ? 'published' : '' }}" style="font-size:11px">{{ $exam->starts_at->format('d M H:i') }}</span>
                 @else
                     <span class="badge warning" style="font-size:11px">Belum diatur</span>
@@ -387,14 +403,16 @@
                     <div style="font-size:13px;font-weight:800">Siswa kirim jawaban</div>
                     <div class="muted small">Matikan mode pesawat, nyalakan internet, lalu kirim</div>
                 </div>
-                @if($exam->ends_at)
+                @if($isManual)
+                    <span class="badge {{ $exam->manual_exam_open ? 'published' : 'closed' }}" style="font-size:11px">{{ $exam->manual_exam_open ? 'Masih menerima' : 'Ditutup manual' }}</span>
+                @elseif($exam->ends_at)
                     <span class="badge {{ $ended ? 'closed' : '' }}" style="font-size:11px">Batas {{ $exam->ends_at->format('d M H:i') }}</span>
                 @else
                     <span class="badge warning" style="font-size:11px">Tidak ada batas</span>
                 @endif
             </div>
 
-            @if(!$exam->starts_at || !$exam->ends_at)
+            @if(!$isManual && (!$exam->starts_at || !$exam->ends_at))
                 <div class="alert warning" style="margin-top:.75rem;margin-bottom:0;font-size:13px">
                     Jadwal belum diatur. <a href="{{ route('exams.edit', $exam) }}" style="font-weight:900">Atur jadwal</a>
                 </div>
@@ -436,7 +454,7 @@
 {{-- ═══ ZONA BERBAHAYA ═══ --}}
 <details class="danger-zone">
     <summary class="danger-summary">
-        <span style="color:#dc2626">!</span> Aksi Berbahaya - Tutup, Arsipkan, Hapus
+        <span style="color:#dc2626">!</span> Aksi Final - Tutup final, Arsipkan, Hapus
         <span class="muted small" style="margin-left:auto;font-weight:700">Klik untuk buka</span>
     </summary>
     <div class="danger-body">
@@ -452,7 +470,7 @@
                 <form method="POST" action="{{ route('exams.close', $exam) }}"
                       onsubmit="return confirm('Tutup ujian?\n\nSiswa tidak bisa lagi download atau submit jawaban.')">
                     @csrf
-                    <button class="btn danger">Tutup Ujian</button>
+                    <button class="btn danger">Tutup Final</button>
                 </form>
             @endif
             @if($exam->status !== 'archived')
@@ -474,7 +492,7 @@
         </div>
         <p class="help mb0">
             <b>Kembalikan ke Draft</b>: hanya jika belum ada aktivitas siswa |
-            <b>Tutup</b>: siswa tidak bisa submit baru |
+            <b>Tutup final</b>: mengakhiri ujian dan menghentikan submit baru |
             <b>Arsipkan</b>: sembunyikan dari daftar, data tetap |
             <b>Hapus</b>: permanen, hanya sebelum ada aktivitas
         </p>
