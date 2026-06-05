@@ -136,6 +136,9 @@
         @endunless
         <button class="btn primary">{{ $isEdit ? 'Simpan Perubahan Soal' : 'Simpan Semua Soal' }}</button>
         <a class="btn" href="{{ route('question-bank.index') }}">Batal</a>
+        @if($isEdit)
+            <a class="btn soft" href="{{ route('question-bank.create') }}" style="margin-left:auto">+ Buat Soal Baru</a>
+        @endif
     </div>
 </form>
 @endsection
@@ -169,12 +172,13 @@ function addQuestion(question = null){
             </div>
         </div>
         <div class="field">
-            <label>Pertanyaan</label>
-            <input class="input q-title" placeholder="Tulis pertanyaan" value="${esc(q.title)}">
+            <label>Pertanyaan <span class="muted small" style="font-weight:600">(maks 500 karakter)</span></label>
+            <textarea class="input q-title" rows="2" maxlength="500" placeholder="Tulis pertanyaan">${esc(q.title)}</textarea>
+            <div class="muted tiny q-title-count" style="text-align:right;margin-top:.2rem">0 / 500</div>
         </div>
         <div class="field">
-            <label>Deskripsi / instruksi</label>
-            <textarea class="input q-desc" rows="2" placeholder="Opsional, misalnya bacalah teks berikut terlebih dahulu">${esc(q.description)}</textarea>
+            <label>Deskripsi / instruksi <span class="muted small" style="font-weight:600">(maks 1000 karakter)</span></label>
+            <textarea class="input q-desc" rows="2" maxlength="1000" placeholder="Opsional, misalnya bacalah teks berikut terlebih dahulu">${esc(q.description)}</textarea>
         </div>
         <div class="field" style="max-width:180px">
             <label>Poin</label>
@@ -185,6 +189,15 @@ function addQuestion(question = null){
     document.getElementById('questionCards').appendChild(card);
     renderAnswerArea(card, q);
     renumberCards();
+
+    // Counter karakter pertanyaan
+    const titleEl = card.querySelector('.q-title');
+    const countEl = card.querySelector('.q-title-count');
+    if(titleEl && countEl){
+        const upd = () => countEl.textContent = `${titleEl.value.length} / 500`;
+        titleEl.addEventListener('input', upd);
+        upd();
+    }
 }
 
 function renumberCards(){
@@ -238,7 +251,7 @@ function renderAnswerArea(card, question = null){
 function choiceOptionHtml(uid, inputType, opt = {}){
     return `<div class="option-row">
         <input class="opt-correct" name="correct_${uid}" type="${inputType}" ${opt.is_correct?'checked':''}>
-        <input class="input opt-label" placeholder="Opsi jawaban" value="${esc(opt.label)}">
+        <input class="input opt-label" maxlength="300" placeholder="Opsi jawaban" value="${esc(opt.label)}">
         <span class="muted small">Kunci</span>
         <button type="button" class="btn danger remove-row">Hapus</button>
     </div>`;
@@ -246,8 +259,8 @@ function choiceOptionHtml(uid, inputType, opt = {}){
 
 function matchingRowHtml(row = {}){
     return `<div class="matching-row">
-        <input class="input match-left" placeholder="Item kiri" value="${esc(row.label)}">
-        <input class="input match-right" placeholder="Pasangan benar" value="${esc(row.match || row.meta?.match || '')}">
+        <input class="input match-left" maxlength="200" placeholder="Item kiri" value="${esc(row.label)}">
+        <input class="input match-right" maxlength="200" placeholder="Pasangan benar" value="${esc(row.match || row.meta?.match || '')}">
         <button type="button" class="btn danger remove-row">Hapus</button>
     </div>`;
 }

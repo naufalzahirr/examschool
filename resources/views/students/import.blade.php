@@ -13,9 +13,9 @@
     <div class="between">
         <div>
             <h2 class="mb0">Template Import Cepat</h2>
-            <p class="muted mb0">Gunakan pemisah titik koma. Sistem akan membuat atau memperbarui akun siswa berdasarkan NIS.</p>
+            <p class="muted mb0">Unduh template, isi di Excel, lalu copy-paste isinya ke kolom di bawah. Sistem membuat/memperbarui akun berdasarkan NIS.</p>
         </div>
-        <span class="badge info">Format SILAP-ready</span>
+        <a class="btn primary" href="{{ route('students.template') }}">⬇ Unduh Template Excel (CSV)</a>
     </div>
 </div>
 
@@ -25,12 +25,12 @@
         <div class="import-toolbar">
             <div>
                 <h2 class="mb0">Tempel Data Siswa</h2>
-                <p class="muted small mb0">Format: <b>NIS;Nama;Password minimal 8 karakter;Nama Kelas;ClassroomID</b></p>
+                <p class="muted small mb0">Kolom: <b>NIS · Nama · Password (min 8) · Nama Kelas · ClassroomID</b></p>
             </div>
             <button class="btn primary">Import / Update Akun</button>
         </div>
-        <textarea name="students_text" rows="14" placeholder="4728;ACHMAD RAFA YUSAPUTRA;Siswa4728!;XII RPL 1;10&#10;4729;ADE RAHMANA;Siswa4729!;XII RPL 1;10"></textarea>
-        <p class="help">Kolom nama kelas boleh kosong jika ClassroomID valid. Baris dengan password kurang dari 8 karakter akan dilewati.</p>
+        <textarea class="input" name="students_text" rows="14" placeholder="Paste langsung dari Excel, atau ketik:&#10;4728;ACHMAD RAFA YUSAPUTRA;Siswa4728!;XII RPL 1;10&#10;4729;ADE RAHMANA;Siswa4729!;XII RPL 1;10"></textarea>
+        <p class="help">Bisa paste langsung dari Excel (otomatis terdeteksi). Pemisah ; tab, atau koma diterima. Baris header "NIS" otomatis dilewati. Password kurang dari 8 karakter dilewati.</p>
     </form>
 
     <div class="card">

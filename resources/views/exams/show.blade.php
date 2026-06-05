@@ -138,6 +138,65 @@
     </div>
 </div>
 
+{{-- Panel kontrol manual (hanya mode manual) --}}
+@if($exam->isManualMode())
+<div class="card mb" style="border:2px solid {{ $exam->manual_exam_open ? '#bbf7d0' : 'var(--line)' }};background:{{ $exam->manual_exam_open ? 'linear-gradient(135deg,#f0fdf9,#ecfdf5)' : '#fff' }}">
+    <div class="between" style="margin-bottom:1rem">
+        <div>
+            <h2 class="mb0" style="font-size:16px">🎛️ Kontrol Manual Ujian</h2>
+            <p class="muted small mb0">Buka/tutup download dan ujian kapan saja — cocok untuk ujian susulan.</p>
+        </div>
+        @if($exam->manual_exam_open)
+            <span class="badge published" style="font-size:12px">● Ujian Sedang Dibuka</span>
+        @elseif($exam->manual_download_open)
+            <span class="badge warning" style="font-size:12px">Download Dibuka</span>
+        @else
+            <span class="badge archived" style="font-size:12px">Belum Dibuka</span>
+        @endif
+    </div>
+
+    <div class="two" style="gap:1rem">
+        {{-- Toggle Download --}}
+        <div class="mini-card" style="display:flex;align-items:center;gap:1rem">
+            <div style="flex:1">
+                <b style="font-size:14px">1. Download Soal</b>
+                <p class="muted small mb0" style="margin-top:.15rem">
+                    {{ $exam->manual_download_open ? 'Siswa bisa mengunduh soal sekarang.' : 'Siswa belum bisa mengunduh.' }}
+                </p>
+            </div>
+            <form method="POST" action="{{ route('exams.toggleManual', $exam) }}">
+                @csrf
+                <input type="hidden" name="target" value="download">
+                <input type="hidden" name="state" value="{{ $exam->manual_download_open ? 0 : 1 }}">
+                <button class="btn {{ $exam->manual_download_open ? 'danger' : 'green' }}" style="white-space:nowrap"
+                        @if($exam->manual_exam_open && $exam->manual_download_open) disabled title="Tutup ujian dulu sebelum menutup download" @endif>
+                    {{ $exam->manual_download_open ? 'Tutup Download' : 'Buka Download' }}
+                </button>
+            </form>
+        </div>
+
+        {{-- Toggle Ujian --}}
+        <div class="mini-card" style="display:flex;align-items:center;gap:1rem">
+            <div style="flex:1">
+                <b style="font-size:14px">2. Buka Ujian</b>
+                <p class="muted small mb0" style="margin-top:.15rem">
+                    {{ $exam->manual_exam_open ? 'Siswa bisa membuka & mengerjakan soal.' : 'Soal belum bisa dibuka siswa.' }}
+                </p>
+            </div>
+            <form method="POST" action="{{ route('exams.toggleManual', $exam) }}">
+                @csrf
+                <input type="hidden" name="target" value="exam">
+                <input type="hidden" name="state" value="{{ $exam->manual_exam_open ? 0 : 1 }}">
+                <button class="btn {{ $exam->manual_exam_open ? 'danger' : 'primary' }}" style="white-space:nowrap">
+                    {{ $exam->manual_exam_open ? 'Tutup Ujian' : 'Buka Ujian' }}
+                </button>
+            </form>
+        </div>
+    </div>
+    <p class="help" style="margin-top:.75rem">Membuka ujian otomatis membuka download. Menutup download otomatis menutup ujian.</p>
+</div>
+@endif
+
 @elseif($isClosed)
 {{-- Closed/Archived: Lihat hasil --}}
 <div class="next-action-banner closed">

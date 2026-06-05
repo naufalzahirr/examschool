@@ -213,11 +213,28 @@
             @if($exam->shuffle_options)<input type="hidden" name="shuffle_options" value="1">@endif
         @endif
 
+        @php $currentMode = old('schedule_mode', $exam->schedule_mode ?? \App\Models\Exam::MODE_MANUAL); @endphp
+
         @if(!($exam->exists && $exam->hasStartedWork()))
-        <div class="alert info" style="margin-bottom:1.1rem;font-size:13px">
-            Siswa bisa download soal <b>sebelum</b> jam mulai. Soal baru bisa dibuka tepat saat jam mulai.
-            Pastikan <b>Jam Selesai ≥ Jam Mulai + Durasi ujian</b>.
+        {{-- Pilih mode: Manual vs Terjadwal --}}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:1.1rem">
+            <label class="mode-pick" style="display:flex;gap:.7rem;align-items:flex-start;padding:1rem;border:2px solid var(--line);border-radius:var(--radius);cursor:pointer">
+                <input type="radio" name="schedule_mode" value="manual" @checked($currentMode === \App\Models\Exam::MODE_MANUAL) style="margin-top:.2rem">
+                <div>
+                    <b style="font-size:14px;color:var(--heading)">🟢 Manual (buka/tutup tombol)</b>
+                    <p class="muted small mb0" style="margin-top:.2rem">Seperti Google Form. Ujian dibuka & ditutup lewat tombol, tanpa jam. Cocok untuk ujian susulan.</p>
+                </div>
+            </label>
+            <label class="mode-pick" style="display:flex;gap:.7rem;align-items:flex-start;padding:1rem;border:2px solid var(--line);border-radius:var(--radius);cursor:pointer">
+                <input type="radio" name="schedule_mode" value="scheduled" @checked($currentMode === \App\Models\Exam::MODE_SCHEDULED) style="margin-top:.2rem">
+                <div>
+                    <b style="font-size:14px;color:var(--heading)">🕐 Terjadwal (atur jam)</b>
+                    <p class="muted small mb0" style="margin-top:.2rem">Ujian buka & tutup otomatis sesuai jam mulai dan selesai yang diatur.</p>
+                </div>
+            </label>
         </div>
+        @else
+            <input type="hidden" name="schedule_mode" value="{{ $exam->schedule_mode ?? \App\Models\Exam::MODE_SCHEDULED }}">
         @endif
 
         @if($exam->exists && $exam->hasStartedWork())
@@ -250,31 +267,51 @@
 
         @else
         {{-- Mode edit normal --}}
-        <div class="three" style="margin-bottom:.85rem">
-            <div class="field">
-                <label>Jam Mulai</label>
-                <input id="starts_at_input" class="input" type="datetime-local" name="starts_at"
-                       value="{{ old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')) }}">
-                <p class="help" id="starts_at_preview">
-                    @if(old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')))
-                        <b>{{ optional($exam->starts_at)->format('l, d M Y — H:i') ?? '' }}</b>
-                    @else
-                        Pilih tanggal dan jam mulai
-                    @endif
-                </p>
+
+        {{-- Field jam (hanya untuk mode terjadwal) --}}
+        <div id="scheduledFields">
+            <div class="alert info" style="margin-bottom:1.1rem;font-size:13px">
+                Siswa bisa download soal <b>sebelum</b> jam mulai. Soal baru bisa dibuka saat jam mulai.
+                Pastikan <b>Jam Selesai ≥ Jam Mulai + Durasi</b>.
             </div>
-            <div class="field">
-                <label>Jam Selesai</label>
-                <input id="ends_at_input" class="input" type="datetime-local" name="ends_at"
-                       value="{{ old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')) }}">
-                <p class="help" id="ends_at_preview">
-                    @if(old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')))
-                        <b>{{ optional($exam->ends_at)->format('l, d M Y — H:i') ?? '' }}</b>
-                    @else
-                        Pilih tanggal dan jam selesai
-                    @endif
-                </p>
+            <div class="two" style="margin-bottom:.85rem">
+                <div class="field">
+                    <label>Jam Mulai</label>
+                    <input id="starts_at_input" class="input" type="datetime-local" name="starts_at"
+                           value="{{ old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')) }}">
+                    <p class="help" id="starts_at_preview">
+                        @if(old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')))
+                            <b>{{ optional($exam->starts_at)->format('l, d M Y — H:i') ?? '' }}</b>
+                        @else
+                            Pilih tanggal dan jam mulai
+                        @endif
+                    </p>
+                </div>
+                <div class="field">
+                    <label>Jam Selesai</label>
+                    <input id="ends_at_input" class="input" type="datetime-local" name="ends_at"
+                           value="{{ old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')) }}">
+                    <p class="help" id="ends_at_preview">
+                        @if(old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')))
+                            <b>{{ optional($exam->ends_at)->format('l, d M Y — H:i') ?? '' }}</b>
+                        @else
+                            Pilih tanggal dan jam selesai
+                        @endif
+                    </p>
+                </div>
             </div>
+            <div class="alert warning" style="font-size:13px;margin-bottom:.9rem">
+                <b>Windows Chrome / Edge:</b> Input jam pakai format AM/PM (12 jam). Jam 7 malam = <b>7:00 PM</b>. Cek teks konfirmasi di bawah kolom.
+            </div>
+        </div>
+
+        {{-- Info mode manual --}}
+        <div id="manualInfo" class="alert success" style="display:none;font-size:13px;margin-bottom:1.1rem">
+            <b>Mode manual aktif.</b> Setelah ujian dipublish, buka/tutup download soal dan ujian lewat tombol di halaman detail ujian. Tidak perlu mengatur jam.
+        </div>
+
+        {{-- Durasi + acak (selalu tampil) --}}
+        <div class="two" style="margin-bottom:.85rem">
             <div class="field">
                 <label>Durasi Mengerjakan (menit) <span style="color:var(--danger)">*</span></label>
                 <input class="input" type="number" name="duration_minutes"
@@ -282,14 +319,6 @@
                        min="1" max="600" required>
                 <p class="help">Timer di HP siswa akan mundur sesuai durasi ini.</p>
             </div>
-        </div>
-
-        <div class="alert warning" style="font-size:13px;margin-bottom:.9rem">
-            <b>Windows Chrome / Edge:</b> Input jam ditampilkan dalam format AM/PM (12 jam).
-            Jam 7 malam = <b>7:00 PM</b>. Cek teks konfirmasi di bawah kolom Mulai/Selesai.
-        </div>
-
-        <div class="two">
             <div class="field">
                 <label>Acak Soal & Opsi</label>
                 <div style="display:flex;flex-direction:column;gap:.4rem;margin-top:.35rem">
@@ -304,52 +333,15 @@
                         Acak urutan opsi jawaban
                     </label>
                 </div>
-                <p class="help">Kunci jawaban tetap hanya di server — tidak ikut dikirim ke HP siswa.</p>
             </div>
-            <div></div>
         </div>
         @endif
     </div>
 
-    {{-- ═══ SECTION 4: PENGATURAN LANJUTAN (collapsed) ═══ --}}
-    <div class="card" style="padding:0;overflow:hidden">
-        <details>
-            <summary style="cursor:pointer;padding:1rem 1.35rem;display:flex;align-items:center;gap:.75rem;font-weight:800;color:var(--muted);list-style:none;border-bottom:1px solid transparent;transition:.15s">
-                <div style="width:34px;height:34px;border-radius:8px;background:var(--violet-soft);display:grid;place-items:center;flex-shrink:0">🔒</div>
-                <div>
-                    <div style="color:var(--heading)">Pengaturan Lanjutan (opsional)</div>
-                    <div class="muted small" style="font-weight:700">Mode keamanan aplikasi siswa — default sudah optimal untuk ujian resmi</div>
-                </div>
-                <span style="margin-left:auto;font-size:12px">Klik untuk buka ▾</span>
-            </summary>
-            <div style="padding:1.25rem 1.35rem;border-top:1px solid var(--line);background:#fafbff">
-                <div class="alert info" style="font-size:13px;margin-bottom:1rem">
-                    <b>Untuk ujian biasa, tidak perlu mengubah pengaturan ini.</b>
-                    Default sistem sudah menggunakan mode paling aman: wajib mode pesawat sebelum soal dibuka, alarm berbunyi jika internet aktif, pelanggaran dicatat otomatis.
-                </div>
-                <div class="two">
-                    <div class="field">
-                        <label>Mode Keamanan Aplikasi</label>
-                        <select class="input" name="lock_mode">
-                            @foreach($lockModes as $value => $label)
-                                <option value="{{ $value }}" @selected(old('lock_mode', $exam->lock_mode ?? \App\Models\Exam::LOCK_STRICT_AIRPLANE) === $value)>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                        <p class="help">Rekomendasi: <b>Ketat / Mode Pesawat Wajib</b> untuk ujian resmi.</p>
-                    </div>
-                    <div class="field">
-                        <label>Aturan Keluar Aplikasi</label>
-                        <select class="input" name="exit_policy">
-                            @foreach($exitPolicies as $value => $label)
-                                <option value="{{ $value }}" @selected(old('exit_policy', $exam->exit_policy ?? \App\Models\Exam::EXIT_AFTER_SUBMIT) === $value)>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                        <p class="help">Kapan siswa boleh keluar dari aplikasi ujian.</p>
-                    </div>
-                </div>
-            </div>
-        </details>
-    </div>
+    {{-- Mode keamanan diatur otomatis oleh sistem (default: wajib mode pesawat).
+         Nilai tetap dikirim agar konsisten saat edit. --}}
+    <input type="hidden" name="lock_mode" value="{{ old('lock_mode', $exam->lock_mode ?? \App\Models\Exam::LOCK_STRICT_AIRPLANE) }}">
+    <input type="hidden" name="exit_policy" value="{{ old('exit_policy', $exam->exit_policy ?? \App\Models\Exam::EXIT_AFTER_SUBMIT) }}">
 
     {{-- ═══ SAVE BAR ═══ --}}
     <div class="card">
@@ -397,6 +389,26 @@ function bindPreview(inputId, previewId) {
 document.addEventListener('DOMContentLoaded', () => {
     bindPreview('starts_at_input', 'starts_at_preview');
     bindPreview('ends_at_input',   'ends_at_preview');
+
+    // Toggle tampilan field jadwal sesuai mode
+    const scheduledFields = document.getElementById('scheduledFields');
+    const manualInfo = document.getElementById('manualInfo');
+    const modeRadios = document.querySelectorAll('input[name="schedule_mode"]');
+
+    function applyMode(){
+        const mode = document.querySelector('input[name="schedule_mode"]:checked')?.value || 'manual';
+        const isManual = mode === 'manual';
+        if(scheduledFields) scheduledFields.style.display = isManual ? 'none' : 'block';
+        if(manualInfo) manualInfo.style.display = isManual ? 'block' : 'none';
+        // Tandai kartu mode terpilih
+        document.querySelectorAll('.mode-pick').forEach(card => {
+            const checked = card.querySelector('input')?.checked;
+            card.style.borderColor = checked ? 'var(--primary)' : 'var(--line)';
+            card.style.background = checked ? 'var(--primary-soft)' : '#fff';
+        });
+    }
+    modeRadios.forEach(r => r.addEventListener('change', applyMode));
+    applyMode();
 });
 </script>
 @endpush

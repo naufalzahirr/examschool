@@ -1,5 +1,23 @@
 @extends('layouts.app', ['title' => 'Bank Soal'])
 
+@push('head')
+<style>
+.qb-toolbar{display:flex;flex-direction:column;gap:.85rem;padding:1.15rem 1.35rem;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#fff 0%,#f7fffd 100%)}
+.qb-filter-row{display:flex;gap:.65rem;flex-wrap:wrap;align-items:flex-end}
+.qb-filter-row .tool-field{min-width:0;flex:1 1 150px}
+.qb-action-row{display:flex;gap:.65rem;align-items:center}
+.qb-action-row .live-search-wrap{flex:1}
+.qb-modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px);z-index:100;display:none;align-items:center;justify-content:center;padding:1.5rem}
+.qb-modal-overlay.open{display:flex}
+.qb-modal{background:#fff;border-radius:14px;max-width:640px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 30px 70px rgba(15,23,42,.30)}
+.qb-modal-head{padding:1.25rem 1.5rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;position:sticky;top:0;background:#fff}
+.qb-modal-body{padding:1.25rem 1.5rem}
+.qb-opt{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border:1px solid var(--line);border-radius:10px;margin-bottom:.45rem}
+.qb-opt.correct{background:var(--success-soft);border-color:#bbf7d0}
+.qb-opt-mark{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0;color:#fff}
+</style>
+@endpush
+
 @section('content')
 <div class="hero mb">
     <div class="between">
@@ -15,11 +33,9 @@
 </div>
 
 <div class="card data-card">
-    <div class="table-toolbar">
-        <div class="table-title">
-            <h2 style="font-size:15px">{{ $items->total() }} Soal di Bank</h2>
-        </div>
-        <form class="table-tools" method="GET" action="{{ route('question-bank.index') }}">
+    <form class="qb-toolbar" method="GET" action="{{ route('question-bank.index') }}">
+        {{-- Baris 1: filter dropdown --}}
+        <div class="qb-filter-row">
             <div class="tool-field">
                 <label>Mapel</label>
                 <select class="input" name="subject" onchange="this.form.submit()">
@@ -56,28 +72,27 @@
                     @endforeach
                 </select>
             </div>
-            <div class="tool-field search">
-                <label>Cari</label>
-                <div class="live-search-wrap">
-                    <input class="input" data-live-search="bankTable" name="q" value="{{ request('q') }}" placeholder="Soal, kode, topik...">
-                </div>
+        </div>
+        {{-- Baris 2: search + tombol --}}
+        <div class="qb-action-row">
+            <div class="live-search-wrap">
+                <input class="input" data-live-search="bankTable" name="q" value="{{ request('q') }}" placeholder="Cari soal, kode, topik...">
             </div>
-            <button class="btn primary" style="align-self:flex-end">Cari</button>
+            <button class="btn primary">Cari</button>
             @if(request('q') || request('subject') || request('grade_level') || request('type') || request('difficulty') || request('visibility'))
-                <a class="btn ghost" href="{{ route('question-bank.index') }}" style="align-self:flex-end">Reset</a>
+                <a class="btn ghost" href="{{ route('question-bank.index') }}">Reset</a>
             @else
-                <button class="btn ghost" type="button" data-live-reset="bankTable" style="align-self:flex-end">Clear</button>
+                <button class="btn ghost" type="button" data-live-reset="bankTable">Clear</button>
             @endif
-        </form>
-    </div>
+        </div>
+    </form>
 
     <div class="table-wrap">
         <table class="table" id="bankTable">
             <thead>
                 <tr>
-                    <th>Soal</th>
+                    <th>Kode</th>
                     <th>Jenis</th>
-                    <th>Kunci Jawaban</th>
                     <th>Mapel / Topik</th>
                     <th>Level</th>
                     <th>Akses</th>
@@ -88,17 +103,9 @@
             </thead>
             <tbody>
             @forelse($items as $item)
-                <tr>
-                    <td>
-                        <b style="font-size:13px;display:block;margin-bottom:.2rem">{{ Str::limit($item->title, 70) }}</b>
-                        <span class="muted small">{{ $item->question_code }}</span>
-                    </td>
-                    <td>
-                        <span class="badge info" style="font-size:11px">{{ $filters['types'][$item->type] ?? $item->type }}</span>
-                    </td>
-                    <td class="small">
-                        <span class="muted">Kunci:</span> <b>{{ Str::limit($item->answerPreview(), 55) }}</b>
-                    </td>
+                <tr data-title="{{ $item->title }}">
+                    <td><span class="muted small">{{ $item->question_code }}</span></td>
+                    <td><span class="badge info" style="font-size:11px">{{ $filters['types'][$item->type] ?? $item->type }}</span></td>
                     <td>
                         <span style="font-size:13px">{{ $item->subject ?: '–' }}</span><br>
                         <span class="muted small">{{ $item->topic ?: '–' }} · {{ $item->grade_level ?: '–' }}</span>
@@ -119,25 +126,25 @@
                     <td><b>{{ $item->points }}</b></td>
                     <td class="small muted">{{ $item->teacher?->name ?: '–' }}</td>
                     <td>
-                        @if($item->canBeManagedBy(auth()->user()))
-                            <div class="row" style="gap:.3rem;flex-wrap:nowrap">
+                        <div class="row" style="gap:.3rem;flex-wrap:nowrap">
+                            <button type="button" class="btn ghost" style="font-size:12px;padding:.35rem .65rem"
+                                    onclick="viewQuestion('{{ route('question-bank.detail', $item) }}')">Lihat</button>
+                            @if($item->canBeManagedBy(auth()->user()))
                                 <a class="btn soft" href="{{ route('question-bank.edit', $item) }}" style="font-size:12px;padding:.35rem .65rem">Edit</a>
                                 <form method="POST" action="{{ route('question-bank.destroy', $item) }}" onsubmit="return confirm('Hapus soal dari bank?')">
                                     @csrf @method('DELETE')
                                     <button class="btn danger" style="font-size:12px;padding:.35rem .65rem">Hapus</button>
                                 </form>
-                            </div>
-                        @else
-                            <span class="badge info" style="font-size:11px">Bisa dipakai</span>
-                        @endif
+                            @endif
+                        </div>
                     </td>
                 </tr>
             @empty
                 <tr data-empty-row>
-                    <td colspan="9" style="text-align:center;padding:3rem;color:var(--muted)">
+                    <td colspan="8" style="text-align:center;padding:3rem;color:var(--muted)">
                         <div style="font-size:40px;margin-bottom:.75rem">🧩</div>
                         <b style="display:block;color:var(--heading);margin-bottom:.35rem">Bank Soal masih kosong</b>
-                        <p class="small mb0">Tambah soal pertama atau import dari file teks.</p>
+                        <p class="small mb0">Tambah soal pertama atau import dari file.</p>
                         <div class="row" style="justify-content:center;margin-top:.85rem">
                             <a class="btn primary" href="{{ route('question-bank.create') }}">+ Tambah Soal</a>
                             <a class="btn ghost" href="{{ route('question-bank.import') }}">Import Massal</a>
@@ -149,8 +156,84 @@
         </table>
     </div>
     <div class="table-meta between">
-        <div class="small muted">Terlihat: <b data-live-count="bankTable">{{ $items->count() }}</b> baris</div>
+        <div class="small muted">Total: <b>{{ $items->total() }}</b> soal · Terlihat: <b data-live-count="bankTable">{{ $items->count() }}</b></div>
         <div>{{ $items->links() }}</div>
     </div>
 </div>
+
+{{-- Modal detail soal --}}
+<div class="qb-modal-overlay" id="qbModal" onclick="if(event.target===this)closeQbModal()">
+    <div class="qb-modal">
+        <div class="qb-modal-head">
+            <div>
+                <div class="muted small" id="qbModalType">Memuat...</div>
+                <h2 class="mb0" id="qbModalTitle" style="font-size:18px;margin-top:.25rem">—</h2>
+            </div>
+            <button type="button" class="btn ghost" style="padding:.35rem .6rem" onclick="closeQbModal()">✕</button>
+        </div>
+        <div class="qb-modal-body" id="qbModalBody">
+            <div style="text-align:center;padding:2rem;color:var(--muted)">Memuat detail soal...</div>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+const qbModal = document.getElementById('qbModal');
+
+function closeQbModal(){ qbModal.classList.remove('open'); }
+
+async function viewQuestion(url){
+    qbModal.classList.add('open');
+    const body = document.getElementById('qbModalBody');
+    body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">Memuat detail soal...</div>';
+    document.getElementById('qbModalTitle').textContent = '—';
+    document.getElementById('qbModalType').textContent = 'Memuat...';
+    try {
+        const res = await fetch(url, {headers:{'Accept':'application/json'}});
+        if(!res.ok) throw new Error('Gagal memuat');
+        const d = await res.json();
+        document.getElementById('qbModalTitle').textContent = d.title;
+        document.getElementById('qbModalType').textContent = `${d.type_label} · ${d.points} poin · Kode ${d.code}`;
+
+        let html = '';
+        if(d.description){
+            html += `<p class="muted" style="font-size:13px;margin-bottom:1rem;padding:.6rem .85rem;background:#f8fafc;border-radius:8px">${escapeHtml(d.description)}</p>`;
+        }
+        html += `<div class="row" style="gap:.4rem;margin-bottom:1rem">
+            <span class="badge" style="font-size:11px">${escapeHtml(d.subject||'Tanpa mapel')}</span>
+            ${d.grade_level?`<span class="badge archived" style="font-size:11px">${escapeHtml(d.grade_level)}</span>`:''}
+            ${d.topic?`<span class="badge info" style="font-size:11px">${escapeHtml(d.topic)}</span>`:''}
+        </div>`;
+
+        if(d.options && d.options.length){
+            html += '<div style="font-size:12px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">Pilihan Jawaban</div>';
+            d.options.forEach((o, i) => {
+                if(o.match !== null && o.match !== undefined){
+                    html += `<div class="qb-opt"><b>${escapeHtml(o.label)}</b><span style="color:var(--muted)">→</span><span>${escapeHtml(o.match)}</span></div>`;
+                } else {
+                    html += `<div class="qb-opt ${o.is_correct?'correct':''}">
+                        <span class="qb-opt-mark" style="background:${o.is_correct?'var(--success)':'#cbd5e1'}">${o.is_correct?'✓':String.fromCharCode(65+i)}</span>
+                        <span>${escapeHtml(o.label)}</span>
+                    </div>`;
+                }
+            });
+        }
+        html += `<div style="margin-top:1rem;padding:.75rem 1rem;background:var(--success-soft);border-radius:10px;border:1px solid #bbf7d0">
+            <span style="font-size:12px;font-weight:900;color:#166534">KUNCI JAWABAN</span><br>
+            <b style="color:#14532d">${escapeHtml(d.answer)}</b>
+        </div>`;
+        if(d.edit_url){
+            html += `<div style="margin-top:1rem;text-align:right"><a class="btn soft" href="${d.edit_url}">Edit Soal Ini</a></div>`;
+        }
+        body.innerHTML = html;
+    } catch(e){
+        body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--danger)">Gagal memuat detail soal.</div>';
+    }
+}
+
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeQbModal();});
+</script>
+@endpush

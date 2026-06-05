@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/classrooms/import-simple', [ClassroomController::class, 'importSimple'])->name('classrooms.importSimple');
 
         Route::get('/students/import', [StudentController::class, 'importPage'])->name('students.import');
+        Route::get('/students/import/template', [StudentController::class, 'downloadTemplate'])->name('students.template');
         Route::resource('students', StudentController::class)->except(['show']);
         Route::post('/students/import-simple', [StudentController::class, 'importSimple'])->name('students.importSimple');
         Route::get('/teachers', [TeacherController::class, 'index'])->name('teachers.index');
@@ -55,12 +56,15 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin,teacher')->group(function () {
         Route::get('/question-bank/import', [QuestionBankController::class, 'importPage'])->name('question-bank.import');
+        Route::get('/question-bank/import/template', [QuestionBankController::class, 'downloadTemplate'])->name('question-bank.template');
         Route::post('/question-bank/import-simple', [QuestionBankController::class, 'importSimple'])->name('question-bank.importSimple');
+        Route::get('/question-bank/{questionBank}/detail', [QuestionBankController::class, 'detail'])->name('question-bank.detail');
         Route::resource('question-bank', QuestionBankController::class)->parameters(['question-bank' => 'questionBank'])->except(['show']);
 
         Route::resource('exams', ExamController::class);
         Route::post('/exams/{exam}/regenerate-code', [ExamController::class, 'regenerateCode'])->name('exams.regenerateCode');
         Route::post('/exams/{exam}/publish', [ExamController::class, 'publish'])->name('exams.publish');
+        Route::post('/exams/{exam}/toggle-manual', [ExamController::class, 'toggleManual'])->name('exams.toggleManual');
         Route::post('/exams/{exam}/package/regenerate', [ExamController::class, 'regeneratePackage'])->name('exams.package.regenerate');
         Route::post('/exams/{exam}/unpublish', [ExamController::class, 'unpublish'])->name('exams.unpublish');
         Route::post('/exams/{exam}/close', [ExamController::class, 'close'])->name('exams.close');

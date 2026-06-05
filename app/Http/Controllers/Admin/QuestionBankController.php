@@ -43,6 +43,57 @@ class QuestionBankController extends Controller
         return view('question_bank.index', compact('items', 'filters'));
     }
 
+    public function detail(QuestionBankItem $questionBank)
+    {
+        abort_unless(
+            QuestionBankItem::query()->visibleToUser(auth()->user())->whereKey($questionBank->id)->exists(),
+            403
+        );
+
+        return response()->json([
+            'title' => $questionBank->title,
+            'description' => $questionBank->description,
+            'type' => $questionBank->type,
+            'type_label' => QuestionBankItem::typeLabels()[$questionBank->type] ?? $questionBank->type,
+            'points' => (float) $questionBank->points,
+            'subject' => $questionBank->subject,
+            'grade_level' => $questionBank->grade_level,
+            'topic' => $questionBank->topic,
+            'difficulty' => ucfirst((string) $questionBank->difficulty),
+            'code' => $questionBank->question_code,
+            'options' => collect($questionBank->options ?? [])->map(fn ($o) => [
+                'label' => $o['label'] ?? '',
+                'is_correct' => (bool) ($o['is_correct'] ?? false),
+                'match' => $o['match'] ?? ($o['meta']['match'] ?? null),
+            ])->values(),
+            'answer' => $questionBank->answerPreview(),
+            'can_manage' => $questionBank->canBeManagedBy(auth()->user()),
+            'edit_url' => $questionBank->canBeManagedBy(auth()->user()) ? route('question-bank.edit', $questionBank) : null,
+        ]);
+    }
+
+    public function downloadTemplate()
+    {
+        $filename = 'template-import-bank-soal.csv';
+        $rows = [
+            ['jenis', 'pertanyaan', 'poin', 'kunci', 'opsi'],
+            ['multiple_choice', 'Ibu kota Indonesia?', '10', 'Jakarta', 'Jakarta|Bandung|Surabaya|Medan'],
+            ['multiple_choice_complex', 'Pilih bilangan genap', '10', '2|4', '2|3|4|5'],
+            ['true_false', 'Matahari terbit dari timur', '5', 'Benar', ''],
+            ['matching', 'Jodohkan negara dan ibukota', '10', '', 'Indonesia=Jakarta|Jepang=Tokyo'],
+            ['short_answer', 'Singkatan dari Republik Indonesia', '5', 'RI', ''],
+        ];
+
+        return response()->streamDownload(function () use ($rows) {
+            $handle = fopen('php://output', 'w');
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+            foreach ($rows as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
     public function create()
     {
         return view('question_bank.form', [

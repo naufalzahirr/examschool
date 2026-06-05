@@ -43,6 +43,28 @@ class StudentController extends Controller
         ]);
     }
 
+    public function downloadTemplate()
+    {
+        $classroom = $this->availableClassrooms()->first();
+        $exampleId = $classroom?->id ?: 1;
+        $exampleClass = $classroom?->nama_kelas ?: 'XII RPL 1';
+
+        $rows = [
+            ['NIS', 'Nama Lengkap', 'Password (min 8 karakter)', 'Nama Kelas', 'ClassroomID'],
+            ['4728', 'ACHMAD RAFA YUSAPUTRA', 'Siswa4728!', $exampleClass, $exampleId],
+            ['4729', 'ADE RAHMANA PUTRI', 'Siswa4729!', $exampleClass, $exampleId],
+        ];
+
+        return response()->streamDownload(function () use ($rows) {
+            $handle = fopen('php://output', 'w');
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+            foreach ($rows as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        }, 'template-import-siswa.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
     public function create()
     {
         return view('students.form', [
@@ -107,7 +129,15 @@ class StudentController extends Controller
                 continue;
             }
 
-            [$nis, $name, $password, $className, $classroomId] = array_pad(array_map('trim', explode(';', $line, 5)), 5, null);
+            // Terima pemisah titik koma (;), tab (paste dari Excel), atau koma (file CSV)
+            $sep = str_contains($line, ';') ? ';' : (str_contains($line, "\t") ? "\t" : ',');
+            $parts = array_map(fn ($v) => trim($v, " \t\"'"), str_getcsv($line, $sep));
+            [$nis, $name, $password, $className, $classroomId] = array_pad($parts, 5, null);
+
+            // Lewati baris header template (jika ikut ter-paste)
+            if ($nis !== null && strtoupper((string) $nis) === 'NIS') {
+                continue;
+            }
             if (! $classroomId && $className && is_numeric($className)) {
                 $classroomId = $className;
                 $className = null;

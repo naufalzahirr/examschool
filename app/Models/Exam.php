@@ -24,6 +24,10 @@ class Exam extends Model
 
     public const STATUS_ARCHIVED = 'archived';
 
+    public const MODE_SCHEDULED = 'scheduled';
+
+    public const MODE_MANUAL = 'manual';
+
     public const LOCK_STANDARD = 'standard';
 
     public const LOCK_STRICT_AIRPLANE = 'strict_airplane';
@@ -57,6 +61,7 @@ class Exam extends Model
 
     protected $fillable = [
         'teacher_id', 'title', 'description', 'subject', 'grade_level', 'status',
+        'schedule_mode', 'manual_download_open', 'manual_exam_open',
         'starts_at', 'ends_at', 'duration_minutes', 'shuffle_questions', 'shuffle_options',
         'lock_mode', 'exit_policy', 'offline_exit_code_salt', 'offline_exit_code_hash',
         'offline_exit_code_encrypted', 'offline_exit_code_generated_at',
@@ -69,6 +74,8 @@ class Exam extends Model
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'manual_download_open' => 'boolean',
+        'manual_exam_open' => 'boolean',
         'shuffle_questions' => 'boolean',
         'shuffle_options' => 'boolean',
         'settings' => 'array',
@@ -285,9 +292,11 @@ class Exam extends Model
                 'note' => $this->hasGeneratedPackage() ? 'soal sudah siap' : 'disiapkan otomatis saat publish',
             ],
             [
-                'label' => 'Jadwal selesai tidak lebih awal dari jadwal mulai',
-                'ok' => ! $this->starts_at || ! $this->ends_at || $this->ends_at->greaterThanOrEqualTo($this->starts_at),
-                'note' => $this->starts_at && $this->ends_at ? $this->starts_at->format('d M Y H:i').' - '.$this->ends_at->format('d M Y H:i') : 'jadwal fleksibel',
+                'label' => $this->isManualMode() ? 'Mode buka/tutup manual' : 'Jadwal selesai tidak lebih awal dari mulai',
+                'ok' => $this->isManualMode() || ! $this->starts_at || ! $this->ends_at || $this->ends_at->greaterThanOrEqualTo($this->starts_at),
+                'note' => $this->isManualMode()
+                    ? 'Ujian dibuka/ditutup lewat tombol'
+                    : ($this->starts_at && $this->ends_at ? $this->starts_at->format('d M Y H:i').' - '.$this->ends_at->format('d M Y H:i') : 'jadwal fleksibel'),
             ],
         ];
     }
@@ -342,18 +351,31 @@ class Exam extends Model
         return 'Published';
     }
 
+    public function isManualMode(): bool
+    {
+        return $this->schedule_mode === self::MODE_MANUAL;
+    }
+
     public function isOpenNow(): bool
     {
+        if ($this->status !== self::STATUS_PUBLISHED) {
+            return false;
+        }
+
+        // Mode manual: ditentukan tombol on/off guru
+        if ($this->isManualMode()) {
+            return (bool) $this->manual_exam_open;
+        }
+
         $now = now();
 
-        return $this->status === self::STATUS_PUBLISHED
-            && (! $this->starts_at || $now->greaterThanOrEqualTo($this->starts_at))
+        return (! $this->starts_at || $now->greaterThanOrEqualTo($this->starts_at))
             && (! $this->ends_at || $now->lessThanOrEqualTo($this->ends_at));
     }
 
     public function downloadOpensAt(?int $hoursBefore = null): ?Carbon
     {
-        if (! $this->starts_at) {
+        if ($this->isManualMode() || ! $this->starts_at) {
             return null;
         }
 
@@ -364,8 +386,13 @@ class Exam extends Model
 
     public function isPackageDownloadWindowOpen(?int $hoursBefore = null): bool
     {
-        if ($this->status !== self::STATUS_PUBLISHED || $this->status === self::STATUS_CLOSED || $this->status === self::STATUS_ARCHIVED) {
+        if ($this->status !== self::STATUS_PUBLISHED) {
             return false;
+        }
+
+        // Mode manual: download terbuka jika guru mengaktifkan toggle download ATAU ujian sudah dibuka
+        if ($this->isManualMode()) {
+            return (bool) ($this->manual_download_open || $this->manual_exam_open);
         }
 
         $opensAt = $this->downloadOpensAt($hoursBefore);

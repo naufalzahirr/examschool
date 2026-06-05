@@ -534,23 +534,25 @@
             <a href="{{ route('dashboard') }}" class="brand"><span class="brand-logo">US</span><span>Ujian Sekolah</span></a>
             <nav class="menu">
                 <div class="menu-header">Utama</div>
-                <a class="menu-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><span class="menu-ico">DB</span>Dashboard</a>
-                <a class="menu-link {{ request()->routeIs('guide') ? 'active' : '' }}" href="{{ route('guide') }}"><span class="menu-ico">PD</span>Panduan</a>
+                <a class="menu-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><span class="menu-ico">📊</span>Dashboard</a>
+                <a class="menu-link {{ request()->routeIs('guide') ? 'active' : '' }}" href="{{ route('guide') }}"><span class="menu-ico">📖</span>Panduan</a>
                 @if(auth()->user()->isAdmin() || auth()->user()->isTeacher())
-                    <a class="menu-link {{ request()->routeIs('exams.*') ? 'active' : '' }}" href="{{ route('exams.index') }}"><span class="menu-ico">UJ</span>Ujian</a>
-                    <a class="menu-link {{ request()->routeIs('question-bank.*') ? 'active' : '' }}" href="{{ route('question-bank.index') }}"><span class="menu-ico">BS</span>Bank Soal</a>
+                    <a class="menu-link {{ request()->routeIs('exams.*') ? 'active' : '' }}" href="{{ route('exams.index') }}"><span class="menu-ico">📝</span>Ujian</a>
+                    <a class="menu-link {{ request()->routeIs('question-bank.*') ? 'active' : '' }}" href="{{ route('question-bank.index') }}"><span class="menu-ico">🧩</span>Bank Soal</a>
                 @endif
                 @if(auth()->user()->isAdmin())
                     <div class="menu-header">Data Master</div>
-                    <a class="menu-link {{ request()->routeIs('classrooms.*') ? 'active' : '' }}" href="{{ route('classrooms.index') }}"><span class="menu-ico">KL</span>Kelas</a>
-                    <a class="menu-link {{ request()->routeIs('students.*') ? 'active' : '' }}" href="{{ route('students.index') }}"><span class="menu-ico">SW</span>Siswa</a>
-                    <a class="menu-link {{ request()->routeIs('teachers.*') ? 'active' : '' }}" href="{{ route('teachers.index') }}"><span class="menu-ico">GR</span>Guru</a>
-                    <a class="menu-link {{ request()->routeIs('accounts.*') ? 'active' : '' }}" href="{{ route('accounts.index') }}"><span class="menu-ico">AK</span>Akun</a>
-                    <a class="menu-link {{ request()->routeIs('silap.*') ? 'active' : '' }}" href="{{ route('silap.index') }}"><span class="menu-ico">SI</span>Sinkron SILAP</a>
+                    <a class="menu-link {{ request()->routeIs('classrooms.*') ? 'active' : '' }}" href="{{ route('classrooms.index') }}"><span class="menu-ico">🏫</span>Kelas</a>
+                    <a class="menu-link {{ request()->routeIs('students.*') ? 'active' : '' }}" href="{{ route('students.index') }}"><span class="menu-ico">🎓</span>Siswa</a>
+                    <a class="menu-link {{ request()->routeIs('teachers.*') ? 'active' : '' }}" href="{{ route('teachers.index') }}"><span class="menu-ico">👨‍🏫</span>Guru</a>
+                    <a class="menu-link {{ request()->routeIs('accounts.*') ? 'active' : '' }}" href="{{ route('accounts.index') }}"><span class="menu-ico">🔐</span>Akun</a>
+                    <a class="menu-link {{ request()->routeIs('silap.*') ? 'active' : '' }}" href="{{ route('silap.index') }}"><span class="menu-ico">🔄</span>Sinkron SILAP</a>
                     <div class="menu-header">Produksi</div>
-                    <a class="menu-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.school.edit') }}"><span class="menu-ico">PG</span>Pengaturan</a>
-                    <a class="menu-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="{{ route('audit.index') }}"><span class="menu-ico">LG</span>Audit Log</a>
+                    <a class="menu-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.school.edit') }}"><span class="menu-ico">⚙️</span>Pengaturan</a>
+                    <a class="menu-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="{{ route('audit.index') }}"><span class="menu-ico">🧾</span>Audit Log</a>
                 @endif
+                <div class="menu-header">Akun Saya</div>
+                <a class="menu-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.password.edit') }}"><span class="menu-ico">🔑</span>Ganti Password</a>
             </nav>
         </aside>
         <section class="layout-page">
@@ -563,7 +565,7 @@
                 <div class="user-chip">
                     <img class="avatar" src="{{ asset('assets/img/avatars/1.png') }}" alt="avatar">
                     <div>
-                        <b>{{ auth()->user()->name }}</b><br><a class="muted small" href="{{ route('profile.password.edit') }}">{{ auth()->user()->role ?? 'admin' }} | ganti password</a>
+                        <b>{{ auth()->user()->name }}</b><br><span class="muted small" style="text-transform:capitalize">{{ auth()->user()->role ?? 'admin' }}</span>
                     </div>
                     <form method="POST" action="{{ route('logout') }}">@csrf <button class="btn danger">Logout</button></form>
                 </div>

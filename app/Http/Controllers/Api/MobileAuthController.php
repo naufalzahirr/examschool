@@ -98,6 +98,7 @@ class MobileAuthController extends Controller
                 'description' => $exam->description,
                 'subject' => $exam->subject,
                 'status' => $exam->status,
+                'schedule_mode' => $exam->schedule_mode,
                 'starts_at' => optional($exam->starts_at)->toIso8601String(),
                 'ends_at' => optional($exam->ends_at)->toIso8601String(),
                 'duration_minutes' => $exam->duration_minutes,
@@ -401,8 +402,12 @@ class MobileAuthController extends Controller
         [$exam, $participant] = $this->resolveAuthenticatedParticipant($request, $data['access_code']);
 
         if (! $exam->isOpenNow()) {
+            $message = $exam->isManualMode()
+                ? 'Ujian belum dibuka oleh pengawas. Tunggu pengawas membuka ujian, lalu coba lagi.'
+                : 'Unlock key baru diberikan saat jadwal ujian dibuka.';
+
             return response()->json([
-                'message' => 'Unlock key baru diberikan saat jadwal ujian dibuka.',
+                'message' => $message,
                 'server_time' => now()->toIso8601String(),
                 'starts_at' => optional($exam->starts_at)->toIso8601String(),
                 'ends_at' => optional($exam->ends_at)->toIso8601String(),
@@ -460,7 +465,26 @@ class MobileAuthController extends Controller
     {
         $deviceId = trim($deviceId);
         abort_if($deviceId === '', 422, 'ID perangkat wajib dikirim aplikasi.');
-        abort_if($participant->device_id && ! hash_equals((string) $participant->device_id, $deviceId), 423, 'Akun ini sudah terkunci di perangkat lain. Hubungi pengawas untuk reset perangkat.');
+
+        // 1) Akun ini sudah terkunci di HP lain
+        abort_if(
+            $participant->device_id && ! hash_equals((string) $participant->device_id, $deviceId),
+            423,
+            'Akun ini sudah terkunci di perangkat lain. Hubungi pengawas untuk reset perangkat.'
+        );
+
+        // 2) HP ini sudah dipakai siswa (NIS) lain untuk ujian yang sama
+        $usedByOther = ExamParticipant::where('exam_id', $participant->exam_id)
+            ->where('device_id', $deviceId)
+            ->where('id', '!=', $participant->id)
+            ->with('student:id,nis,name')
+            ->first();
+
+        abort_if(
+            $usedByOther !== null,
+            423,
+            'HP ini sudah dipakai untuk login siswa lain (NIS '.($usedByOther->student?->nis ?? '-').') di ujian ini. Satu HP hanya bisa untuk satu siswa per ujian. Hubungi pengawas jika perlu reset perangkat.'
+        );
 
         if (! $participant->device_id) {
             $participant->forceFill(['device_id' => $deviceId])->save();

@@ -241,6 +241,47 @@ class ExamController extends Controller
         return back()->with('success', 'Ujian dipublish dan soal siap diunduh siswa. Siswa tetap bisa download saat ujian berlangsung selama belum melewati jadwal selesai.');
     }
 
+    public function toggleManual(Request $request, Exam $exam)
+    {
+        $this->ensureCanManage($exam);
+
+        $data = $request->validate([
+            'target' => ['required', Rule::in(['download', 'exam'])],
+            'state'  => ['required', 'boolean'],
+        ]);
+
+        abort_unless($exam->status === Exam::STATUS_PUBLISHED, 422, 'Ujian harus dipublish dulu.');
+        abort_unless($exam->isManualMode(), 422, 'Ujian ini memakai jadwal otomatis, bukan mode manual.');
+
+        $state = (bool) $data['state'];
+
+        if ($data['target'] === 'exam') {
+            // Membuka ujian otomatis membuka download juga; menutup ujian tidak menutup download
+            $exam->manual_exam_open = $state;
+            if ($state) {
+                $exam->manual_download_open = true;
+            }
+            $msg = $state ? 'Ujian DIBUKA. Siswa sekarang bisa membuka soal.' : 'Ujian DITUTUP. Siswa tidak bisa membuka soal baru.';
+        } else {
+            $exam->manual_download_open = $state;
+            // Menutup download juga menutup ujian (tidak mungkin ujian terbuka tanpa download)
+            if (! $state) {
+                $exam->manual_exam_open = false;
+            }
+            $msg = $state ? 'Download soal DIBUKA. Siswa bisa mulai mengunduh.' : 'Download soal DITUTUP.';
+        }
+
+        $exam->save();
+        AuditLog::record('exam.manual_toggle', $exam, [
+            'target' => $data['target'],
+            'state' => $state,
+            'download_open' => $exam->manual_download_open,
+            'exam_open' => $exam->manual_exam_open,
+        ]);
+
+        return back()->with('success', $msg);
+    }
+
     public function regeneratePackage(Exam $exam)
     {
         $this->ensureCanManage($exam);
@@ -316,6 +357,7 @@ class ExamController extends Controller
             'description'      => ['nullable', 'string'],
             'subject'          => ['nullable', 'string', 'max:120'],
             'grade_level'      => ['nullable', 'string', 'max:60'],
+            'schedule_mode'    => ['nullable', Rule::in([Exam::MODE_SCHEDULED, Exam::MODE_MANUAL])],
             'classroom_ids'    => ['nullable', 'array'],
             'classroom_ids.*'  => ['integer', 'exists:classrooms,id'],
             'starts_at'        => ['nullable', 'date'],
@@ -327,6 +369,14 @@ class ExamController extends Controller
             'exit_policy'      => ['nullable', Rule::in(array_keys(Exam::EXIT_POLICIES))],
             'status'           => ['nullable', Rule::in([Exam::STATUS_DRAFT, Exam::STATUS_READY])],
         ]);
+
+        $data['schedule_mode'] = $data['schedule_mode'] ?? Exam::MODE_SCHEDULED;
+
+        // Mode manual: abaikan jadwal jam, kosongkan starts_at/ends_at
+        if ($data['schedule_mode'] === Exam::MODE_MANUAL) {
+            $data['starts_at'] = null;
+            $data['ends_at'] = null;
+        }
 
         $data['shuffle_questions'] = $request->boolean('shuffle_questions');
         $data['shuffle_options']   = $request->boolean('shuffle_options');

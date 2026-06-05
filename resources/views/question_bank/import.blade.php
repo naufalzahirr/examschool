@@ -1,7 +1,7 @@
 @extends('layouts.app', ['title' => 'Import Bank Soal'])
 
 @section('content')
-<div class="between mb"><div><h1>Import Bank Soal</h1><p class="muted">Import cepat untuk banyak soal. Untuk file Excel nanti bisa ditambahkan setelah format final sekolah disepakati.</p></div><a class="btn" href="{{ route('question-bank.index') }}">Kembali</a></div>
+<div class="between mb"><div><h1>Import Bank Soal</h1><p class="muted">Import banyak soal sekaligus. Unduh template untuk lihat format yang benar.</p></div><div class="row"><a class="btn primary" href="{{ route('question-bank.template') }}">⬇ Unduh Template (CSV)</a><a class="btn ghost" href="{{ route('question-bank.index') }}">Kembali</a></div></div>
 <div class="import-layout">
     <div class="card">
         <form class="form" method="POST" action="{{ route('question-bank.importSimple') }}">
