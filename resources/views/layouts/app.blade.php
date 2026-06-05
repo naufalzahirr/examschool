@@ -549,8 +549,6 @@
                     <a class="menu-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.school.edit') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.8 1.8 0 0 0 .3 2l.1.1-2 3.4-.2-.1a1.8 1.8 0 0 0-2 .3l-.1.1a1.8 1.8 0 0 0-.5 1.2V22h-4v-.1a1.8 1.8 0 0 0-.5-1.2l-.1-.1a1.8 1.8 0 0 0-2-.3l-.2.1-2-3.4.1-.1a1.8 1.8 0 0 0 .3-2V15a1.8 1.8 0 0 0-1.5-1.1H5v-4h.1A1.8 1.8 0 0 0 6.6 9V8.9a1.8 1.8 0 0 0-.3-2l-.1-.1 2-3.4.2.1a1.8 1.8 0 0 0 2-.3l.1-.1A1.8 1.8 0 0 0 11 2h4v.1a1.8 1.8 0 0 0 .5 1.2l.1.1a1.8 1.8 0 0 0 2 .3l.2-.1 2 3.4-.1.1a1.8 1.8 0 0 0-.3 2V9a1.8 1.8 0 0 0 1.5 1.1h.1v4h-.1A1.8 1.8 0 0 0 19.4 15z"></path></svg></span>Pengaturan</a>
                     <a class="menu-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="{{ route('audit.index') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M8 8h8"></path><path d="M8 12h8"></path><path d="M8 16h5"></path></svg></span>Audit Log</a>
                 @endif
-                <div class="menu-header">Akun Saya</div>
-                <a class="menu-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.password.edit') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M21 2 11 12"></path><path d="M15 2h6v6"></path><circle cx="7" cy="17" r="4"></circle></svg></span>Ganti Password</a>
             </nav>
         </aside>
         <section class="layout-page">
