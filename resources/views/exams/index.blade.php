@@ -81,8 +81,8 @@
                     <div class="exam-card-title">{{ $exam->title }}</div>
                     <div class="exam-card-meta">
                         {{ $exam->subject ?: 'Tanpa mapel' }}
-                        @if($exam->grade_level) · {{ $exam->grade_level }} @endif
-                        @if($exam->starts_at) · {{ $exam->starts_at->format('d M Y H:i') }} @endif
+                        @if($exam->grade_level) | {{ $exam->grade_level }} @endif
+                        @if($exam->starts_at) | {{ $exam->starts_at->format('d M Y H:i') }} @endif
                     </div>
                     <div class="row" style="gap:.35rem;flex-wrap:wrap">
                         @foreach($exam->classrooms->take(3) as $classroom)
@@ -115,7 +115,7 @@
             </div>
         @empty
             <div class="empty-state" style="grid-column:1/-1">
-                <span class="empty-state-icon">📝</span>
+                <span class="empty-state-icon">0</span>
                 <b style="display:block;font-size:18px;color:var(--heading);margin-bottom:.5rem">Belum ada ujian</b>
                 <p class="muted">Buat ujian pertama dengan mengklik tombol di atas.</p>
                 <a class="btn primary" href="{{ route('exams.create') }}" style="margin-top:.75rem">+ Buat Ujian Pertama</a>
@@ -125,7 +125,7 @@
     </div>
 
     <div class="table-meta between">
-        <div class="small muted">Menampilkan <b>{{ $exams->firstItem() ?? 0 }}–{{ $exams->lastItem() ?? 0 }}</b> dari <b>{{ $exams->total() }}</b> ujian</div>
+        <div class="small muted">Menampilkan <b>{{ $exams->firstItem() ?? 0 }}-{{ $exams->lastItem() ?? 0 }}</b> dari <b>{{ $exams->total() }}</b> ujian</div>
         <div>{{ $exams->links() }}</div>
     </div>
 </div>

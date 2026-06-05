@@ -59,14 +59,13 @@ class ExamController extends Controller
         return view('exams.form', [
             'exam' => new Exam([
                 'duration_minutes' => 90,
-                'status'      => Exam::STATUS_DRAFT,
-                'lock_mode'   => SchoolSetting::getValue('default_exam_lock_mode', Exam::LOCK_STRICT_AIRPLANE),
-                'exit_policy' => Exam::normalizeExitPolicy((string) SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_AFTER_SUBMIT)),
+                'status' => Exam::STATUS_DRAFT,
+                'schedule_mode' => Exam::MODE_MANUAL,
+                'lock_mode' => Exam::LOCK_STRICT_AIRPLANE,
+                'exit_policy' => Exam::EXIT_AFTER_SUBMIT,
             ]),
-            'classrooms'          => $this->availableClassrooms(),
+            'classrooms' => $this->availableClassrooms(),
             'selectedClassroomIds' => [],
-            'lockModes'           => Exam::LOCK_MODES,
-            'exitPolicies'        => Exam::EXIT_POLICIES,
         ]);
     }
 
@@ -123,11 +122,9 @@ class ExamController extends Controller
         $exam->load('classrooms');
 
         return view('exams.form', [
-            'exam'                => $exam,
-            'classrooms'          => $this->availableClassrooms(),
+            'exam' => $exam,
+            'classrooms' => $this->availableClassrooms(),
             'selectedClassroomIds' => $exam->classrooms->pluck('id')->map(fn ($id) => (string) $id)->all(),
-            'lockModes'           => Exam::LOCK_MODES,
-            'exitPolicies'        => Exam::EXIT_POLICIES,
         ]);
     }
 
@@ -147,9 +144,9 @@ class ExamController extends Controller
         if ($exam->hasStartedWork()) {
             // Partial update: hanya field yang aman (tidak mempengaruhi soal, kelas, atau penilaian)
             $safeData = $request->validate([
-                'title'       => ['required', 'string', 'max:180'],
+                'title' => ['required', 'string', 'max:180'],
                 'description' => ['nullable', 'string'],
-                'subject'     => ['nullable', 'string', 'max:120'],
+                'subject' => ['nullable', 'string', 'max:120'],
                 'grade_level' => ['nullable', 'string', 'max:60'],
             ]);
             $exam->update($safeData);
@@ -247,7 +244,7 @@ class ExamController extends Controller
 
         $data = $request->validate([
             'target' => ['required', Rule::in(['download', 'exam'])],
-            'state'  => ['required', 'boolean'],
+            'state' => ['required', 'boolean'],
         ]);
 
         abort_unless($exam->status === Exam::STATUS_PUBLISHED, 422, 'Ujian harus dipublish dulu.');
@@ -353,24 +350,22 @@ class ExamController extends Controller
     private function validated(Request $request, ?Exam $exam = null): array
     {
         $data = $request->validate([
-            'title'            => ['required', 'string', 'max:180'],
-            'description'      => ['nullable', 'string'],
-            'subject'          => ['nullable', 'string', 'max:120'],
-            'grade_level'      => ['nullable', 'string', 'max:60'],
-            'schedule_mode'    => ['nullable', Rule::in([Exam::MODE_SCHEDULED, Exam::MODE_MANUAL])],
-            'classroom_ids'    => ['nullable', 'array'],
-            'classroom_ids.*'  => ['integer', 'exists:classrooms,id'],
-            'starts_at'        => ['nullable', 'date'],
-            'ends_at'          => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'title' => ['required', 'string', 'max:180'],
+            'description' => ['nullable', 'string'],
+            'subject' => ['nullable', 'string', 'max:120'],
+            'grade_level' => ['nullable', 'string', 'max:60'],
+            'schedule_mode' => ['nullable', Rule::in([Exam::MODE_SCHEDULED, Exam::MODE_MANUAL])],
+            'classroom_ids' => ['nullable', 'array'],
+            'classroom_ids.*' => ['integer', 'exists:classrooms,id'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
             'shuffle_questions' => ['nullable', 'boolean'],
-            'shuffle_options'   => ['nullable', 'boolean'],
-            'lock_mode'        => ['nullable', Rule::in(array_keys(Exam::LOCK_MODES))],
-            'exit_policy'      => ['nullable', Rule::in(array_keys(Exam::EXIT_POLICIES))],
-            'status'           => ['nullable', Rule::in([Exam::STATUS_DRAFT, Exam::STATUS_READY])],
+            'shuffle_options' => ['nullable', 'boolean'],
+            'status' => ['nullable', Rule::in([Exam::STATUS_DRAFT, Exam::STATUS_READY])],
         ]);
 
-        $data['schedule_mode'] = $data['schedule_mode'] ?? Exam::MODE_SCHEDULED;
+        $data['schedule_mode'] = $data['schedule_mode'] ?? ($exam?->schedule_mode ?: Exam::MODE_MANUAL);
 
         // Mode manual: abaikan jadwal jam, kosongkan starts_at/ends_at
         if ($data['schedule_mode'] === Exam::MODE_MANUAL) {
@@ -379,20 +374,10 @@ class ExamController extends Controller
         }
 
         $data['shuffle_questions'] = $request->boolean('shuffle_questions');
-        $data['shuffle_options']   = $request->boolean('shuffle_options');
+        $data['shuffle_options'] = $request->boolean('shuffle_options');
 
-        // lock_mode: dari request jika ada, fallback ke exam yang ada, fallback ke default
-        $data['lock_mode'] = $data['lock_mode']
-            ?? $exam?->lock_mode
-            ?? SchoolSetting::getValue('default_exam_lock_mode', Exam::LOCK_STRICT_AIRPLANE);
-
-        // exit_policy: dari request jika ada, fallback ke exam yang ada, fallback ke default
-        $data['exit_policy'] = isset($data['exit_policy'])
-            ? Exam::normalizeExitPolicy($data['exit_policy'])
-            : Exam::normalizeExitPolicy(
-                $exam?->exit_policy
-                ?? (string) SchoolSetting::getValue('default_exam_exit_policy', Exam::EXIT_AFTER_SUBMIT)
-            );
+        $data['lock_mode'] = $exam?->lock_mode ?: Exam::LOCK_STRICT_AIRPLANE;
+        $data['exit_policy'] = Exam::normalizeExitPolicy($exam?->exit_policy ?? Exam::EXIT_AFTER_SUBMIT);
 
         $data['classroom_ids'] = collect($request->input('classroom_ids', []))
             ->filter()

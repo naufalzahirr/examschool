@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
@@ -13,6 +13,7 @@ class QuestionBankItem extends Model
     use HasFactory;
 
     public const VISIBILITY_SCHOOL = 'school';
+
     public const VISIBILITY_PRIVATE = 'private';
 
     public const VISIBILITIES = [
@@ -72,7 +73,6 @@ class QuestionBankItem extends Model
         return self::VISIBILITIES;
     }
 
-
     public function teacher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'teacher_id');
@@ -81,7 +81,7 @@ class QuestionBankItem extends Model
     public static function generateQuestionCode(): string
     {
         do {
-            $code = 'QB-' . now()->format('ymd') . '-' . strtoupper(Str::random(5));
+            $code = 'QB-'.now()->format('ymd').'-'.strtoupper(Str::random(5));
         } while (self::where('question_code', $code)->exists());
 
         return $code;
@@ -98,13 +98,11 @@ class QuestionBankItem extends Model
         ];
     }
 
-
-
     public function optionsPreview(): string
     {
         if ($this->type === Question::TYPE_MATCHING) {
             return collect($this->options ?? [])
-                ->map(fn ($o) => ($o['label'] ?? '') . ' → ' . ($o['match'] ?? ($o['meta']['match'] ?? '')))
+                ->map(fn ($o) => ($o['label'] ?? '').' = '.($o['match'] ?? ($o['meta']['match'] ?? '')))
                 ->filter()
                 ->implode(' | ');
         }

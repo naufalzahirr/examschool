@@ -8,6 +8,7 @@ use App\Models\ExamParticipant;
 use App\Models\SchoolSetting;
 use App\Models\Student;
 use App\Services\ExamPackageService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -155,20 +156,20 @@ class MobileAuthController extends Controller
         }
 
         if (! $exam->isPackageDownloadWindowOpen($settings['open_hours'])) {
-            $opensAt  = $exam->downloadOpensAt($settings['open_hours']);
-            $isEnded  = $exam->ends_at && now()->greaterThan($exam->ends_at);
-            $isEarly  = $opensAt && now()->lessThan($opensAt);
+            $opensAt = $exam->downloadOpensAt($settings['open_hours']);
+            $isEnded = $exam->ends_at && now()->greaterThan($exam->ends_at);
+            $isEarly = $opensAt && now()->lessThan($opensAt);
 
             $message = match (true) {
                 $isEnded => 'Waktu ujian sudah berakhir. Download paket tidak lagi tersedia.',
-                $isEarly => 'Jendela download belum dibuka. Download tersedia mulai ' . $opensAt->format('d M Y H:i') . '.',
-                default  => 'Jendela download paket soal belum tersedia. Hubungi pengawas.',
+                $isEarly => 'Jendela download belum dibuka. Download tersedia mulai '.$opensAt->format('d M Y H:i').'.',
+                default => 'Jendela download paket soal belum tersedia. Hubungi pengawas.',
             };
 
             return response()->json([
-                'message'          => $message,
+                'message' => $message,
                 'download_opens_at' => optional($opensAt)->toIso8601String(),
-                'ends_at'          => optional($exam->ends_at)->toIso8601String(),
+                'ends_at' => optional($exam->ends_at)->toIso8601String(),
             ], 403);
         }
 
@@ -487,7 +488,11 @@ class MobileAuthController extends Controller
         );
 
         if (! $participant->device_id) {
-            $participant->forceFill(['device_id' => $deviceId])->save();
+            try {
+                $participant->forceFill(['device_id' => $deviceId])->save();
+            } catch (QueryException) {
+                abort(423, 'HP ini sudah dipakai siswa lain di ujian ini. Satu HP hanya bisa untuk satu siswa per ujian. Hubungi pengawas jika perlu reset perangkat.');
+            }
             $participant->refresh();
         }
     }

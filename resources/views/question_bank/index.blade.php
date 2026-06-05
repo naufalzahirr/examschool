@@ -107,8 +107,8 @@
                     <td><span class="muted small">{{ $item->question_code }}</span></td>
                     <td><span class="badge info" style="font-size:11px">{{ $filters['types'][$item->type] ?? $item->type }}</span></td>
                     <td>
-                        <span style="font-size:13px">{{ $item->subject ?: '–' }}</span><br>
-                        <span class="muted small">{{ $item->topic ?: '–' }} · {{ $item->grade_level ?: '–' }}</span>
+                        <span style="font-size:13px">{{ $item->subject ?: '-' }}</span><br>
+                        <span class="muted small">{{ $item->topic ?: '-' }} | {{ $item->grade_level ?: '-' }}</span>
                     </td>
                     <td>
                         <span class="badge {{ $item->difficulty === 'sulit' ? 'danger' : ($item->difficulty === 'mudah' ? 'published' : 'warning') }}" style="font-size:11px">{{ ucfirst($item->difficulty) }}</span>
@@ -124,7 +124,7 @@
                         @endunless
                     </td>
                     <td><b>{{ $item->points }}</b></td>
-                    <td class="small muted">{{ $item->teacher?->name ?: '–' }}</td>
+                    <td class="small muted">{{ $item->teacher?->name ?: '-' }}</td>
                     <td>
                         <div class="row" style="gap:.3rem;flex-wrap:nowrap">
                             <button type="button" class="btn ghost" style="font-size:12px;padding:.35rem .65rem"
@@ -142,7 +142,7 @@
             @empty
                 <tr data-empty-row>
                     <td colspan="8" style="text-align:center;padding:3rem;color:var(--muted)">
-                        <div style="font-size:40px;margin-bottom:.75rem">🧩</div>
+                        <div style="font-size:32px;margin-bottom:.75rem;font-weight:900;color:var(--primary)">BS</div>
                         <b style="display:block;color:var(--heading);margin-bottom:.35rem">Bank Soal masih kosong</b>
                         <p class="small mb0">Tambah soal pertama atau import dari file.</p>
                         <div class="row" style="justify-content:center;margin-top:.85rem">
@@ -156,7 +156,7 @@
         </table>
     </div>
     <div class="table-meta between">
-        <div class="small muted">Total: <b>{{ $items->total() }}</b> soal · Terlihat: <b data-live-count="bankTable">{{ $items->count() }}</b></div>
+        <div class="small muted">Total: <b>{{ $items->total() }}</b> soal | Terlihat: <b data-live-count="bankTable">{{ $items->count() }}</b></div>
         <div>{{ $items->links() }}</div>
     </div>
 </div>
@@ -167,9 +167,9 @@
         <div class="qb-modal-head">
             <div>
                 <div class="muted small" id="qbModalType">Memuat...</div>
-                <h2 class="mb0" id="qbModalTitle" style="font-size:18px;margin-top:.25rem">—</h2>
+                <h2 class="mb0" id="qbModalTitle" style="font-size:18px;margin-top:.25rem">-</h2>
             </div>
-            <button type="button" class="btn ghost" style="padding:.35rem .6rem" onclick="closeQbModal()">✕</button>
+            <button type="button" class="btn ghost" style="padding:.35rem .6rem" onclick="closeQbModal()">X</button>
         </div>
         <div class="qb-modal-body" id="qbModalBody">
             <div style="text-align:center;padding:2rem;color:var(--muted)">Memuat detail soal...</div>
@@ -188,14 +188,14 @@ async function viewQuestion(url){
     qbModal.classList.add('open');
     const body = document.getElementById('qbModalBody');
     body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">Memuat detail soal...</div>';
-    document.getElementById('qbModalTitle').textContent = '—';
+            document.getElementById('qbModalTitle').textContent = '-';
     document.getElementById('qbModalType').textContent = 'Memuat...';
     try {
         const res = await fetch(url, {headers:{'Accept':'application/json'}});
         if(!res.ok) throw new Error('Gagal memuat');
         const d = await res.json();
         document.getElementById('qbModalTitle').textContent = d.title;
-        document.getElementById('qbModalType').textContent = `${d.type_label} · ${d.points} poin · Kode ${d.code}`;
+        document.getElementById('qbModalType').textContent = `${d.type_label} | ${d.points} poin | Kode ${d.code}`;
 
         let html = '';
         if(d.description){
@@ -211,19 +211,15 @@ async function viewQuestion(url){
             html += '<div style="font-size:12px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">Pilihan Jawaban</div>';
             d.options.forEach((o, i) => {
                 if(o.match !== null && o.match !== undefined){
-                    html += `<div class="qb-opt"><b>${escapeHtml(o.label)}</b><span style="color:var(--muted)">→</span><span>${escapeHtml(o.match)}</span></div>`;
+                    html += `<div class="qb-opt"><b>${escapeHtml(o.label)}</b><span class="muted small">pasangan disembunyikan</span></div>`;
                 } else {
-                    html += `<div class="qb-opt ${o.is_correct?'correct':''}">
-                        <span class="qb-opt-mark" style="background:${o.is_correct?'var(--success)':'#cbd5e1'}">${o.is_correct?'✓':String.fromCharCode(65+i)}</span>
+                    html += `<div class="qb-opt">
+                        <span class="qb-opt-mark" style="background:#cbd5e1">${String.fromCharCode(65+i)}</span>
                         <span>${escapeHtml(o.label)}</span>
                     </div>`;
                 }
             });
         }
-        html += `<div style="margin-top:1rem;padding:.75rem 1rem;background:var(--success-soft);border-radius:10px;border:1px solid #bbf7d0">
-            <span style="font-size:12px;font-weight:900;color:#166534">KUNCI JAWABAN</span><br>
-            <b style="color:#14532d">${escapeHtml(d.answer)}</b>
-        </div>`;
         if(d.edit_url){
             html += `<div style="margin-top:1rem;text-align:right"><a class="btn soft" href="${d.edit_url}">Edit Soal Ini</a></div>`;
         }

@@ -28,7 +28,18 @@
         <h1>{{ $item->exists ? 'Edit Soal Bank' : 'Tambah Soal ke Bank' }}</h1>
         <p class="muted">{{ $item->exists ? 'Perbaiki satu soal yang sudah tersimpan di Bank Soal.' : 'Tulis satu atau banyak soal sekaligus. Setiap kartu akan tersimpan sebagai satu soal yang bisa dipilih ke ujian.' }}</p>
     </div>
-    <a class="btn" href="{{ route('question-bank.index') }}">Kembali</a>
+    <div class="row">
+        @if($isEdit)
+            <a class="btn soft" href="{{ route('question-bank.create', [
+                'subject' => $item->subject,
+                'grade_level' => $item->grade_level,
+                'topic' => $item->topic,
+                'difficulty' => $item->difficulty,
+                'visibility' => $item->visibility,
+            ]) }}">Tambah Soal Baru di Bank Ini</a>
+        @endif
+        <a class="btn" href="{{ route('question-bank.index') }}">Kembali</a>
+    </div>
 </div>
 
 <div class="card mb">
@@ -137,7 +148,13 @@
         <button class="btn primary">{{ $isEdit ? 'Simpan Perubahan Soal' : 'Simpan Semua Soal' }}</button>
         <a class="btn" href="{{ route('question-bank.index') }}">Batal</a>
         @if($isEdit)
-            <a class="btn soft" href="{{ route('question-bank.create') }}" style="margin-left:auto">+ Buat Soal Baru</a>
+            <a class="btn soft" href="{{ route('question-bank.create', [
+                'subject' => $item->subject,
+                'grade_level' => $item->grade_level,
+                'topic' => $item->topic,
+                'difficulty' => $item->difficulty,
+                'visibility' => $item->visibility,
+            ]) }}" style="margin-left:auto">Tambah Soal Baru di Bank Ini</a>
         @endif
     </div>
 </form>

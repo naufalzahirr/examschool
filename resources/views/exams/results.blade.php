@@ -1,4 +1,4 @@
-@extends('layouts.app', ['title' => 'Hasil — ' . $exam->title])
+@extends('layouts.app', ['title' => 'Hasil - ' . $exam->title])
 
 @push('head')
 <style>
@@ -19,11 +19,11 @@
     <div class="between">
         <div>
             <h1 style="margin:0">Hasil Ujian</h1>
-            <p class="muted mb0">{{ $exam->title }} · Kode: <b>{{ $exam->access_code }}</b></p>
+            <p class="muted mb0">{{ $exam->title }} | Kode: <b>{{ $exam->access_code }}</b></p>
         </div>
         <div class="row">
-            <a class="btn soft" href="{{ route('exams.results.export', $exam) }}">↓ Export CSV</a>
-            <a class="btn ghost" href="{{ route('exams.show', $exam) }}">← Detail Ujian</a>
+            <a class="btn soft" href="{{ route('exams.results.export', $exam) }}">Export CSV</a>
+            <a class="btn ghost" href="{{ route('exams.show', $exam) }}">Detail Ujian</a>
         </div>
     </div>
 </div>
@@ -36,16 +36,16 @@
         <div class="muted small" style="margin-top:.25rem">dari {{ $stats['total'] }} peserta</div>
     </div>
     <div class="result-stat">
-        <div class="num" style="color:var(--heading)">{{ $stats['avg_score'] ?? '–' }}</div>
+        <div class="num" style="color:var(--heading)">{{ $stats['avg_score'] ?? '-' }}</div>
         <div class="lbl">Rata-rata Nilai</div>
         @if($stats['submitted'] > 0)<div class="muted small" style="margin-top:.25rem">dari {{ $stats['submitted'] }} siswa</div>@endif
     </div>
     <div class="result-stat">
-        <div class="num" style="color:var(--success)">{{ $stats['max_score'] ?? '–' }}</div>
+        <div class="num" style="color:var(--success)">{{ $stats['max_score'] ?? '-' }}</div>
         <div class="lbl">Nilai Tertinggi</div>
     </div>
     <div class="result-stat">
-        <div class="num" style="color:{{ $stats['min_score'] !== null && $stats['min_score'] < 60 ? 'var(--danger)' : 'var(--heading)' }}">{{ $stats['min_score'] ?? '–' }}</div>
+        <div class="num" style="color:{{ $stats['min_score'] !== null && $stats['min_score'] < 60 ? 'var(--danger)' : 'var(--heading)' }}">{{ $stats['min_score'] ?? '-' }}</div>
         <div class="lbl">Nilai Terendah</div>
     </div>
 </div>
@@ -59,7 +59,7 @@
         @php $maxDist = max(1, max($stats['distribution'])); @endphp
         @foreach($stats['distribution'] as $range => $count)
             @php
-            $colors = ['85–100'=>'#22c55e','75–84'=>'#84cc16','60–74'=>'#f59e0b','40–59'=>'#f97316','0–39'=>'#ef4444'];
+            $colors = ['85-100'=>'#22c55e','75-84'=>'#84cc16','60-74'=>'#f59e0b','40-59'=>'#f97316','0-39'=>'#ef4444'];
             $col = $colors[$range] ?? 'var(--primary)';
             @endphp
             <div class="dist-row">
@@ -80,7 +80,7 @@
             <div style="margin-bottom:.9rem">
                 <div class="between" style="gap:.4rem;margin-bottom:.3rem">
                     <span style="font-size:12px;font-weight:800;color:var(--heading);flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">
-                        No.{{ $q['no'] }} · {{ Str::limit($q['title'], 48) }}
+                        No.{{ $q['no'] }} | {{ Str::limit($q['title'], 48) }}
                     </span>
                     <span class="badge {{ $q['wrong_pct'] >= 60 ? 'danger' : ($q['wrong_pct'] >= 40 ? 'warning' : '') }}" style="font-size:10px;white-space:nowrap">
                         {{ $q['wrong_pct'] }}% salah
@@ -95,7 +95,7 @@
             </div>
         @empty
             <div style="text-align:center;padding:1.5rem;color:var(--muted)">
-                <div style="font-size:28px;margin-bottom:.5rem">📊</div>
+                <div style="font-size:28px;font-weight:950;margin-bottom:.5rem">0</div>
                 <p class="small mb0">Data jawaban belum tersedia.</p>
             </div>
         @endforelse
@@ -109,7 +109,7 @@
     <div class="table-toolbar">
         <div class="table-title">
             <h2 style="font-size:15px">Daftar Hasil Peserta</h2>
-            <p class="muted small mb0">{{ $participants->firstItem() ?? 0 }}–{{ $participants->lastItem() ?? 0 }} dari {{ $participants->total() }} peserta</p>
+            <p class="muted small mb0">{{ $participants->firstItem() ?? 0 }}-{{ $participants->lastItem() ?? 0 }} dari {{ $participants->total() }} peserta</p>
         </div>
         <form class="table-tools" method="GET" action="{{ route('exams.results', $exam) }}">
             <div class="tool-field">
@@ -169,18 +169,18 @@
                 @endphp
                 <tr>
                     <td><b style="font-size:13px">{{ $p->student?->name ?: 'Siswa dihapus' }}</b></td>
-                    <td><span class="badge" style="font-size:11px">{{ $p->student?->nis ?: '–' }}</span></td>
-                    <td class="small muted">{{ $p->student?->classroom?->nama_kelas ?: ($p->student?->class_name ?: '–') }}</td>
+                    <td><span class="badge" style="font-size:11px">{{ $p->student?->nis ?: '-' }}</span></td>
+                    <td class="small muted">{{ $p->student?->classroom?->nama_kelas ?: ($p->student?->class_name ?: '-') }}</td>
                     <td><span class="badge {{ $p->status }}" style="font-size:11px">{{ $statusLabel }}</span></td>
                     <td>
                         @if($p->score !== null)
                             <b style="font-size:15px;color:{{ $p->score >= 75 ? 'var(--success)' : ($p->score >= 60 ? 'var(--warning)' : 'var(--danger)') }}">{{ number_format((float) $p->score, 1) }}</b>
                         @else
-                            <span class="muted">–</span>
+                            <span class="muted">-</span>
                         @endif
                     </td>
-                    <td class="small muted">{{ optional($p->submitted_at)->format('d M Y H:i') ?: '–' }}</td>
-                    <td class="small muted">{{ optional($last?->last_synced_at)->format('d M Y H:i') ?: '–' }}</td>
+                    <td class="small muted">{{ optional($p->submitted_at)->format('d M Y H:i') ?: '-' }}</td>
+                    <td class="small muted">{{ optional($last?->last_synced_at)->format('d M Y H:i') ?: '-' }}</td>
                 </tr>
             @empty
                 <tr data-empty-row>

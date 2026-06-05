@@ -6,6 +6,8 @@
 .bank-card:hover{border-color:#99f6e4;background:#f0fdfb}
 .bank-card.selected{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px rgba(20,184,166,.15)}
 .bank-card.already-added{border-color:var(--line);background:#f8fafc;opacity:.7;cursor:not-allowed}
+.bank-card *{cursor:pointer}
+.bank-card.already-added *{cursor:not-allowed}
 .bank-card-title{font-size:15px;font-weight:900;color:var(--heading);margin:0 0 .3rem}
 .bank-card-meta{font-size:12px;color:var(--muted);margin-bottom:.55rem}
 .bank-card input{pointer-events:none}
@@ -39,11 +41,11 @@
     <div class="between">
         <div>
             <h1 style="margin:0">Pilih Soal untuk Ujian</h1>
-            <p class="muted mb0">Ujian: <b>{{ $exam->title }}</b> · Sudah ada: <b>{{ $exam->questions_count ?? 0 }} soal</b></p>
+            <p class="muted mb0">Ujian: <b>{{ $exam->title }}</b> | Sudah ada: <b>{{ $exam->questions_count ?? 0 }} soal</b></p>
         </div>
         <div class="row">
-            <button type="button" class="btn ghost" onclick="document.getElementById('infoModal').classList.add('open')" style="font-size:13px">❓ Cara Kerja</button>
-            <a class="btn ghost" href="{{ route('exams.show', $exam) }}">← Kembali</a>
+            <button type="button" class="btn ghost" onclick="document.getElementById('infoModal').classList.add('open')" style="font-size:13px">Cara Kerja</button>
+            <a class="btn ghost" href="{{ route('exams.show', $exam) }}">Kembali</a>
         </div>
     </div>
 </div>
@@ -100,8 +102,8 @@
 <div class="between mb">
     <span class="muted small">Klik satu paket untuk memilih, lalu tekan "Tambahkan ke Ujian"</span>
     <div class="view-toggle">
-        <button type="button" id="btnCard" class="active" onclick="setView('card')">▦ Kartu</button>
-        <button type="button" id="btnList" onclick="setView('list')">☰ Daftar</button>
+        <button type="button" id="btnCard" class="active" onclick="setView('card')">Card View</button>
+        <button type="button" id="btnList" onclick="setView('list')">List View</button>
     </div>
 </div>
 @endif
@@ -112,11 +114,11 @@
 
     @if($bankGroups->isEmpty())
         <div class="card" style="text-align:center;padding:3rem">
-            <div style="font-size:40px;margin-bottom:.75rem">🔍</div>
+            <div style="font-size:32px;margin-bottom:.75rem;font-weight:900;color:var(--primary)">0</div>
             <b style="font-size:16px;display:block;margin-bottom:.4rem;color:var(--heading)">Tidak ada paket yang cocok</b>
             <p class="muted small mb0">Coba ubah filter, atau buat soal baru di Bank Soal.</p>
             <div class="row" style="justify-content:center;margin-top:.85rem">
-                <a class="btn primary" href="{{ route('question-bank.create') }}">+ Buat Soal Baru</a>
+                <a class="btn primary" href="{{ route('question-bank.create') }}">Buat Soal Baru</a>
                 <a class="btn ghost" href="{{ route('exams.question-bank.select', $exam) }}">Reset Filter</a>
             </div>
         </div>
@@ -132,17 +134,17 @@
                         <div class="between" style="align-items:flex-start;margin-bottom:.5rem">
                             <div class="bank-card-title">{{ $group['title'] }}</div>
                             @if($isAdded)
-                                <span class="badge published" style="font-size:10px;flex-shrink:0">✓ Sudah masuk</span>
+                                <span class="badge published" style="font-size:10px;flex-shrink:0">Sudah masuk</span>
                             @endif
                         </div>
                         <div class="bank-card-meta">
-                            {{ $group['subject'] ?: '–' }}@if($group['grade_level']) · {{ $group['grade_level'] }}@endif@if($group['topic']) · {{ $group['topic'] }}@endif
+                            {{ $group['subject'] ?: '-' }}@if($group['grade_level']) | {{ $group['grade_level'] }}@endif@if($group['topic']) | {{ $group['topic'] }}@endif
                         </div>
                     </div>
                     <div class="lv-stats" style="display:flex;gap:.4rem;flex-wrap:wrap">
                         <span class="badge" style="font-size:11px">{{ $group['questions_count'] }} soal</span>
                         @if(!$isAdded && $group['available_count'] < $group['questions_count'])
-                            <span class="badge warning" style="font-size:11px" title="Soal yang belum disalin ke ujian ini">{{ $group['available_count'] }} baru</span>
+                            <span class="badge warning" style="font-size:11px" title="Soal yang belum masuk ke ujian ini">{{ $group['available_count'] }} bisa ditambahkan</span>
                         @endif
                         @if(($group['visibility'] ?? '') === \App\Models\QuestionBankItem::VISIBILITY_SCHOOL)
                             <span class="badge published" style="font-size:11px">Bersama</span>
@@ -162,7 +164,7 @@
             <div id="selectedInfo" style="font-weight:900;color:var(--muted)">Belum ada paket dipilih</div>
             <div id="selectedSub" class="muted small"></div>
         </div>
-        <a class="btn ghost" href="{{ route('question-bank.create') }}" style="font-size:13px">+ Buat Soal Baru</a>
+        <a class="btn ghost" href="{{ route('question-bank.create') }}" style="font-size:13px">Buat Soal Baru</a>
         <button class="btn primary" id="submitBtn" disabled style="min-width:180px">Tambahkan ke Ujian</button>
     </div>
     @endif
@@ -173,27 +175,27 @@
     <div class="info-modal">
         <div class="between" style="margin-bottom:1.25rem">
             <h2 class="mb0" style="font-size:18px">Cara Memilih Soal</h2>
-            <button type="button" class="btn ghost" style="padding:.35rem .6rem" onclick="document.getElementById('infoModal').classList.remove('open')">✕</button>
+            <button type="button" class="btn ghost" style="padding:.35rem .6rem" onclick="document.getElementById('infoModal').classList.remove('open')">Tutup</button>
         </div>
         <div class="info-step">
-            <div class="info-step-ico" style="background:var(--primary-soft)">🧩</div>
+            <div class="info-step-ico" style="background:var(--primary-soft)">1</div>
             <div>
                 <b style="font-size:14px;color:var(--heading)">Apa itu Paket Bank Soal?</b>
                 <p class="muted small mb0" style="margin-top:.2rem;line-height:1.5">Soal yang punya mapel, jenjang, dan topik sama dikelompokkan jadi satu paket. Satu paket = sekumpulan soal dengan label yang sama.</p>
             </div>
         </div>
         <div class="info-step">
-            <div class="info-step-ico" style="background:var(--accent-soft)">☑️</div>
+            <div class="info-step-ico" style="background:var(--accent-soft)">2</div>
             <div>
                 <b style="font-size:14px;color:var(--heading)">Pilih satu, semua soal masuk</b>
-                <p class="muted small mb0" style="margin-top:.2rem;line-height:1.5">Klik satu paket lalu "Tambahkan ke Ujian" — semua soal aktif di paket itu disalin otomatis ke ujian.</p>
+                <p class="muted small mb0" style="margin-top:.2rem;line-height:1.5">Klik satu paket lalu "Tambahkan ke Ujian". Semua soal aktif di paket itu disalin otomatis ke ujian.</p>
             </div>
         </div>
         <div class="info-step">
-            <div class="info-step-ico" style="background:var(--warning-soft)">🔁</div>
+            <div class="info-step-ico" style="background:var(--warning-soft)">3</div>
             <div>
-                <b style="font-size:14px;color:var(--heading)">Badge "X baru" artinya apa?</b>
-                <p class="muted small mb0" style="margin-top:.2rem;line-height:1.5">Jumlah soal di paket itu yang <b>belum</b> disalin ke ujian ini. Kalau sudah semua masuk, badge berubah jadi "Sudah masuk".</p>
+                <b style="font-size:14px;color:var(--heading)">Badge "bisa ditambahkan" artinya apa?</b>
+                <p class="muted small mb0" style="margin-top:.2rem;line-height:1.5">Itu jumlah soal di paket tersebut yang belum masuk ke ujian ini. Kalau semua sudah masuk, badge berubah menjadi "Sudah masuk".</p>
             </div>
         </div>
     </div>
@@ -217,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.classList.add('selected');
             if(info) info.innerHTML = `Paket terpilih: <b style="color:var(--heading)">${radio.dataset.title}</b>`;
             if(sub)  sub.textContent = `${radio.dataset.count} soal akan ditambahkan ke ujian ini`;
-            if(btn){ btn.disabled = false; btn.textContent = 'Tambahkan ke Ujian →'; }
+            if(btn){ btn.disabled = false; btn.textContent = 'Tambahkan ke Ujian'; }
         });
     });
 });

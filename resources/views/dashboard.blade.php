@@ -4,7 +4,7 @@
 <style>
 .stat-card{position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
 .stat-card:hover{transform:translateY(-2px);box-shadow:0 18px 40px rgba(15,23,42,.10)}
-.stat-card-icon{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:20px;margin-bottom:.75rem}
+.stat-card-icon{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:12px;font-weight:950;letter-spacing:.02em;margin-bottom:.75rem}
 .stat-card-val{font-size:36px;font-weight:950;letter-spacing:0;line-height:1;color:var(--heading)}
 .stat-card-label{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.3rem}
 .stat-card::after{content:'';position:absolute;right:-16px;bottom:-16px;width:72px;height:72px;border-radius:50%;opacity:.08}
@@ -42,8 +42,8 @@ $greet = $hour < 11 ? 'Selamat Pagi' : ($hour < 15 ? 'Selamat Siang' : ($hour < 
 <div class="hero mb">
     <div class="between">
         <div>
-            <h1 style="margin:0">{{ $greet }}, {{ explode(' ', auth()->user()->name)[0] }} 👋</h1>
-            <p class="muted mb0">{{ now()->isoFormat('dddd, D MMMM Y') }} · Ruang kendali ujian sekolah</p>
+            <h1 style="margin:0">{{ $greet }}, {{ explode(' ', auth()->user()->name)[0] }}</h1>
+            <p class="muted mb0">{{ now()->isoFormat('dddd, D MMMM Y') }} | Ruang kendali ujian sekolah</p>
         </div>
         <div class="row">
             @if(auth()->user()->isAdmin() || auth()->user()->isTeacher())
@@ -51,7 +51,7 @@ $greet = $hour < 11 ? 'Selamat Pagi' : ($hour < 15 ? 'Selamat Siang' : ($hour < 
                 <a class="btn soft" href="{{ route('question-bank.index') }}">Bank Soal</a>
             @endif
             @if(auth()->user()->isAdmin())
-                <a class="btn ghost" href="{{ route('silap.index') }}">↻ Sinkron SILAP</a>
+                <a class="btn ghost" href="{{ route('silap.index') }}">Sinkron SILAP</a>
             @endif
         </div>
     </div>
@@ -84,7 +84,7 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
 <div class="card mb" style="background:linear-gradient(135deg,#0f172a,#1e293b);border:none;padding:1.5rem">
     <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#64748b;margin-bottom:.75rem">Mulai dari sini</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem">
-        @foreach([['🧩','Buat soal di Bank Soal','Tambah soal yang bisa dipakai ulang',route('question-bank.create')],['📝','Buat Ujian Baru','Isi jadwal, kelas, dan pilih soal',route('exams.create')],['🚀','Publish & Pantau','Bagikan kode ke siswa dan monitor','#']] as [$ico,$title,$sub,$url])
+        @foreach([['BS','Buat soal di Bank Soal','Tambah soal yang bisa dipakai ulang',route('question-bank.create')],['UJ','Buat Ujian Baru','Isi jadwal, kelas, dan pilih soal',route('exams.create')],['ON','Publish & Pantau','Bagikan kode ke siswa dan monitor','#']] as [$ico,$title,$sub,$url])
         <a href="{{ $url }}" style="display:flex;gap:.75rem;padding:.9rem;background:rgba(255,255,255,.06);border-radius:10px;border:1px solid rgba(255,255,255,.08);text-decoration:none;transition:.18s;align-items:flex-start" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
             <span style="font-size:22px">{{ $ico }}</span>
             <div>
@@ -100,22 +100,22 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
 {{-- ───── STAT CARDS ───── --}}
 <div class="grid mb">
     <div class="card stat-card s-teal">
-        <div class="stat-card-icon">📝</div>
+        <div class="stat-card-icon">UJ</div>
         <div class="stat-card-val">{{ $examCount }}</div>
         <div class="stat-card-label">Total Ujian</div>
     </div>
     <div class="card stat-card s-pink">
-        <div class="stat-card-icon">▶</div>
+        <div class="stat-card-icon">ON</div>
         <div class="stat-card-val">{{ $runningCount }}</div>
         <div class="stat-card-label">Sedang Berjalan</div>
     </div>
     <div class="card stat-card s-violet">
-        <div class="stat-card-icon">🧩</div>
+        <div class="stat-card-icon">BS</div>
         <div class="stat-card-val">{{ $bankCount }}</div>
         <div class="stat-card-label">Bank Soal</div>
     </div>
     <div class="card stat-card s-green">
-        <div class="stat-card-icon">✅</div>
+        <div class="stat-card-icon">IN</div>
         <div class="stat-card-val">{{ $submittedCount }}</div>
         <div class="stat-card-label">Submit Masuk</div>
     </div>
@@ -124,22 +124,22 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
 @if(auth()->user()->isAdmin())
 <div class="grid mb" style="grid-template-columns:repeat(4,1fr)">
     <div class="card stat-card s-sky">
-        <div class="stat-card-icon">🎓</div>
+        <div class="stat-card-icon">SW</div>
         <div class="stat-card-val">{{ $studentCount }}</div>
         <div class="stat-card-label">Akun Siswa</div>
     </div>
     <div class="card stat-card s-teal">
-        <div class="stat-card-icon">🏫</div>
+        <div class="stat-card-icon">KL</div>
         <div class="stat-card-val">{{ $classroomCount }}</div>
         <div class="stat-card-label">Kelas</div>
     </div>
     <div class="card stat-card s-amber">
-        <div class="stat-card-icon">👨‍🏫</div>
+        <div class="stat-card-icon">GR</div>
         <div class="stat-card-val">{{ $teacherCount }}</div>
         <div class="stat-card-label">Guru</div>
     </div>
     <div class="card stat-card s-violet">
-        <div class="stat-card-icon">📊</div>
+        <div class="stat-card-icon">PB</div>
         <div class="stat-card-val">{{ $publishedCount }}</div>
         <div class="stat-card-label">Published</div>
     </div>
@@ -153,7 +153,7 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
     <div class="card" style="padding:0;overflow:hidden">
         <div class="between" style="padding:1.1rem 1.25rem;border-bottom:1px solid var(--line)">
             <div>
-                <h2 class="mb0" style="font-size:16px">⏰ Segera Dimulai</h2>
+                <h2 class="mb0" style="font-size:16px">Segera Dimulai</h2>
                 <p class="muted small mb0">Dalam 48 jam ke depan</p>
             </div>
             @if($upcomingExams->isNotEmpty())
@@ -165,7 +165,7 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
             <div class="upcoming-strip">
                 <div style="flex:1;min-width:0">
                     <b style="font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $exam->title }}</b>
-                    <span class="muted small">{{ $exam->access_code }} · {{ $exam->participants_count }} peserta</span>
+                    <span class="muted small">{{ $exam->access_code }} | {{ $exam->participants_count }} peserta</span>
                 </div>
                 <div class="upcoming-time">
                     <div class="big">{{ $exam->starts_at->format('H:i') }}</div>
@@ -175,7 +175,7 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
             </div>
         @empty
             <div style="padding:2rem;text-align:center;color:var(--muted)">
-                <div style="font-size:32px;margin-bottom:.5rem">🗓</div>
+                <div style="font-size:28px;font-weight:950;margin-bottom:.5rem">0</div>
                 <div class="small">Tidak ada ujian dalam 48 jam ke depan</div>
             </div>
         @endforelse
@@ -185,7 +185,7 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
     <div class="card" style="padding:0;overflow:hidden">
         <div class="between" style="padding:1.1rem 1.25rem;border-bottom:1px solid var(--line)">
             <div>
-                <h2 class="mb0" style="font-size:16px">🚀 Siap Dipublish</h2>
+                <h2 class="mb0" style="font-size:16px">Siap Dipublish</h2>
                 <p class="muted small mb0">Semua checklist terpenuhi</p>
             </div>
             @if($readyToPublishExams->isNotEmpty())
@@ -196,16 +196,16 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
             <div class="upcoming-strip">
                 <div style="flex:1;min-width:0">
                     <b style="font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $exam->title }}</b>
-                    <span class="muted small">{{ $exam->questions_count }} soal · {{ $exam->participants_count }} peserta{{ $exam->starts_at ? ' · ' . $exam->starts_at->format('d M H:i') : '' }}</span>
+                    <span class="muted small">{{ $exam->questions_count }} soal | {{ $exam->participants_count }} peserta{{ $exam->starts_at ? ' | ' . $exam->starts_at->format('d M H:i') : '' }}</span>
                 </div>
                 <form method="POST" action="{{ route('exams.publish', $exam) }}">
                     @csrf
-                    <button class="btn green" style="padding:.45rem .7rem;font-size:12px;white-space:nowrap">✓ Publish</button>
+                    <button class="btn green" style="padding:.45rem .7rem;font-size:12px;white-space:nowrap">Publish</button>
                 </form>
             </div>
         @empty
             <div style="padding:2rem;text-align:center;color:var(--muted)">
-                <div style="font-size:32px;margin-bottom:.5rem">✅</div>
+                <div style="font-size:28px;font-weight:950;margin-bottom:.5rem">0</div>
                 <div class="small">Tidak ada ujian yang menunggu dipublish</div>
             </div>
         @endforelse
@@ -227,7 +227,7 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
         <div class="exam-row">
             <div class="exam-title-col">
                 <b>{{ $exam->title }}</b>
-                <span>{{ $exam->access_code }} · {{ $exam->subject ?: 'Tanpa mapel' }}</span>
+                <span>{{ $exam->access_code }} | {{ $exam->subject ?: 'Tanpa mapel' }}</span>
             </div>
             <div class="row" style="flex-wrap:nowrap">
                 @foreach($exam->classrooms->take(2) as $c)
@@ -238,7 +238,7 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
         </div>
     @empty
         <div style="padding:2.5rem;text-align:center;color:var(--muted)">
-            <div style="font-size:38px;margin-bottom:.6rem">📡</div>
+            <div style="font-size:28px;font-weight:950;margin-bottom:.6rem">0</div>
             <b style="display:block;margin-bottom:.25rem;color:var(--heading)">Tidak ada ujian yang sedang berjalan</b>
             <span class="small">Ujian yang sudah dipublish dan dalam jadwal aktif akan muncul di sini.</span>
         </div>
@@ -253,7 +253,7 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
         </div>
         <div class="row">
             @if(auth()->user()->isAdmin() || auth()->user()->isTeacher())
-                <a class="btn soft" href="{{ route('exams.index') }}">Lihat Semua →</a>
+                <a class="btn soft" href="{{ route('exams.index') }}">Lihat Semua</a>
             @endif
         </div>
     </div>
@@ -265,13 +265,13 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
                 <tr>
                     <td>
                         <b>{{ $exam->title }}</b><br>
-                        <span class="muted small">{{ $exam->subject ?: '–' }} · {{ $exam->grade_level ?: '–' }}</span>
+                        <span class="muted small">{{ $exam->subject ?: '-' }} | {{ $exam->grade_level ?: '-' }}</span>
                     </td>
                     <td><span class="badge">{{ $exam->access_code }}</span></td>
                     <td><span class="badge {{ $exam->status }}">{{ $exam->operationalStatus() }}</span></td>
                     <td class="small">
-                        {{ optional($exam->starts_at)->format('d M Y H:i') ?: '–' }}<br>
-                        <span class="muted">{{ optional($exam->ends_at)->format('H:i') ? '↳ ' . optional($exam->ends_at)->format('H:i') : '' }}</span>
+                        {{ optional($exam->starts_at)->format('d M Y H:i') ?: '-' }}<br>
+                        <span class="muted">{{ optional($exam->ends_at)->format('H:i') ? 's.d. ' . optional($exam->ends_at)->format('H:i') : '' }}</span>
                     </td>
                     <td class="row">
                         @if(auth()->user()->canManageExam($exam))
@@ -283,7 +283,7 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
             @empty
                 <tr data-empty-row>
                     <td colspan="5" style="text-align:center;padding:2.5rem;color:var(--muted)">
-                        Belum ada ujian. <a href="{{ route('exams.create') }}" style="color:var(--primary);font-weight:900">Buat ujian pertama →</a>
+                        Belum ada ujian. <a href="{{ route('exams.create') }}" style="color:var(--primary);font-weight:900">Buat ujian pertama</a>
                     </td>
                 </tr>
             @endforelse
@@ -297,7 +297,7 @@ if($upcomingExams->isNotEmpty()) $needsAttention[] = ['type'=>'upcoming','msg'=>
 <div class="card data-card">
     <div class="table-toolbar">
         <div class="table-title"><h2 style="font-size:16px">Aktivitas Terbaru</h2></div>
-        <a class="btn ghost" href="{{ route('audit.index') }}" style="font-size:13px">Lihat Semua Audit →</a>
+        <a class="btn ghost" href="{{ route('audit.index') }}" style="font-size:13px">Lihat Semua Audit</a>
     </div>
     <div class="table-wrap">
         <table class="table">

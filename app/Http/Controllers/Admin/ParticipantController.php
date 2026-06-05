@@ -297,18 +297,18 @@ class ParticipantController extends Controller
             ->map(fn ($s) => (float) $s);
 
         $stats = [
-            'total'       => $exam->participants()->count(),
-            'submitted'   => $scores->count(),
-            'avg_score'   => $scores->count() > 0 ? round($scores->avg(), 1) : null,
-            'max_score'   => $scores->count() > 0 ? round((float) $scores->max(), 1) : null,
-            'min_score'   => $scores->count() > 0 ? round((float) $scores->min(), 1) : null,
+            'total' => $exam->participants()->count(),
+            'submitted' => $scores->count(),
+            'avg_score' => $scores->count() > 0 ? round($scores->avg(), 1) : null,
+            'max_score' => $scores->count() > 0 ? round((float) $scores->max(), 1) : null,
+            'min_score' => $scores->count() > 0 ? round((float) $scores->min(), 1) : null,
             'not_submitted' => $exam->participants()->whereNotIn('status', ['submitted'])->count(),
             'distribution' => [
-                '85–100' => $scores->filter(fn ($s) => $s >= 85)->count(),
-                '75–84'  => $scores->filter(fn ($s) => $s >= 75 && $s < 85)->count(),
-                '60–74'  => $scores->filter(fn ($s) => $s >= 60 && $s < 75)->count(),
-                '40–59'  => $scores->filter(fn ($s) => $s >= 40 && $s < 60)->count(),
-                '0–39'   => $scores->filter(fn ($s) => $s < 40)->count(),
+                '85-100' => $scores->filter(fn ($s) => $s >= 85)->count(),
+                '75-84' => $scores->filter(fn ($s) => $s >= 75 && $s < 85)->count(),
+                '60-74' => $scores->filter(fn ($s) => $s >= 60 && $s < 75)->count(),
+                '40-59' => $scores->filter(fn ($s) => $s >= 40 && $s < 60)->count(),
+                '0-39' => $scores->filter(fn ($s) => $s < 40)->count(),
             ],
         ];
 
@@ -327,12 +327,12 @@ class ParticipantController extends Controller
             ->get()
             ->filter(fn ($row) => $row->total_answers > 0 && $row->wrong_count > 0)
             ->map(fn ($row) => [
-                'no'          => $row->question?->order_no ?? '?',
-                'title'       => $row->question?->title ?? '(soal dihapus)',
-                'type'        => $row->question?->type ?? '-',
-                'total'       => (int) $row->total_answers,
-                'wrong'       => (int) $row->wrong_count,
-                'wrong_pct'   => $row->total_answers > 0
+                'no' => $row->question?->order_no ?? '?',
+                'title' => $row->question?->title ?? '(soal dihapus)',
+                'type' => $row->question?->type ?? '-',
+                'total' => (int) $row->total_answers,
+                'wrong' => (int) $row->wrong_count,
+                'wrong_pct' => $row->total_answers > 0
                     ? round($row->wrong_count / $row->total_answers * 100)
                     : 0,
             ])
@@ -368,15 +368,15 @@ class ParticipantController extends Controller
         $filename = 'hasil-'.preg_replace('/[^A-Za-z0-9\-]+/', '-', strtolower($exam->access_code.'-'.$exam->title)).'-'.now()->format('Ymd').'.csv';
 
         $statusLabels = [
-            'assigned'       => 'Belum login',
+            'assigned' => 'Belum login',
             'download_ready' => 'Siap download',
-            'downloading'    => 'Mengunduh',
-            'downloaded'     => 'Paket terunduh',
-            'unlocked'       => 'Soal terbuka',
-            'in_progress'    => 'Mengerjakan',
-            'locked'         => 'Terkunci',
-            'synced'         => 'Tersinkron',
-            'submitted'      => 'Sudah submit',
+            'downloading' => 'Mengunduh',
+            'downloaded' => 'Paket terunduh',
+            'unlocked' => 'Soal terbuka',
+            'in_progress' => 'Mengerjakan',
+            'locked' => 'Terkunci',
+            'synced' => 'Tersinkron',
+            'submitted' => 'Sudah submit',
         ];
 
         return response()->streamDownload(function () use ($exam, $statusLabels) {

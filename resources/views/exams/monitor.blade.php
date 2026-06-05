@@ -1,4 +1,4 @@
-@extends('layouts.app', ['title' => 'Monitor — ' . $exam->title])
+@extends('layouts.app', ['title' => 'Monitor - ' . $exam->title])
 
 @push('head')
 <style>
@@ -45,9 +45,9 @@ $progress  = $total > 0 ? round($submitted / $total * 100) : 0;
             <h1>{{ $exam->title }}</h1>
             <p style="margin:0;opacity:.7;font-size:13px">
                 Kode: <b style="color:#fff">{{ $exam->access_code }}</b>
-                &nbsp;·&nbsp; {{ optional($exam->starts_at)->format('d M Y H:i') ?: 'Jadwal fleksibel' }}
-                @if($exam->ends_at) – {{ $exam->ends_at->format('H:i') }} @endif
-                &nbsp;·&nbsp; Download:
+                &nbsp;|&nbsp; {{ optional($exam->starts_at)->format('d M Y H:i') ?: 'Jadwal fleksibel' }}
+                @if($exam->ends_at) - {{ $exam->ends_at->format('H:i') }} @endif
+                &nbsp;|&nbsp; Download:
                 @if($queueStats['download_window_open'])
                     <span style="color:#4ade80">Dibuka</span>
                 @elseif($queueStats['download_opens_at'])
@@ -61,7 +61,7 @@ $progress  = $total > 0 ? round($submitted / $total * 100) : 0;
             <span class="countdown-badge" id="refreshCountdown">↻ 30s</span>
             <a class="btn" href="{{ route('exams.monitor', $exam) }}" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2);font-size:13px">Refresh</a>
             @if(auth()->user()->canManageExam($exam))
-                <a class="btn soft" href="{{ route('exams.show', $exam) }}" style="font-size:13px">← Detail Ujian</a>
+                <a class="btn soft" href="{{ route('exams.show', $exam) }}" style="font-size:13px">Detail Ujian</a>
             @endif
         </div>
     </div>
@@ -71,7 +71,7 @@ $progress  = $total > 0 ? round($submitted / $total * 100) : 0;
 <div class="card mb">
     <div class="between" style="margin-bottom:.75rem">
         <b style="font-size:15px">Progress Submit</b>
-        <span class="muted small"><b>{{ $submitted }}</b> dari <b>{{ $exam->participants_count }}</b> peserta sudah submit — <b>{{ $progress }}%</b></span>
+        <span class="muted small"><b>{{ $submitted }}</b> dari <b>{{ $exam->participants_count }}</b> peserta sudah submit - <b>{{ $progress }}%</b></span>
     </div>
     <div class="progress-track">
         <div class="progress-fill" style="width:{{ $progress }}%"></div>
@@ -90,7 +90,7 @@ $progress  = $total > 0 ? round($submitted / $total * 100) : 0;
 {{-- ═══ INTEGRITY ALERT ═══ --}}
 @if($locked > 0)
 <div class="integrity-alert mb">
-    <span style="font-size:24px">⚠️</span>
+    <span style="font-size:18px;font-weight:950">!</span>
     <div>
         <b style="color:#991b1b">{{ $locked }} siswa terdeteksi pelanggaran integritas</b>
         <p class="small mb0" style="color:#b91c1c">Periksa detail di tabel peserta di bawah. Filter status "Terkunci" untuk melihat daftar lengkap.</p>
@@ -176,7 +176,7 @@ $notSubmitted = $exam->participants_count - $submitted;
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem">
         <div style="padding:.75rem;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.2);border-radius:10px;text-align:center">
             <div style="font-size:24px;font-weight:950;color:#4ade80">{{ $submitted }}</div>
-            <div style="font-size:11px;color:#86efac">Sudah submit ✓</div>
+            <div style="font-size:11px;color:#86efac">Sudah submit</div>
         </div>
         <div style="padding:.75rem;background:rgba(251,191,36,.10);border:1px solid rgba(251,191,36,.2);border-radius:10px;text-align:center">
             <div style="font-size:24px;font-weight:950;color:#fbbf24">{{ $inProg }}</div>
@@ -193,10 +193,10 @@ $notSubmitted = $exam->participants_count - $submitted;
     </div>
     @if($locked > 0)
     <div style="margin-top:.75rem;padding:.75rem 1rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);border-radius:10px;display:flex;align-items:center;gap:.75rem">
-        <span style="font-size:18px">⚠️</span>
+        <span style="font-size:18px;font-weight:950">!</span>
         <div>
-            <div style="font-weight:900;color:#fca5a5;font-size:13px">{{ $locked }} siswa terkunci — kemungkinan terjadi pelanggaran integritas</div>
-            <div style="font-size:12px;color:#94a3b8">Filter "Terkunci" di tabel bawah → gunakan tombol "Ganti HP" jika HP siswa bermasalah</div>
+            <div style="font-weight:900;color:#fca5a5;font-size:13px">{{ $locked }} siswa terkunci - kemungkinan terjadi pelanggaran integritas</div>
+            <div style="font-size:12px;color:#94a3b8">Filter "Terkunci" di tabel bawah, gunakan tombol "Ganti HP" jika HP siswa bermasalah</div>
         </div>
     </div>
     @endif
@@ -207,7 +207,7 @@ $notSubmitted = $exam->participants_count - $submitted;
     <div class="table-toolbar">
         <div class="table-title">
             <h2 style="font-size:15px">Aktivitas Peserta</h2>
-            <p class="muted small mb0">Diurutkan dari aktivitas terbaru · Waktu: jam server</p>
+            <p class="muted small mb0">Diurutkan dari aktivitas terbaru | Waktu: jam server</p>
         </div>
         <form class="table-tools" method="GET" action="{{ route('exams.monitor', $exam) }}">
             <div class="tool-field">
@@ -242,7 +242,7 @@ $notSubmitted = $exam->participants_count - $submitted;
             </div>
             <button class="btn primary" style="align-self:flex-end">Cari</button>
             @if(auth()->user()->canManageExam($exam))
-                <a class="btn soft" href="{{ route('exams.results.export', $exam) }}" style="align-self:flex-end;font-size:13px">↓ Export CSV</a>
+                <a class="btn soft" href="{{ route('exams.results.export', $exam) }}" style="align-self:flex-end;font-size:13px">Export CSV</a>
             @endif
             @if(request('q') || request('status') || request('classroom_id'))
                 <a class="btn ghost" href="{{ route('exams.monitor', $exam) }}" style="align-self:flex-end">Reset</a>
@@ -287,26 +287,26 @@ $notSubmitted = $exam->participants_count - $submitted;
                 $summary = $p->meta['integrity_summary'] ?? [];
                 @endphp
                 <tr>
-                    <td><span class="badge" style="font-size:11px">{{ $p->student?->nis ?: '–' }}</span></td>
+                    <td><span class="badge" style="font-size:11px">{{ $p->student?->nis ?: '-' }}</span></td>
                     <td>
                         <b style="font-size:13px">{{ $p->student?->name ?: 'Siswa dihapus' }}</b>
                     </td>
-                    <td class="small muted">{{ $p->student?->classroom?->nama_kelas ?: ($p->student?->class_name ?: '–') }}</td>
+                    <td class="small muted">{{ $p->student?->classroom?->nama_kelas ?: ($p->student?->class_name ?: '-') }}</td>
                     <td><span class="badge {{ $p->status }}" style="font-size:11px">{{ $statusLabel }}</span></td>
                     <td class="small">
                         @if(($summary['total'] ?? 0) > 0)
                             <span class="badge warning" style="font-size:11px">{{ $summary['total'] }} event</span>
-                            <br><span class="muted" style="font-size:11px">{{ $summary['last_reason'] ?? '–' }}</span>
+                            <br><span class="muted" style="font-size:11px">{{ $summary['last_reason'] ?? '-' }}</span>
                         @elseif($p->status === 'locked')
                             <span class="badge danger" style="font-size:11px">terkunci</span>
                         @else
-                            <span class="muted">–</span>
+                            <span class="muted">-</span>
                         @endif
                     </td>
-                    <td class="small muted">{{ optional($last?->started_at)->format('H:i') ?: '–' }}</td>
-                    <td class="small muted">{{ optional($last?->last_synced_at)->format('H:i') ?: '–' }}</td>
-                    <td class="small muted">{{ optional($p->submitted_at)->format('H:i') ?: '–' }}</td>
-                    <td><b>{{ $p->score ?? '–' }}</b></td>
+                    <td class="small muted">{{ optional($last?->started_at)->format('H:i') ?: '-' }}</td>
+                    <td class="small muted">{{ optional($last?->last_synced_at)->format('H:i') ?: '-' }}</td>
+                    <td class="small muted">{{ optional($p->submitted_at)->format('H:i') ?: '-' }}</td>
+                    <td><b>{{ $p->score ?? '-' }}</b></td>
                     <td>
                         @if(auth()->user()->canManageExam($exam))
                             <form method="POST" action="{{ route('exams.participants.resetDevice', [$exam, $p]) }}"
@@ -315,7 +315,7 @@ $notSubmitted = $exam->participants_count - $submitted;
                                 <button class="btn warning" style="font-size:12px;padding:.35rem .7rem">Ganti HP</button>
                             </form>
                         @else
-                            <span class="muted small">–</span>
+                            <span class="muted small">-</span>
                         @endif
                     </td>
                 </tr>

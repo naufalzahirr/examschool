@@ -10,7 +10,7 @@
 .next-action-banner.draft{background:linear-gradient(135deg,#fffbf0,#fff7e0);border:1px solid #fde68a}
 .next-action-banner.published{background:linear-gradient(135deg,#f0fdf9,#e8f9f5);border:1px solid #99f6e4}
 .next-action-banner.closed{background:linear-gradient(135deg,#fafafa,#f1f5f9);border:1px solid var(--line)}
-.next-action-icon{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;font-size:26px;flex-shrink:0}
+.next-action-icon{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;font-size:14px;font-weight:950;flex-shrink:0}
 
 /* Code share box */
 .code-share-box{background:#0f172a;border-radius:var(--radius);padding:1.15rem 1.35rem;display:flex;align-items:center;gap:1rem;margin-bottom:.75rem}
@@ -22,7 +22,7 @@
 /* Steps nav */
 .nav-btn{display:flex;align-items:center;gap:.75rem;padding:.9rem 1rem;border:1px solid var(--line);border-radius:var(--radius);background:#fff;color:var(--heading);font-weight:800;font-size:14px;transition:all .18s;text-decoration:none;cursor:pointer}
 .nav-btn:hover{border-color:#99f6e4;background:#f0fdfb;transform:translateX(3px)}
-.nav-btn .ico{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.nav-btn .ico{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:950;flex-shrink:0}
 .nav-btn .badge-right{margin-left:auto;flex-shrink:0}
 
 /* Checklist */
@@ -74,12 +74,12 @@
             </div>
             <h1 style="margin:0 0 .3rem;font-size:24px">{{ $exam->title }}</h1>
             <p class="muted mb0" style="font-size:13px">
-                {{ $exam->subject ?: 'Tanpa mapel' }}@if($exam->grade_level) · {{ $exam->grade_level }}@endif
-                @if($exam->starts_at) · {{ $exam->starts_at->format('d M Y, H:i') }}@if($exam->ends_at) – {{ $exam->ends_at->format('H:i') }}@endif @endif
+                {{ $exam->subject ?: 'Tanpa mapel' }}@if($exam->grade_level) | {{ $exam->grade_level }}@endif
+                @if($exam->starts_at) | {{ $exam->starts_at->format('d M Y, H:i') }}@if($exam->ends_at) - {{ $exam->ends_at->format('H:i') }}@endif @endif
             </p>
         </div>
         <div class="row" style="flex-wrap:nowrap;gap:.5rem">
-            <a class="btn ghost" href="{{ route('exams.index') }}" style="font-size:12px">← Kembali</a>
+            <a class="btn ghost" href="{{ route('exams.index') }}" style="font-size:12px">Kembali</a>
             <a class="btn ghost" href="{{ route('exams.edit', $exam) }}" style="font-size:12px">Edit</a>
         </div>
     </div>
@@ -89,7 +89,7 @@
 @if($isDraft && !$isReady)
 {{-- Draft: Masih ada yang kurang --}}
 <div class="next-action-banner draft">
-    <div class="next-action-icon" style="background:#fef3c7">⚠️</div>
+    <div class="next-action-icon" style="background:#fef3c7">!</div>
     <div style="flex:1">
         <b style="font-size:15px;color:#92400e">Ujian belum siap dipublish</b>
         <p class="mb0" style="font-size:13px;color:#78350f;margin-top:.2rem">
@@ -101,25 +101,25 @@
 @elseif($isDraft && $isReady)
 {{-- Draft: Siap dipublish --}}
 <div class="next-action-banner published">
-    <div class="next-action-icon" style="background:var(--success-soft)">🚀</div>
+    <div class="next-action-icon" style="background:var(--success-soft)">OK</div>
     <div style="flex:1">
         <b style="font-size:15px;color:#166534">Semua siap! Ujian bisa dipublish sekarang.</b>
         <p class="mb0" style="font-size:13px;color:#14532d;margin-top:.2rem">
-            Setelah dipublish, sistem otomatis menyiapkan soal. Bagikan kode <b>{{ $exam->access_code }}</b> ke siswa — mereka bisa download soal mulai sekarang.
+            Setelah dipublish, sistem otomatis menyiapkan soal. Bagikan kode <b>{{ $exam->access_code }}</b> ke siswa - mereka bisa download soal mulai sekarang.
         </p>
     </div>
     <form method="POST" action="{{ route('exams.publish', $exam) }}">
         @csrf
-        <button class="btn primary" style="white-space:nowrap;min-width:130px">🚀 Publish Sekarang</button>
+        <button class="btn primary" style="white-space:nowrap;min-width:130px">Publish Sekarang</button>
     </form>
 </div>
 
 @elseif($isPublished)
 {{-- Published: Bagikan kode + panduan --}}
 <div class="next-action-banner published">
-    <div class="next-action-icon" style="background:var(--primary-soft)">📡</div>
+    <div class="next-action-icon" style="background:var(--primary-soft)">ON</div>
     <div style="flex:1">
-        <b style="font-size:15px;color:#0f766e">Ujian aktif — bagikan kode ini ke siswa</b>
+        <b style="font-size:15px;color:#0f766e">Ujian aktif - bagikan kode ini ke siswa</b>
         <p class="mb0" style="font-size:13px;color:#134e4a;margin-top:.2rem">
             Siswa login di aplikasi menggunakan kode ujian, NIS, dan password mereka.
             @if($exam->starts_at && !$started) Download soal dibuka, soal bisa diakses mulai <b>{{ $exam->starts_at->format('d M H:i') }}</b>. @endif
@@ -133,8 +133,8 @@
     </div>
     <button class="code-share-copy" onclick="copyCode('{{ $exam->access_code }}',this)" id="copyBtn">Salin Kode</button>
     <div style="border-left:1px solid rgba(255,255,255,.12);padding-left:1rem;color:#94a3b8;font-size:12px;line-height:1.5">
-        Siswa masuk ke aplikasi →<br>
-        Ketik kode ini → NIS → Password
+        Siswa masuk ke aplikasi<br>
+        Kode ujian - NIS - Password
     </div>
 </div>
 
@@ -143,11 +143,11 @@
 <div class="card mb" style="border:2px solid {{ $exam->manual_exam_open ? '#bbf7d0' : 'var(--line)' }};background:{{ $exam->manual_exam_open ? 'linear-gradient(135deg,#f0fdf9,#ecfdf5)' : '#fff' }}">
     <div class="between" style="margin-bottom:1rem">
         <div>
-            <h2 class="mb0" style="font-size:16px">🎛️ Kontrol Manual Ujian</h2>
-            <p class="muted small mb0">Buka/tutup download dan ujian kapan saja — cocok untuk ujian susulan.</p>
+            <h2 class="mb0" style="font-size:16px">Kontrol Manual Ujian</h2>
+            <p class="muted small mb0">Buka/tutup download dan ujian kapan saja - cocok untuk ujian susulan.</p>
         </div>
         @if($exam->manual_exam_open)
-            <span class="badge published" style="font-size:12px">● Ujian Sedang Dibuka</span>
+            <span class="badge published" style="font-size:12px">Ujian Sedang Dibuka</span>
         @elseif($exam->manual_download_open)
             <span class="badge warning" style="font-size:12px">Download Dibuka</span>
         @else
@@ -200,16 +200,16 @@
 @elseif($isClosed)
 {{-- Closed/Archived: Lihat hasil --}}
 <div class="next-action-banner closed">
-    <div class="next-action-icon" style="background:#f1f5f9">📊</div>
+    <div class="next-action-icon" style="background:#f1f5f9">HS</div>
     <div style="flex:1">
-        <b style="font-size:15px;color:var(--heading)">Ujian selesai — lihat dan export hasilnya</b>
+        <b style="font-size:15px;color:var(--heading)">Ujian selesai - lihat dan export hasilnya</b>
         <p class="mb0" style="font-size:13px;color:var(--muted);margin-top:.2rem">
             Nilai siswa sudah tersedia. Export ke CSV untuk pengolahan lebih lanjut.
         </p>
     </div>
     <div class="row">
-        <a class="btn primary" href="{{ route('exams.results', $exam) }}">📊 Lihat Hasil</a>
-        <a class="btn soft" href="{{ route('exams.results.export', $exam) }}">↓ Export CSV</a>
+        <a class="btn primary" href="{{ route('exams.results', $exam) }}">Lihat Hasil</a>
+        <a class="btn soft" href="{{ route('exams.results.export', $exam) }}">Export CSV</a>
     </div>
 </div>
 @endif
@@ -248,11 +248,11 @@
                     <h2 class="mb0" style="font-size:16px">Checklist Sebelum Publish</h2>
                     <p class="muted small mb0">Semua harus hijau sebelum ujian bisa diaktifkan</p>
                 </div>
-                <span class="badge {{ $isReady ? 'published' : 'warning' }}">{{ $isReady ? '✓ Siap' : 'Belum Lengkap' }}</span>
+                <span class="badge {{ $isReady ? 'published' : 'warning' }}">{{ $isReady ? 'Siap' : 'Belum Lengkap' }}</span>
             </div>
             @foreach($readiness as $item)
                 <div class="cl-row {{ $item['ok'] ? 'ok' : 'fail' }}">
-                    <div class="cl-icon {{ $item['ok'] ? 'ok' : 'fail' }}">{{ $item['ok'] ? '✓' : '!' }}</div>
+                    <div class="cl-icon {{ $item['ok'] ? 'ok' : 'fail' }}">{{ $item['ok'] ? 'OK' : '!' }}</div>
                     <div style="flex:1">
                         <div style="font-size:13px;font-weight:800">{{ $item['label'] }}</div>
                         <div class="muted small">{{ $item['note'] }}</div>
@@ -277,7 +277,7 @@
 
             @if($isDraft && $exam->canEditQuestions())
                 <a class="nav-btn" href="{{ route('exams.question-bank.select', $exam) }}" style="margin-bottom:.45rem;display:flex">
-                    <div class="ico" style="background:var(--violet-soft)">🧩</div>
+                    <div class="ico" style="background:var(--violet-soft)">BS</div>
                     <div>
                         <div>Ambil Soal dari Bank Soal</div>
                         <div class="muted small" style="font-weight:700;font-size:12px">Pilih paket soal untuk ujian ini</div>
@@ -288,7 +288,7 @@
 
             @if($exam->canEditQuestions())
                 <a class="nav-btn" href="{{ route('exams.builder', $exam) }}" style="margin-bottom:.45rem;display:flex">
-                    <div class="ico" style="background:var(--info-soft)">✏️</div>
+                    <div class="ico" style="background:var(--info-soft)">RV</div>
                     <div>
                         <div>Review Soal Ujian</div>
                         <div class="muted small" style="font-weight:700;font-size:12px">Lihat dan edit salinan soal</div>
@@ -296,7 +296,7 @@
                 </a>
             @elseif(!$isDraft)
                 <a class="nav-btn" href="{{ route('exams.builder', $exam) }}" style="margin-bottom:.45rem;display:flex">
-                    <div class="ico" style="background:var(--info-soft)">📋</div>
+                    <div class="ico" style="background:var(--info-soft)">RD</div>
                     <div>
                         <div>Lihat Soal (Mode Baca)</div>
                         <div class="muted small" style="font-weight:700;font-size:12px">Soal terkunci, hanya bisa dilihat</div>
@@ -306,7 +306,7 @@
             @endif
 
             <a class="nav-btn" href="{{ route('exams.participants', $exam) }}" style="margin-bottom:.45rem;display:flex">
-                <div class="ico" style="background:var(--accent-soft)">👥</div>
+                <div class="ico" style="background:var(--accent-soft)">PS</div>
                 <div>
                     <div>Daftar Peserta</div>
                     <div class="muted small" style="font-weight:700;font-size:12px">Lihat status, reset HP, hapus peserta</div>
@@ -316,19 +316,19 @@
 
             @if($isPublished)
                 <a class="nav-btn" href="{{ route('exams.monitor', $exam) }}" style="margin-bottom:.45rem;display:flex">
-                    <div class="ico" style="background:var(--success-soft)">📡</div>
+                    <div class="ico" style="background:var(--success-soft)">LV</div>
                     <div>
                         <div>Monitor Live</div>
                         <div class="muted small" style="font-weight:700;font-size:12px">Pantau siapa yang sudah submit, terkunci, dll</div>
                     </div>
                     @if($exam->isOpenNow())
-                        <span class="badge published nav-btn-badge" style="font-size:10px">● Live</span>
+                        <span class="badge published nav-btn-badge" style="font-size:10px">Live</span>
                     @endif
                 </a>
             @endif
 
             <a class="nav-btn" href="{{ route('exams.results', $exam) }}" style="display:flex">
-                <div class="ico" style="background:var(--warning-soft)">📊</div>
+                <div class="ico" style="background:var(--warning-soft)">HS</div>
                 <div>
                     <div>Hasil & Statistik</div>
                     <div class="muted small" style="font-weight:700;font-size:12px">Nilai, distribusi, soal paling banyak salah</div>
@@ -363,7 +363,7 @@
                 <div class="tl-num" style="background:{{ $started && !$ended ? 'var(--success)' : '#94a3b8' }}">2</div>
                 <div style="flex:1">
                     <div style="font-size:13px;font-weight:800">Ujian dimulai</div>
-                    <div class="muted small">Siswa aktifkan mode pesawat → soal terbuka</div>
+                    <div class="muted small">Siswa aktifkan mode pesawat, lalu soal terbuka</div>
                 </div>
                 @if($exam->starts_at)
                     <span class="badge {{ $started ? 'published' : '' }}" style="font-size:11px">{{ $exam->starts_at->format('d M H:i') }}</span>
@@ -385,7 +385,7 @@
                 <div class="tl-num" style="background:{{ $ended ? 'var(--danger)' : '#94a3b8' }}">4</div>
                 <div style="flex:1">
                     <div style="font-size:13px;font-weight:800">Siswa kirim jawaban</div>
-                    <div class="muted small">Matikan mode pesawat → nyalakan internet → kirim</div>
+                    <div class="muted small">Matikan mode pesawat, nyalakan internet, lalu kirim</div>
                 </div>
                 @if($exam->ends_at)
                     <span class="badge {{ $ended ? 'closed' : '' }}" style="font-size:11px">Batas {{ $exam->ends_at->format('d M H:i') }}</span>
@@ -396,7 +396,7 @@
 
             @if(!$exam->starts_at || !$exam->ends_at)
                 <div class="alert warning" style="margin-top:.75rem;margin-bottom:0;font-size:13px">
-                    Jadwal belum diatur. <a href="{{ route('exams.edit', $exam) }}" style="font-weight:900">Atur jadwal →</a>
+                    Jadwal belum diatur. <a href="{{ route('exams.edit', $exam) }}" style="font-weight:900">Atur jadwal</a>
                 </div>
             @endif
         </div>
@@ -410,7 +410,7 @@
                 @forelse($exam->classrooms as $classroom)
                     <span class="badge" style="font-size:11px">{{ $classroom->nama_kelas }}</span>
                 @empty
-                    <span class="muted small">Belum ada kelas. <a href="{{ route('exams.edit', $exam) }}" style="color:var(--primary)">Pilih kelas →</a></span>
+                    <span class="muted small">Belum ada kelas. <a href="{{ route('exams.edit', $exam) }}" style="color:var(--primary)">Pilih kelas</a></span>
                 @endforelse
             </div>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem">
@@ -425,7 +425,7 @@
             </div>
             @if($isPublished)
                 <div class="alert info" style="margin-top:.75rem;margin-bottom:0;font-size:12px">
-                    {{ $queueStats['active'] }}/{{ $queueStats['limit'] }} slot download aktif ·
+                    {{ $queueStats['active'] }}/{{ $queueStats['limit'] }} slot download aktif |
                     {{ $queueStats['waiting'] }} menunggu antrean
                 </div>
             @endif
@@ -436,7 +436,7 @@
 {{-- ═══ ZONA BERBAHAYA ═══ --}}
 <details class="danger-zone">
     <summary class="danger-summary">
-        <span style="color:#dc2626">⚠</span> Aksi Berbahaya — Tutup, Arsipkan, Hapus
+        <span style="color:#dc2626">!</span> Aksi Berbahaya - Tutup, Arsipkan, Hapus
         <span class="muted small" style="margin-left:auto;font-weight:700">Klik untuk buka</span>
     </summary>
     <div class="danger-body">
@@ -445,7 +445,7 @@
                 <form method="POST" action="{{ route('exams.unpublish', $exam) }}"
                       onsubmit="return confirm('Kembalikan ke draft?\n\nHanya bisa jika belum ada siswa yang mulai mengerjakan.')">
                     @csrf
-                    <button class="btn warning">↩ Kembalikan ke Draft</button>
+                    <button class="btn warning">Kembalikan ke Draft</button>
                 </form>
             @endif
             @if(!in_array($exam->status, ['closed','archived'], true))
@@ -466,16 +466,16 @@
                 <form method="POST" action="{{ route('exams.destroy', $exam) }}"
                       onsubmit="return confirm('HAPUS PERMANEN?\n\nSemua soal, peserta, dan data ujian dihapus selamanya.\nTidak bisa dibatalkan.')">
                     @csrf @method('DELETE')
-                    <button class="btn danger" style="background:#7f1d1d;color:#fff">🗑 Hapus Permanen</button>
+                    <button class="btn danger" style="background:#7f1d1d;color:#fff">Hapus Permanen</button>
                 </form>
             @else
-                <span class="muted small" style="align-self:center">Tidak bisa dihapus — sudah ada aktivitas siswa. Gunakan Arsipkan.</span>
+                <span class="muted small" style="align-self:center">Tidak bisa dihapus - sudah ada aktivitas siswa. Gunakan Arsipkan.</span>
             @endif
         </div>
         <p class="help mb0">
-            <b>Kembalikan ke Draft</b>: hanya jika belum ada aktivitas siswa ·
-            <b>Tutup</b>: siswa tidak bisa submit baru ·
-            <b>Arsipkan</b>: sembunyikan dari daftar, data tetap ·
+            <b>Kembalikan ke Draft</b>: hanya jika belum ada aktivitas siswa |
+            <b>Tutup</b>: siswa tidak bisa submit baru |
+            <b>Arsipkan</b>: sembunyikan dari daftar, data tetap |
             <b>Hapus</b>: permanen, hanya sebelum ada aktivitas
         </p>
     </div>
@@ -487,7 +487,7 @@
 <script>
 function copyCode(code, btn) {
     navigator.clipboard.writeText(code).then(() => {
-        btn.textContent = '✓ Tersalin!';
+        btn.textContent = 'Tersalin!';
         btn.classList.add('copied');
         setTimeout(() => { btn.textContent = 'Salin Kode'; btn.classList.remove('copied'); }, 2000);
     });

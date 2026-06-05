@@ -63,10 +63,8 @@ class QuestionBankController extends Controller
             'code' => $questionBank->question_code,
             'options' => collect($questionBank->options ?? [])->map(fn ($o) => [
                 'label' => $o['label'] ?? '',
-                'is_correct' => (bool) ($o['is_correct'] ?? false),
-                'match' => $o['match'] ?? ($o['meta']['match'] ?? null),
+                'match' => $questionBank->type === Question::TYPE_MATCHING ? null : ($o['match'] ?? ($o['meta']['match'] ?? null)),
             ])->values(),
-            'answer' => $questionBank->answerPreview(),
             'can_manage' => $questionBank->canBeManagedBy(auth()->user()),
             'edit_url' => $questionBank->canBeManagedBy(auth()->user()) ? route('question-bank.edit', $questionBank) : null,
         ]);
@@ -74,7 +72,7 @@ class QuestionBankController extends Controller
 
     public function downloadTemplate()
     {
-        $filename = 'template-import-bank-soal.csv';
+        $filename = 'template-import-bank-soal.xls';
         $rows = [
             ['jenis', 'pertanyaan', 'poin', 'kunci', 'opsi'],
             ['multiple_choice', 'Ibu kota Indonesia?', '10', 'Jakarta', 'Jakarta|Bandung|Surabaya|Medan'],
@@ -85,19 +83,40 @@ class QuestionBankController extends Controller
         ];
 
         return response()->streamDownload(function () use ($rows) {
-            $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-            foreach ($rows as $row) {
-                fputcsv($handle, $row);
+            echo '<html><head><meta charset="UTF-8"></head><body><table border="1">';
+            foreach ($rows as $index => $row) {
+                echo '<tr>';
+                foreach ($row as $cell) {
+                    $tag = $index === 0 ? 'th' : 'td';
+                    echo '<'.$tag.'>'.e($cell).'</'.$tag.'>';
+                }
+                echo '</tr>';
             }
-            fclose($handle);
-        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+            echo '</table></body></html>';
+        }, $filename, ['Content-Type' => 'application/vnd.ms-excel; charset=UTF-8']);
     }
 
     public function create()
     {
+        $defaults = [
+            'subject' => request('subject'),
+            'grade_level' => request('grade_level'),
+            'topic' => request('topic'),
+            'difficulty' => request('difficulty', 'sedang'),
+            'visibility' => request('visibility', QuestionBankItem::VISIBILITY_SCHOOL),
+        ];
+
         return view('question_bank.form', [
-            'item' => new QuestionBankItem(['type' => Question::TYPE_MULTIPLE_CHOICE, 'points' => 1, 'difficulty' => 'sedang', 'is_active' => true, 'visibility' => QuestionBankItem::VISIBILITY_SCHOOL]),
+            'item' => new QuestionBankItem([
+                'type' => Question::TYPE_MULTIPLE_CHOICE,
+                'points' => 1,
+                'subject' => $defaults['subject'],
+                'grade_level' => $defaults['grade_level'],
+                'topic' => $defaults['topic'],
+                'difficulty' => $defaults['difficulty'],
+                'is_active' => true,
+                'visibility' => $defaults['visibility'],
+            ]),
             'typeLabels' => QuestionBankItem::typeLabels(),
             'visibilityLabels' => QuestionBankItem::visibilityLabels(),
             'initialQuestions' => [[
@@ -445,6 +464,18 @@ class QuestionBankController extends Controller
 
             return $errors;
         }
+        if (mb_strlen($title) > 500) {
+            $errors['question_json'] = 'Pertanyaan maksimal 500 karakter.';
+
+            return $errors;
+        }
+
+        $description = trim((string) ($question['description'] ?? ''));
+        if (mb_strlen($description) > 1000) {
+            $errors['question_json'] = 'Deskripsi/instruksi maksimal 1000 karakter.';
+
+            return $errors;
+        }
 
         $options = collect($question['options'] ?? [])
             ->filter(fn ($o) => trim((string) ($o['label'] ?? '')) !== '')
@@ -455,6 +486,8 @@ class QuestionBankController extends Controller
                 $errors['question_json'] = 'Pilihan ganda minimal punya 2 opsi.';
             } elseif ($options->where('is_correct', true)->count() !== 1) {
                 $errors['question_json'] = 'Pilihan ganda harus punya tepat 1 kunci jawaban.';
+            } elseif ($options->contains(fn ($o) => mb_strlen((string) ($o['label'] ?? '')) > 300)) {
+                $errors['question_json'] = 'Setiap opsi jawaban maksimal 300 karakter.';
             }
         }
 
@@ -463,6 +496,8 @@ class QuestionBankController extends Controller
                 $errors['question_json'] = 'Pilihan ganda kompleks minimal punya 2 opsi.';
             } elseif ($options->where('is_correct', true)->count() < 1) {
                 $errors['question_json'] = 'Pilihan ganda kompleks minimal punya 1 kunci jawaban.';
+            } elseif ($options->contains(fn ($o) => mb_strlen((string) ($o['label'] ?? '')) > 300)) {
+                $errors['question_json'] = 'Setiap opsi jawaban maksimal 300 karakter.';
             }
         }
 
@@ -473,6 +508,8 @@ class QuestionBankController extends Controller
             });
             if ($pairs->count() < 2) {
                 $errors['question_json'] = 'Menjodohkan minimal punya 2 pasangan lengkap.';
+            } elseif ($pairs->contains(fn ($o) => mb_strlen((string) ($o['label'] ?? '')) > 200 || mb_strlen((string) ($o['match'] ?? ($o['meta']['match'] ?? ''))) > 200)) {
+                $errors['question_json'] = 'Setiap item menjodohkan maksimal 200 karakter.';
             }
         }
 

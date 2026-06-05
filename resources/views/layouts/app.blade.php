@@ -143,10 +143,8 @@
             flex:0 0 29px;
             background:rgba(255,255,255,.08);
             color:#fff;
-            font-size:10px;
-            font-weight:950;
-            letter-spacing:.02em;
         }
+        .menu-ico svg{width:17px;height:17px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
         .menu-link.active .menu-ico{background:rgba(255,255,255,.22)}
         .layout-page{
             margin-left:280px;
@@ -534,25 +532,25 @@
             <a href="{{ route('dashboard') }}" class="brand"><span class="brand-logo">US</span><span>Ujian Sekolah</span></a>
             <nav class="menu">
                 <div class="menu-header">Utama</div>
-                <a class="menu-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><span class="menu-ico">📊</span>Dashboard</a>
-                <a class="menu-link {{ request()->routeIs('guide') ? 'active' : '' }}" href="{{ route('guide') }}"><span class="menu-ico">📖</span>Panduan</a>
+                <a class="menu-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M4 13h5v7H4z"></path><path d="M10 4h5v16h-5z"></path><path d="M16 9h4v11h-4z"></path></svg></span>Dashboard</a>
+                <a class="menu-link {{ request()->routeIs('guide') ? 'active' : '' }}" href="{{ route('guide') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h7v18H6a2 2 0 0 1-2-1.5z"></path><path d="M13 3h5a2 2 0 0 1 2 2v14.5A2 2 0 0 0 18 18h-5"></path></svg></span>Panduan</a>
                 @if(auth()->user()->isAdmin() || auth()->user()->isTeacher())
-                    <a class="menu-link {{ request()->routeIs('exams.*') ? 'active' : '' }}" href="{{ route('exams.index') }}"><span class="menu-ico">📝</span>Ujian</a>
-                    <a class="menu-link {{ request()->routeIs('question-bank.*') ? 'active' : '' }}" href="{{ route('question-bank.index') }}"><span class="menu-ico">🧩</span>Bank Soal</a>
+                    <a class="menu-link {{ request()->routeIs('exams.*') ? 'active' : '' }}" href="{{ route('exams.index') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M8 3h8l4 4v14H4V3z"></path><path d="M16 3v5h4"></path><path d="M8 13h8"></path><path d="M8 17h5"></path></svg></span>Ujian</a>
+                    <a class="menu-link {{ request()->routeIs('question-bank.*') ? 'active' : '' }}" href="{{ route('question-bank.index') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M9 3h6v6H9z"></path><path d="M3 15h6v6H3z"></path><path d="M15 15h6v6h-6z"></path><path d="M12 9v3"></path><path d="M6 15v-3h12v3"></path></svg></span>Bank Soal</a>
                 @endif
                 @if(auth()->user()->isAdmin())
                     <div class="menu-header">Data Master</div>
-                    <a class="menu-link {{ request()->routeIs('classrooms.*') ? 'active' : '' }}" href="{{ route('classrooms.index') }}"><span class="menu-ico">🏫</span>Kelas</a>
-                    <a class="menu-link {{ request()->routeIs('students.*') ? 'active' : '' }}" href="{{ route('students.index') }}"><span class="menu-ico">🎓</span>Siswa</a>
-                    <a class="menu-link {{ request()->routeIs('teachers.*') ? 'active' : '' }}" href="{{ route('teachers.index') }}"><span class="menu-ico">👨‍🏫</span>Guru</a>
-                    <a class="menu-link {{ request()->routeIs('accounts.*') ? 'active' : '' }}" href="{{ route('accounts.index') }}"><span class="menu-ico">🔐</span>Akun</a>
-                    <a class="menu-link {{ request()->routeIs('silap.*') ? 'active' : '' }}" href="{{ route('silap.index') }}"><span class="menu-ico">🔄</span>Sinkron SILAP</a>
+                    <a class="menu-link {{ request()->routeIs('classrooms.*') ? 'active' : '' }}" href="{{ route('classrooms.index') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M3 21h18"></path><path d="M5 21V7l7-4 7 4v14"></path><path d="M9 21v-6h6v6"></path><path d="M9 10h.01"></path><path d="M15 10h.01"></path></svg></span>Kelas</a>
+                    <a class="menu-link {{ request()->routeIs('students.*') ? 'active' : '' }}" href="{{ route('students.index') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5z"></path><path d="M6 12v5c3 2 9 2 12 0v-5"></path></svg></span>Siswa</a>
+                    <a class="menu-link {{ request()->routeIs('teachers.*') ? 'active' : '' }}" href="{{ route('teachers.index') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-8 0v2"></path><circle cx="12" cy="7" r="4"></circle><path d="M20 8v6"></path><path d="M23 11h-6"></path></svg></span>Guru</a>
+                    <a class="menu-link {{ request()->routeIs('accounts.*') ? 'active' : '' }}" href="{{ route('accounts.index') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 0 0-8 0v4"></path><rect x="5" y="11" width="14" height="10" rx="2"></rect></svg></span>Akun</a>
+                    <a class="menu-link {{ request()->routeIs('silap.*') ? 'active' : '' }}" href="{{ route('silap.index') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 16h5"></path><path d="M16 8h5"></path></svg></span>Sinkron SILAP</a>
                     <div class="menu-header">Produksi</div>
-                    <a class="menu-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.school.edit') }}"><span class="menu-ico">⚙️</span>Pengaturan</a>
-                    <a class="menu-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="{{ route('audit.index') }}"><span class="menu-ico">🧾</span>Audit Log</a>
+                    <a class="menu-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.school.edit') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.8 1.8 0 0 0 .3 2l.1.1-2 3.4-.2-.1a1.8 1.8 0 0 0-2 .3l-.1.1a1.8 1.8 0 0 0-.5 1.2V22h-4v-.1a1.8 1.8 0 0 0-.5-1.2l-.1-.1a1.8 1.8 0 0 0-2-.3l-.2.1-2-3.4.1-.1a1.8 1.8 0 0 0 .3-2V15a1.8 1.8 0 0 0-1.5-1.1H5v-4h.1A1.8 1.8 0 0 0 6.6 9V8.9a1.8 1.8 0 0 0-.3-2l-.1-.1 2-3.4.2.1a1.8 1.8 0 0 0 2-.3l.1-.1A1.8 1.8 0 0 0 11 2h4v.1a1.8 1.8 0 0 0 .5 1.2l.1.1a1.8 1.8 0 0 0 2 .3l.2-.1 2 3.4-.1.1a1.8 1.8 0 0 0-.3 2V9a1.8 1.8 0 0 0 1.5 1.1h.1v4h-.1A1.8 1.8 0 0 0 19.4 15z"></path></svg></span>Pengaturan</a>
+                    <a class="menu-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="{{ route('audit.index') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M8 8h8"></path><path d="M8 12h8"></path><path d="M8 16h5"></path></svg></span>Audit Log</a>
                 @endif
                 <div class="menu-header">Akun Saya</div>
-                <a class="menu-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.password.edit') }}"><span class="menu-ico">🔑</span>Ganti Password</a>
+                <a class="menu-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.password.edit') }}"><span class="menu-ico"><svg viewBox="0 0 24 24"><path d="M21 2 11 12"></path><path d="M15 2h6v6"></path><circle cx="7" cy="17" r="4"></circle></svg></span>Ganti Password</a>
             </nav>
         </aside>
         <section class="layout-page">

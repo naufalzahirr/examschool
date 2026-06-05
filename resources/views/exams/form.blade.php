@@ -30,14 +30,14 @@
                 @if($exam->exists)
                     Kode: <b>{{ $exam->access_code }}</b>
                     @if($exam->hasStartedWork())
-                        · <span style="color:var(--warning);font-weight:800">Beberapa field terkunci karena sudah ada aktivitas siswa</span>
+                        | <span style="color:var(--warning);font-weight:800">Beberapa field terkunci karena sudah ada aktivitas siswa</span>
                     @endif
                 @else
                     Lengkapi tiga langkah berikut untuk mulai membuat ujian.
                 @endif
             </p>
         </div>
-        <a class="btn ghost" href="{{ $exam->exists ? route('exams.show', $exam) : route('exams.index') }}">← Kembali</a>
+        <a class="btn ghost" href="{{ $exam->exists ? route('exams.show', $exam) : route('exams.index') }}">Kembali</a>
     </div>
 </div>
 
@@ -71,12 +71,12 @@
 {{-- ═══ BANNER: Ujian terkunci parsial ═══ --}}
 @if($exam->exists && $exam->hasStartedWork())
 <div class="alert warning" style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:1.25rem">
-    <span style="font-size:20px;flex-shrink:0">🔒</span>
+    <span class="badge warning" style="flex-shrink:0">Terkunci</span>
     <div>
         <b>Sebagian field dikunci karena sudah ada aktivitas siswa</b><br>
         <span style="font-size:13px;font-weight:700">
             Yang masih bisa diubah: <b>Judul, Mata Pelajaran, Jenjang, dan Instruksi untuk Siswa.</b><br>
-            Yang tidak bisa diubah: Kelas peserta, Jadwal, Durasi, Urutan acak — untuk menjaga konsistensi soal yang sudah diunduh siswa.
+            Yang tidak bisa diubah: Kelas peserta, Jadwal, Durasi, Urutan acak - untuk menjaga konsistensi soal yang sudah diunduh siswa.
         </span>
     </div>
 </div>
@@ -89,7 +89,7 @@
     {{-- ═══ SECTION 1: INFO UJIAN ═══ --}}
     <div class="card">
         <div class="section-header">
-            <div class="section-header-icon" style="background:var(--primary-soft)">📝</div>
+            <div class="section-header-icon" style="background:var(--primary-soft)">01</div>
             <div>
                 <h2 class="mb0">Informasi Ujian</h2>
                 <p class="muted small mb0">Tampil di dashboard guru dan aplikasi siswa.</p>
@@ -119,7 +119,7 @@
         <div class="field">
             <label>Instruksi untuk Siswa</label>
             <textarea class="input" name="description" rows="3"
-                      placeholder="Opsional — contoh: Kerjakan dengan teliti. Baca setiap soal dengan seksama sebelum menjawab.">{{ old('description', $exam->description) }}</textarea>
+                      placeholder="Opsional - contoh: Kerjakan dengan teliti. Baca setiap soal dengan seksama sebelum menjawab.">{{ old('description', $exam->description) }}</textarea>
             <p class="help">Teks ini tampil di layar siswa sebelum ujian dimulai.</p>
         </div>
     </div>
@@ -127,13 +127,13 @@
     {{-- ═══ SECTION 2: KELAS PESERTA ═══ --}}
     <div class="card">
         <div class="section-header">
-            <div class="section-header-icon" style="background:var(--accent-soft)">👥</div>
+            <div class="section-header-icon" style="background:var(--accent-soft)">02</div>
             <div>
                 <h2 class="mb0">Kelas Peserta</h2>
                 <p class="muted small mb0">Siswa aktif di kelas terpilih otomatis menjadi peserta ujian.</p>
             </div>
             @if($exam->exists && $exam->hasStartedWork())
-                <span class="badge warning" style="margin-left:auto;font-size:11px">🔒 Terkunci</span>
+                <span class="badge warning" style="margin-left:auto;font-size:11px">Terkunci</span>
             @endif
         </div>
 
@@ -151,7 +151,7 @@
                 @foreach($classrooms->groupBy('tingkat') as $tingkat => $group)
                     <div class="mini-card {{ ($exam->exists && $exam->hasStartedWork()) ? 'opacity-75' : '' }}" style="{{ ($exam->exists && $exam->hasStartedWork()) ? 'opacity:.7' : '' }}">
                         <div class="between" style="margin-bottom:.65rem">
-                            <b style="font-size:13px">Tingkat {{ $tingkat ?: '–' }}</b>
+                            <b style="font-size:13px">Tingkat {{ $tingkat ?: '-' }}</b>
                             <span class="muted small">{{ $group->count() }} kelas</span>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:.35rem">
@@ -176,7 +176,7 @@
             <p class="help" style="margin-top:.75rem">
                 @if($exam->exists && $exam->hasStartedWork())
                     Kelas tidak bisa diubah karena sudah ada aktivitas siswa.
-                    Kelola peserta dari <a href="{{ route('exams.participants', $exam) }}" style="color:var(--primary)">halaman Peserta Ujian →</a>
+                    Kelola peserta dari <a href="{{ route('exams.participants', $exam) }}" style="color:var(--primary)">halaman Peserta Ujian</a>
                 @else
                     Bisa pilih lebih dari satu kelas. Sinkron ulang peserta dari halaman Peserta Ujian jika ada perubahan kelas.
                 @endif
@@ -185,7 +185,7 @@
             <div class="alert warning" style="margin-bottom:0">
                 Belum ada data kelas. Sinkron dari SILAP atau import dari menu <b>Kelas</b> terlebih dahulu.
                 @if(auth()->user()->isAdmin())
-                    <a href="{{ route('silap.index') }}" style="font-weight:900">Sinkron SILAP →</a>
+                    <a href="{{ route('silap.index') }}" style="font-weight:900">Sinkron SILAP</a>
                 @endif
             </div>
         @endif
@@ -194,13 +194,13 @@
     {{-- ═══ SECTION 3: JADWAL ═══ --}}
     <div class="card">
         <div class="section-header">
-            <div class="section-header-icon" style="background:var(--warning-soft)">🗓</div>
+            <div class="section-header-icon" style="background:var(--warning-soft)">03</div>
             <div>
                 <h2 class="mb0">Jadwal & Durasi</h2>
                 <p class="muted small mb0">Menentukan kapan siswa bisa download soal dan kapan ujian dimulai.</p>
             </div>
             @if($exam->exists && $exam->hasStartedWork())
-                <span class="badge warning" style="margin-left:auto;font-size:11px">🔒 Terkunci</span>
+                <span class="badge warning" style="margin-left:auto;font-size:11px">Terkunci</span>
             @endif
         </div>
 
@@ -221,15 +221,15 @@
             <label class="mode-pick" style="display:flex;gap:.7rem;align-items:flex-start;padding:1rem;border:2px solid var(--line);border-radius:var(--radius);cursor:pointer">
                 <input type="radio" name="schedule_mode" value="manual" @checked($currentMode === \App\Models\Exam::MODE_MANUAL) style="margin-top:.2rem">
                 <div>
-                    <b style="font-size:14px;color:var(--heading)">🟢 Manual (buka/tutup tombol)</b>
+                    <b style="font-size:14px;color:var(--heading)">Manual (buka/tutup tombol)</b>
                     <p class="muted small mb0" style="margin-top:.2rem">Seperti Google Form. Ujian dibuka & ditutup lewat tombol, tanpa jam. Cocok untuk ujian susulan.</p>
                 </div>
             </label>
             <label class="mode-pick" style="display:flex;gap:.7rem;align-items:flex-start;padding:1rem;border:2px solid var(--line);border-radius:var(--radius);cursor:pointer">
                 <input type="radio" name="schedule_mode" value="scheduled" @checked($currentMode === \App\Models\Exam::MODE_SCHEDULED) style="margin-top:.2rem">
                 <div>
-                    <b style="font-size:14px;color:var(--heading)">🕐 Terjadwal (atur jam)</b>
-                    <p class="muted small mb0" style="margin-top:.2rem">Ujian buka & tutup otomatis sesuai jam mulai dan selesai yang diatur.</p>
+                    <b style="font-size:14px;color:var(--heading)">Lanjutan: Terjadwal (atur jam)</b>
+                    <p class="muted small mb0" style="margin-top:.2rem">Pakai kalau ujian harus buka & tutup otomatis sesuai jam mulai dan selesai.</p>
                 </div>
             </label>
         </div>
@@ -272,7 +272,7 @@
         <div id="scheduledFields">
             <div class="alert info" style="margin-bottom:1.1rem;font-size:13px">
                 Siswa bisa download soal <b>sebelum</b> jam mulai. Soal baru bisa dibuka saat jam mulai.
-                Pastikan <b>Jam Selesai ≥ Jam Mulai + Durasi</b>.
+                Pastikan <b>Jam Selesai tidak lebih cepat dari Jam Mulai + Durasi</b>.
             </div>
             <div class="two" style="margin-bottom:.85rem">
                 <div class="field">
@@ -281,7 +281,7 @@
                            value="{{ old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')) }}">
                     <p class="help" id="starts_at_preview">
                         @if(old('starts_at', optional($exam->starts_at)->format('Y-m-d\TH:i')))
-                            <b>{{ optional($exam->starts_at)->format('l, d M Y — H:i') ?? '' }}</b>
+                            <b>{{ optional($exam->starts_at)->format('l, d M Y - H:i') ?? '' }}</b>
                         @else
                             Pilih tanggal dan jam mulai
                         @endif
@@ -293,7 +293,7 @@
                            value="{{ old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')) }}">
                     <p class="help" id="ends_at_preview">
                         @if(old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')))
-                            <b>{{ optional($exam->ends_at)->format('l, d M Y — H:i') ?? '' }}</b>
+                            <b>{{ optional($exam->ends_at)->format('l, d M Y - H:i') ?? '' }}</b>
                         @else
                             Pilih tanggal dan jam selesai
                         @endif
@@ -338,11 +338,6 @@
         @endif
     </div>
 
-    {{-- Mode keamanan diatur otomatis oleh sistem (default: wajib mode pesawat).
-         Nilai tetap dikirim agar konsisten saat edit. --}}
-    <input type="hidden" name="lock_mode" value="{{ old('lock_mode', $exam->lock_mode ?? \App\Models\Exam::LOCK_STRICT_AIRPLANE) }}">
-    <input type="hidden" name="exit_policy" value="{{ old('exit_policy', $exam->exit_policy ?? \App\Models\Exam::EXIT_AFTER_SUBMIT) }}">
-
     {{-- ═══ SAVE BAR ═══ --}}
     <div class="card">
         <div class="save-bar between">
@@ -353,7 +348,7 @@
             <div class="row">
                 <a class="btn ghost" href="{{ $exam->exists ? route('exams.show', $exam) : route('exams.index') }}">Batal</a>
                 <button class="btn primary" style="min-width:160px">
-                    {{ $exam->exists ? '✓ Simpan Konfigurasi' : '→ Simpan & Pilih Soal' }}
+                    {{ $exam->exists ? 'Simpan Konfigurasi' : 'Simpan & Pilih Soal' }}
                 </button>
             </div>
         </div>
@@ -373,8 +368,8 @@ function formatPreview(val) {
     if (isNaN(d)) return '<span style="color:var(--danger)">Format tidak valid</span>';
     const jam  = String(d.getHours()).padStart(2,'0');
     const mnt  = String(d.getMinutes()).padStart(2,'0');
-    const waktu = d.getHours() >= 12 ? '🌙 siang/malam' : '☀️ pagi';
-    return `<b>${HARI[d.getDay()]}, ${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()} — ${jam}:${mnt}</b> <span style="color:var(--muted)">${waktu}</span>`;
+    const waktu = d.getHours() >= 12 ? 'siang/malam' : 'pagi';
+    return `<b>${HARI[d.getDay()]}, ${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()} - ${jam}:${mnt}</b> <span style="color:var(--muted)">${waktu}</span>`;
 }
 
 function bindPreview(inputId, previewId) {
