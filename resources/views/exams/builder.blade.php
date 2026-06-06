@@ -8,24 +8,25 @@
 @endpush
 
 @section('content')
+@include('exams._workspace', ['tab' => 'soal'])
+
 <div class="builder-wrap">
     <div class="between mb">
         <div>
-            <h1>{{ $canEdit ? 'Edit Soal Ujian' : 'Lihat Soal Ujian' }}</h1>
-            <p class="muted">{{ $canEdit ? 'Tinjau dan edit salinan soal ujian ini. Soal baru tetap dipilih dari Bank Soal.' : 'Ujian sudah dikunci - soal hanya bisa dilihat, tidak bisa diubah.' }}</p>
+            <h2 style="margin:0;font-size:18px">{{ $canEdit ? 'Kelola Soal Ujian' : 'Lihat Soal Ujian' }}</h2>
+            <p class="muted mb0" style="font-size:13px">{{ $canEdit ? 'Tinjau dan edit salinan soal. Soal baru diambil dari Bank Soal.' : 'Ujian sudah dikunci — soal hanya bisa dilihat.' }}</p>
         </div>
-        <a class="btn" href="{{ route('exams.show', $exam) }}">Kembali</a>
+        @if($canEdit)
+            <a class="btn soft" href="{{ route('exams.question-bank.select', $exam) }}">+ Ambil dari Bank Soal</a>
+        @endif
     </div>
 
     <div class="card form-head mb">
         <div class="between">
             <div>
-                <h2 style="margin-bottom:0">{{ $exam->title }}</h2>
-                <p class="muted">{{ $exam->description ?: 'Tambahkan instruksi ujian di konfigurasi.' }}</p>
-                <div class="row small">
-                    <span class="badge">Kode: {{ $exam->access_code }}</span>
+                <p class="muted mb0" style="font-size:13px">{{ $exam->description ?: 'Tambahkan instruksi ujian di Pengaturan.' }}</p>
+                <div class="row small" style="margin-top:.4rem">
                     <span class="pill">Versi Soal: {{ $exam->package_version }}</span>
-                    <span class="badge {{ $exam->status }}">{{ $exam->status }}</span>
                 </div>
             </div>
             <div style="text-align:right">

@@ -18,7 +18,7 @@ class ParticipantController extends Controller
     public function index(Request $request, Exam $exam)
     {
         $this->ensureCanManage($exam);
-        $exam->load('classrooms');
+        $exam->load('classrooms')->loadCount(['questions', 'participants']);
 
         $query = $exam->participants()
             ->with('student.classroom')
@@ -279,7 +279,7 @@ class ParticipantController extends Controller
     public function results(Request $request, Exam $exam)
     {
         $this->ensureCanManage($exam);
-        $exam->load('classrooms');
+        $exam->load('classrooms')->loadCount(['questions', 'participants']);
 
         $query = $exam->participants()
             ->with(['student.classroom', 'attempts' => fn ($q) => $q->latest()])

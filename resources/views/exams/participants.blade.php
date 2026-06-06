@@ -1,18 +1,7 @@
 @extends('layouts.app', ['title' => 'Peserta — ' . $exam->title])
 
 @section('content')
-<div class="hero mb">
-    <div class="between">
-        <div>
-            <h1 style="margin:0">Peserta Ujian</h1>
-            <p class="muted mb0">{{ $exam->title }} · Kode: <b>{{ $exam->access_code }}</b></p>
-        </div>
-        <div class="row">
-            <a class="btn soft" href="{{ route('exams.monitor', $exam) }}">📡 Monitor</a>
-            <a class="btn ghost" href="{{ route('exams.show', $exam) }}">← Detail Ujian</a>
-        </div>
-    </div>
-</div>
+@include('exams._workspace', ['tab' => 'peserta'])
 
 {{-- Kelas + sinkron --}}
 <div class="card mb">

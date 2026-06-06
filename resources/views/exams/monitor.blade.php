@@ -30,7 +30,9 @@ $locked    = $integrityStats['locked'] ?? 0;
 $progress  = $total > 0 ? round($submitted / $total * 100) : 0;
 @endphp
 
-{{-- ═══ MONITOR HERO ═══ --}}
+@include('exams._workspace', ['tab' => 'pelaksanaan'])
+
+{{-- ═══ STATUS BAR PELAKSANAAN ═══ --}}
 <div class="monitor-hero">
     <div class="between" style="align-items:flex-start">
         <div>
@@ -42,27 +44,23 @@ $progress  = $total > 0 ? round($submitted / $total * 100) : 0;
                     <span style="font-size:12px;font-weight:900;color:#94a3b8">{{ $exam->operationalStatus() }}</span>
                 @endif
             </div>
-            <h1>{{ $exam->title }}</h1>
+            <h2 style="color:#fff;margin:0 0 .25rem;font-size:18px">Monitor Pelaksanaan</h2>
             <p style="margin:0;opacity:.7;font-size:13px">
-                Kode: <b style="color:#fff">{{ $exam->access_code }}</b>
-                &nbsp;|&nbsp; {{ optional($exam->starts_at)->format('d M Y H:i') ?: 'Jadwal fleksibel' }}
+                {{ optional($exam->starts_at)->format('d M Y H:i') ?: ($exam->isManualMode() ? 'Mode manual (buka/tutup tombol)' : 'Jadwal fleksibel') }}
                 @if($exam->ends_at) - {{ $exam->ends_at->format('H:i') }} @endif
-                &nbsp;|&nbsp; Download:
+                &nbsp;·&nbsp; Download:
                 @if($queueStats['download_window_open'])
                     <span style="color:#4ade80">Dibuka</span>
                 @elseif($queueStats['download_opens_at'])
                     <span>{{ $queueStats['download_opens_at'] }}</span>
                 @else
-                    <span>12 jam sebelum mulai</span>
+                    <span>belum dibuka</span>
                 @endif
             </p>
         </div>
         <div class="row" style="gap:.5rem;flex-wrap:wrap">
             <span class="countdown-badge" id="refreshCountdown">↻ 30s</span>
             <a class="btn" href="{{ route('exams.monitor', $exam) }}" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2);font-size:13px">Refresh</a>
-            @if(auth()->user()->canManageExam($exam))
-                <a class="btn soft" href="{{ route('exams.show', $exam) }}" style="font-size:13px">Detail Ujian</a>
-            @endif
         </div>
     </div>
 </div>

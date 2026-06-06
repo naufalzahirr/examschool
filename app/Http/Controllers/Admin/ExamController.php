@@ -119,7 +119,7 @@ class ExamController extends Controller
     public function edit(Exam $exam)
     {
         $this->ensureCanManage($exam);
-        $exam->load('classrooms');
+        $exam->load('classrooms')->loadCount(['questions', 'participants']);
 
         return view('exams.form', [
             'exam' => $exam,
@@ -354,6 +354,9 @@ class ExamController extends Controller
 
     private function validated(Request $request, ?Exam $exam = null): array
     {
+        $scheduleMode = $request->input('schedule_mode') ?: ($exam?->schedule_mode ?: Exam::MODE_MANUAL);
+        $isManualMode = $scheduleMode === Exam::MODE_MANUAL;
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
@@ -362,8 +365,8 @@ class ExamController extends Controller
             'schedule_mode' => ['nullable', Rule::in([Exam::MODE_SCHEDULED, Exam::MODE_MANUAL])],
             'classroom_ids' => ['nullable', 'array'],
             'classroom_ids.*' => ['integer', 'exists:classrooms,id'],
-            'starts_at' => ['nullable', 'date'],
-            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'starts_at' => $isManualMode ? ['nullable'] : ['nullable', 'date'],
+            'ends_at' => $isManualMode ? ['nullable'] : ['nullable', 'date', 'after_or_equal:starts_at'],
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
             'shuffle_questions' => ['nullable', 'boolean'],
             'shuffle_options' => ['nullable', 'boolean'],

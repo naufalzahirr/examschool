@@ -15,17 +15,11 @@
 
 @section('content')
 
-<div class="hero mb">
-    <div class="between">
-        <div>
-            <h1 style="margin:0">Hasil Ujian</h1>
-            <p class="muted mb0">{{ $exam->title }} | Kode: <b>{{ $exam->access_code }}</b></p>
-        </div>
-        <div class="row">
-            <a class="btn soft" href="{{ route('exams.results.export', $exam) }}">Export CSV</a>
-            <a class="btn ghost" href="{{ route('exams.show', $exam) }}">Detail Ujian</a>
-        </div>
-    </div>
+@include('exams._workspace', ['tab' => 'hasil'])
+
+<div class="between mb">
+    <h2 style="margin:0;font-size:18px">Hasil & Statistik</h2>
+    <a class="btn soft" href="{{ route('exams.results.export', $exam) }}">Export CSV</a>
 </div>
 
 {{-- ═══ STAT CARDS ═══ --}}

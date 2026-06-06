@@ -32,24 +32,22 @@
 @section('content')
 
 {{-- ═══ HEADER ═══ --}}
+@if($exam->exists)
+    @include('exams._workspace', ['tab' => 'pengaturan'])
+    <div class="between mb">
+        <h2 style="margin:0;font-size:18px">Pengaturan Ujian</h2>
+    </div>
+@else
 <div class="hero mb">
     <div class="between">
         <div>
-            <h1 style="margin:0">{{ $exam->exists ? 'Edit Ujian' : 'Buat Ujian Baru' }}</h1>
-            <p class="muted mb0">
-                @if($exam->exists)
-                    Kode: <b>{{ $exam->access_code }}</b>
-                    @if($exam->hasStartedWork())
-                        | <span style="color:var(--warning);font-weight:800">Beberapa field terkunci karena sudah ada aktivitas siswa</span>
-                    @endif
-                @else
-                    Lengkapi tiga langkah berikut untuk mulai membuat ujian.
-                @endif
-            </p>
+            <h1 style="margin:0">Buat Ujian Baru</h1>
+            <p class="muted mb0">Lengkapi tiga langkah berikut untuk mulai membuat ujian.</p>
         </div>
-        <a class="btn ghost" href="{{ $exam->exists ? route('exams.show', $exam) : route('exams.index') }}">Kembali</a>
+        <a class="btn ghost" href="{{ route('exams.index') }}">Kembali</a>
     </div>
 </div>
+@endif
 
 {{-- ═══ STEPS INDICATOR (hanya tampil saat buat baru) ═══ --}}
 @if(!$exam->exists)
@@ -385,6 +383,56 @@
     </div>
 </form>
 
+{{-- ═══ ZONA AKSI FINAL (hanya saat edit) ═══ --}}
+@if($exam->exists)
+<details class="card" style="margin-top:1.25rem;border:1px solid #fee2e2;padding:0;overflow:hidden">
+    <summary style="padding:1rem 1.2rem;font-weight:900;color:#b91c1c;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:1rem">
+        <span>Aksi Final — Tutup, Arsipkan, atau Hapus Ujian</span>
+        <span class="muted small" style="font-weight:700">Klik untuk buka</span>
+    </summary>
+    <div style="padding:1.1rem 1.2rem;border-top:1px solid #fee2e2;background:#fff9f9">
+        <div class="row" style="flex-wrap:wrap;gap:.5rem;margin-bottom:.85rem">
+            @if(in_array($exam->status, ['published','closed'], true))
+                <form method="POST" action="{{ route('exams.unpublish', $exam) }}"
+                      onsubmit="return confirm('Kembalikan ke draft? Hanya bisa jika belum ada siswa yang mulai mengerjakan.')">
+                    @csrf
+                    <button class="btn warning">Kembalikan ke Draft</button>
+                </form>
+            @endif
+            @if(!in_array($exam->status, ['closed','archived'], true))
+                <form method="POST" action="{{ route('exams.close', $exam) }}"
+                      onsubmit="return confirm('Tutup ujian? Siswa tidak bisa lagi download atau submit jawaban.')">
+                    @csrf
+                    <button class="btn danger">Tutup Final</button>
+                </form>
+            @endif
+            @if($exam->status !== 'archived')
+                <form method="POST" action="{{ route('exams.archive', $exam) }}"
+                      onsubmit="return confirm('Arsipkan ujian? Disembunyikan dari daftar aktif. Data dan hasil tetap tersimpan.')">
+                    @csrf
+                    <button class="btn">Arsipkan</button>
+                </form>
+            @endif
+            @if(!$exam->hasStartedWork())
+                <form method="POST" action="{{ route('exams.destroy', $exam) }}"
+                      onsubmit="return confirm('HAPUS PERMANEN? Semua soal, peserta, dan data ujian dihapus selamanya. Tidak bisa dibatalkan.')">
+                    @csrf @method('DELETE')
+                    <button class="btn danger" style="background:#7f1d1d;color:#fff">Hapus Permanen</button>
+                </form>
+            @else
+                <span class="muted small" style="align-self:center">Tidak bisa dihapus — sudah ada aktivitas siswa. Gunakan Arsipkan.</span>
+            @endif
+        </div>
+        <p class="help mb0">
+            <b>Kembalikan ke Draft</b>: hanya jika belum ada aktivitas ·
+            <b>Tutup Final</b>: mengakhiri ujian, hentikan submit baru ·
+            <b>Arsipkan</b>: sembunyikan dari daftar, data tetap ·
+            <b>Hapus</b>: permanen, hanya sebelum ada aktivitas
+        </p>
+    </div>
+</details>
+@endif
+
 @endsection
 
 @push('scripts')
@@ -425,6 +473,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const isManual = mode === 'manual';
         if(scheduledFields) scheduledFields.style.display = isManual ? 'none' : 'block';
         if(manualInfo) manualInfo.style.display = isManual ? 'block' : 'none';
+        ['starts_at_input', 'ends_at_input'].forEach(id => {
+            const input = document.getElementById(id);
+            if(input) input.disabled = isManual;
+        });
         // Tandai kartu mode terpilih
         document.querySelectorAll('.mode-pick').forEach(card => {
             const checked = card.querySelector('input')?.checked;

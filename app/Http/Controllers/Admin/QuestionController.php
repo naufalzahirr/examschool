@@ -15,7 +15,7 @@ class QuestionController extends Controller
     public function builder(Exam $exam)
     {
         abort_unless(auth()->user()->canManageExam($exam), 403);
-        $exam->load(['questions.options'])->loadCount('attempts');
+        $exam->load(['questions.options'])->loadCount(['attempts', 'questions', 'participants']);
         $canEdit = $exam->canEditQuestions();
 
         return view('exams.builder', compact('exam', 'canEdit'));
